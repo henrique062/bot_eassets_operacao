@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server"
-
-export function GET(request: Request) {
-  return NextResponse.redirect(new URL("/icon", request.url), 307)
+export function GET() {
+  return new Response(null, {
+    status: 307,
+    headers: {
+      Location: "/icon",
+    },
+  })
 }

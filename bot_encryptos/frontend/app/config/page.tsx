@@ -109,6 +109,8 @@ export default function ConfigPage() {
       if (bybitResult.status === "fulfilled") {
         setBybitBalance(bybitResult.value)
         nextConfig = applyBybitBalance(nextConfig, bybitResult.value)
+      } else {
+        setError((prev) => prev ?? "Saldo Bybit indisponivel. Verifique API key/secret.")
       }
 
       setConfig(nextConfig)
@@ -157,8 +159,12 @@ export default function ConfigPage() {
       const freshBalance = await api.getBybitBalance()
       setBybitBalance(freshBalance)
       setConfig((prev) => applyBybitBalance(prev, freshBalance))
-    } catch {
-      setError("Erro ao consultar saldo da Bybit.")
+    } catch (err) {
+      if (err instanceof ApiError && err.detail) {
+        setError(err.detail)
+      } else {
+        setError("Erro ao consultar saldo da Bybit.")
+      }
     } finally {
       setSyncingBalance(false)
     }
