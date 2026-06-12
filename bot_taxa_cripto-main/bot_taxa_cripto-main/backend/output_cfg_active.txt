@@ -1,0 +1,2 @@
+{'id': 32, 'session_name': 'Ao contrario ?', 'symbols': ['POWERUSDT', 'AWEUSDT', 'ARCUSDT', 'ENSOUSDT'], 'operation_mode': 'counter_trend'}
+{'id': 33, 'session_name': 'TAKER Funding R', 'symbols': ['POWERUSDT', 'AWEUSDT', 'ARCUSDT', 'ENSOUSDT'], 'operation_mode': 'counter_trend'}

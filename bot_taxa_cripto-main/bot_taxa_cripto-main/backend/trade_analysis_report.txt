@@ -1,0 +1,523 @@
+====================================================================================================
+ANÁLISE COMPLETA DE OPERAÇÕES REAIS + SCORE + FUNDING RATES
+Data da Análise: 2026-02-26 12:28 UTC
+====================================================================================================
+
+============================================================
+1. RESUMO GERAL DAS OPERAÇÕES REAIS
+============================================================
+  Total de Trades:      175
+  Vitórias (Win):       117 (66.9%)
+  Derrotas (Loss):      58 (33.1%)
+  Breakeven:            0
+  PnL Total:            $28.6573
+  PnL Médio por Trade:  $0.1638
+  Funding PnL Total:    $7.0634
+  Price PnL Total:      $25.2691
+  Taxas Totais (Fees):  $3.6752
+  Primeiro Trade:       22/02/2026 00:36:10
+  Último Trade:         26/02/2026 09:27:35
+
+============================================================
+2. ANÁLISE POR MOEDA (TOP 20 POR VOLUME DE TRADES)
+============================================================
+
+  STEEMUSDT
+    Trades: 37 | WinRate: 86% | PnL: $8.5052 | Funding: $1.2429 | Price: $8.0113 | Fees: $0.7490
+
+  POWERUSDT
+    Trades: 21 | WinRate: 67% | PnL: $8.6985 | Funding: $1.2299 | Price: $7.9228 | Fees: $0.4542
+
+  AWEUSDT
+    Trades: 18 | WinRate: 78% | PnL: $0.8728 | Funding: $-0.4581 | Price: $1.7185 | Fees: $0.3877
+
+  BULLAUSDT
+    Trades: 11 | WinRate: 55% | PnL: $4.0129 | Funding: $2.4997 | Price: $1.7758 | Fees: $0.2626
+
+  ENSOUSDT
+    Trades: 10 | WinRate: 40% | PnL: $0.3315 | Funding: $1.5009 | Price: $-1.0091 | Fees: $0.1604
+
+  ESPUSDT
+    Trades: 9 | WinRate: 78% | PnL: $1.6665 | Funding: $-0.3070 | Price: $2.2649 | Fees: $0.2914
+
+  SKRUSDT
+    Trades: 7 | WinRate: 71% | PnL: $2.5206 | Funding: $-0.7088 | Price: $3.4801 | Fees: $0.2507
+
+  AZTECUSDT
+    Trades: 7 | WinRate: 29% | PnL: $0.0481 | Funding: $0.0732 | Price: $0.0867 | Fees: $0.1118
+
+  DENTUSDT
+    Trades: 3 | WinRate: 0% | PnL: $-0.0364 | Funding: $0.2221 | Price: $-0.2192 | Fees: $0.0393
+
+  OMUSDT
+    Trades: 3 | WinRate: 100% | PnL: $0.1266 | Funding: $0.1248 | Price: $0.0247 | Fees: $0.0229
+
+  WETUSDT
+    Trades: 3 | WinRate: 67% | PnL: $-0.2486 | Funding: $0.0000 | Price: $-0.2051 | Fees: $0.0436
+
+  HOLOUSDT
+    Trades: 3 | WinRate: 67% | PnL: $0.0385 | Funding: $0.2968 | Price: $-0.2055 | Fees: $0.0528
+
+  BOBUSDT
+    Trades: 3 | WinRate: 33% | PnL: $0.0030 | Funding: $0.0000 | Price: $0.0788 | Fees: $0.0757
+
+  AXLUSDT
+    Trades: 3 | WinRate: 100% | PnL: $0.2316 | Funding: $0.7168 | Price: $-0.4417 | Fees: $0.0434
+
+  DUSKUSDT
+    Trades: 3 | WinRate: 33% | PnL: $-0.0977 | Funding: $0.1059 | Price: $-0.1400 | Fees: $0.0636
+
+  LAUSDT
+    Trades: 3 | WinRate: 67% | PnL: $0.1324 | Funding: $0.1698 | Price: $0.0206 | Fees: $0.0580
+
+  FOGOUSDT
+    Trades: 3 | WinRate: 33% | PnL: $-0.7435 | Funding: $0.0000 | Price: $-0.6879 | Fees: $0.0557
+
+  JTOUSDT
+    Trades: 2 | WinRate: 100% | PnL: $0.4486 | Funding: $-0.0096 | Price: $0.4827 | Fees: $0.0245
+
+  FLOWUSDT
+    Trades: 2 | WinRate: 50% | PnL: $0.3002 | Funding: $0.0127 | Price: $0.3096 | Fees: $0.0221
+
+  STABLEUSDT
+    Trades: 2 | WinRate: 0% | PnL: $-0.1101 | Funding: $0.0000 | Price: $-0.0496 | Fees: $0.0605
+
+============================================================
+3. TOP 10 MOEDAS MAIS LUCRATIVAS
+============================================================
+  POWERUSDT            |  21 trades | PnL: $+8.6985 | Fund: $+1.2299 | Price: $+7.9228
+  STEEMUSDT            |  37 trades | PnL: $+8.5052 | Fund: $+1.2429 | Price: $+8.0113
+  BULLAUSDT            |  11 trades | PnL: $+4.0129 | Fund: $+2.4997 | Price: $+1.7758
+  SKRUSDT              |   7 trades | PnL: $+2.5206 | Fund: $-0.7088 | Price: $+3.4801
+  ESPUSDT              |   9 trades | PnL: $+1.6665 | Fund: $-0.3070 | Price: $+2.2649
+  AWEUSDT              |  18 trades | PnL: $+0.8728 | Fund: $-0.4581 | Price: $+1.7185
+  JTOUSDT              |   2 trades | PnL: $+0.4486 | Fund: $-0.0096 | Price: $+0.4827
+  BELUSDT              |   1 trades | PnL: $+0.4159 | Fund: $+0.0000 | Price: $+0.4454
+  ARPAUSDT             |   1 trades | PnL: $+0.3974 | Fund: $+0.0000 | Price: $+0.4267
+  KERNELUSDT           |   2 trades | PnL: $+0.3764 | Fund: $+0.0000 | Price: $+0.3969
+
+============================================================
+4. TOP 10 MOEDAS MAIS PREJUDICIAIS
+============================================================
+  FOGOUSDT             |   3 trades | PnL: $-0.7435 | Fund: $+0.0000 | Price: $-0.6879
+  WETUSDT              |   3 trades | PnL: $-0.2486 | Fund: $+0.0000 | Price: $-0.2051
+  AGLDUSDT             |   1 trades | PnL: $-0.1374 | Fund: $+0.0000 | Price: $-0.1078
+  BARDUSDT             |   2 trades | PnL: $-0.1204 | Fund: $+0.0000 | Price: $-0.1044
+  STABLEUSDT           |   2 trades | PnL: $-0.1101 | Fund: $+0.0000 | Price: $-0.0496
+  API3USDT             |   1 trades | PnL: $-0.1015 | Fund: $+0.0000 | Price: $-0.0898
+  DUSKUSDT             |   3 trades | PnL: $-0.0977 | Fund: $+0.1059 | Price: $-0.1400
+  BERAUSDT             |   1 trades | PnL: $-0.0941 | Fund: $+0.0067 | Price: $-0.0949
+  ONTUSDT              |   2 trades | PnL: $-0.0539 | Fund: $+0.1222 | Price: $-0.1407
+  DENTUSDT             |   3 trades | PnL: $-0.0364 | Fund: $+0.2221 | Price: $-0.2192
+
+============================================================
+5. ANÁLISE POR MOTIVO DE FECHAMENTO
+============================================================
+  funding                        |   49 trades | WinRate: 71% | PnL Total: $+4.4477 | PnL Médio: $+0.090770
+  exchange_sync                  |   43 trades | WinRate: 65% | PnL Total: $+20.3195 | PnL Médio: $+0.472547
+  trailing_stop                  |   38 trades | WinRate: 89% | PnL Total: $+11.7677 | PnL Médio: $+0.309675
+  timeout                        |   22 trades | WinRate: 59% | PnL Total: $+1.8742 | PnL Médio: $+0.085192
+  stop_loss_pct                  |   14 trades | WinRate: 7% | PnL Total: $-10.6159 | PnL Médio: $-0.758277
+  take_profit_target             |    7 trades | WinRate: 86% | PnL Total: $+0.9654 | PnL Médio: $+0.137915
+  break_even_stop                |    2 trades | WinRate: 0% | PnL Total: $-0.1014 | PnL Médio: $-0.050680
+
+============================================================
+6. ANÁLISE POR DIREÇÃO (LONG vs SHORT)
+============================================================
+  LONG       |   98 trades | WinRate: 63% | PnL: $+4.3249 | Funding: $+9.7157 | Price: $-3.8326
+  SHORT      |   77 trades | WinRate: 71% | PnL: $+24.3324 | Funding: $-2.6523 | Price: $+29.1017
+
+============================================================
+7. TOP 15 MAIORES PERDAS INDIVIDUAIS
+============================================================
+  BULLAUSDT       | Dir: SHORT | Entry: 0.027660 | Exit: 0.029680 | PnL: $-2.3957 | Fund: $+0.0000 | PricePnL%: -37.508% | Fees: $0.0235 | stop_loss_pct
+  BULLAUSDT       | Dir: SHORT | Entry: 0.027590 | Exit: 0.029570 | PnL: $-2.1302 | Fund: $+0.0000 | PricePnL%: -35.357% | Fees: $0.0309 | stop_loss_pct
+  POWERUSDT       | Dir: SHORT | Entry: 0.367170 | Exit: 0.386730 | PnL: $-1.8241 | Fund: $+0.0000 | PricePnL%: -26.157% | Fees: $0.0245 | stop_loss_pct
+  BULLAUSDT       | Dir: LONG  | Entry: 0.035196 | Exit: 0.032886 | PnL: $-1.7680 | Fund: $+0.7799 | PricePnL%: -32.578% | Fees: $0.0370 | stop_loss_pct
+  BULLAUSDT       | Dir: LONG  | Entry: 0.030050 | Exit: 0.028070 | PnL: $-1.6152 | Fund: $+0.6948 | PricePnL%: -33.301% | Fees: $0.0232 | stop_loss_pct
+  AWEUSDT         | Dir: LONG  | Entry: 0.051620 | Exit: 0.050790 | PnL: $-0.8743 | Fund: $-0.7390 | PricePnL%: -1.608% | Fees: $0.0017 | exchange_sync
+  SKRUSDT         | Dir: SHORT | Entry: 0.023486 | Exit: 0.023838 | PnL: $-0.5428 | Fund: $+0.0000 | PricePnL%: -7.436% | Fees: $0.0342 | trailing_stop
+  FOGOUSDT        | Dir: SHORT | Entry: 0.027410 | Exit: 0.027780 | PnL: $-0.4804 | Fund: $+0.0000 | PricePnL%: -6.773% | Fees: $0.0172 | exchange_sync
+  FOGOUSDT        | Dir: SHORT | Entry: 0.027410 | Exit: 0.027770 | PnL: $-0.4748 | Fund: $+0.0000 | PricePnL%: -6.589% | Fees: $0.0241 | trailing_stop
+  WETUSDT         | Dir: LONG  | Entry: 0.111570 | Exit: 0.109380 | PnL: $-0.4694 | Fund: $+0.0000 | PricePnL%: -5.884% | Fees: $0.0117 | exchange_sync
+  BULLAUSDT       | Dir: SHORT | Entry: 0.029509 | Exit: 0.029880 | PnL: $-0.4164 | Fund: $+0.0000 | PricePnL%: -6.312% | Fees: $0.0159 | exchange_sync
+  POWERUSDT       | Dir: LONG  | Entry: 1.524180 | Exit: 1.496990 | PnL: $-0.3913 | Fund: $+0.0000 | PricePnL%: -5.017% | Fees: $0.0107 | exchange_sync
+  POWERUSDT       | Dir: LONG  | Entry: 1.637700 | Exit: 1.616620 | PnL: $-0.2847 | Fund: $+0.0000 | PricePnL%: -3.676% | Fees: $0.0106 | exchange_sync
+  STEEMUSDT       | Dir: SHORT | Entry: 0.057650 | Exit: 0.057420 | PnL: $-0.2796 | Fund: $-0.3993 | PricePnL%: +1.993% | Fees: $0.0063 | exchange_sync
+  ENSOUSDT        | Dir: LONG  | Entry: 1.673900 | Exit: 1.657800 | PnL: $-0.2388 | Fund: $+0.0000 | PricePnL%: -2.887% | Fees: $0.0118 | exchange_sync
+
+============================================================
+8. TOP 15 MAIORES LUCROS INDIVIDUAIS
+============================================================
+  POWERUSDT       | Dir: SHORT | Entry: 0.585614 | Exit: 0.488610 | PnL: $+4.6579 | Fund: $-0.0809 | PricePnL%: +81.645% | Fees: $0.0143 | exchange_sync
+  BULLAUSDT       | Dir: SHORT | Entry: 0.035223 | Exit: 0.031290 | PnL: $+3.9234 | Fund: $+0.0000 | PricePnL%: +57.287% | Fees: $0.0176 | exchange_sync
+  BULLAUSDT       | Dir: SHORT | Entry: 0.035140 | Exit: 0.031330 | PnL: $+3.0643 | Fund: $+0.0000 | PricePnL%: +55.506% | Fees: $0.0142 | exchange_sync
+  BULLAUSDT       | Dir: LONG  | Entry: 0.031942 | Exit: 0.034440 | PnL: $+2.6435 | Fund: $+0.5416 | PricePnL%: +37.113% | Fees: $0.0135 | exchange_sync
+  POWERUSDT       | Dir: SHORT | Entry: 0.401760 | Exit: 0.379580 | PnL: $+1.6704 | Fund: $+0.0000 | PricePnL%: +27.303% | Fees: $0.0153 | exchange_sync
+  POWERUSDT       | Dir: SHORT | Entry: 0.400530 | Exit: 0.379580 | PnL: $+1.5235 | Fund: $+0.0000 | PricePnL%: +25.757% | Fees: $0.0058 | exchange_sync
+  SKRUSDT         | Dir: SHORT | Entry: 0.022994 | Exit: 0.022250 | PnL: $+1.4096 | Fund: $-0.4684 | PricePnL%: +16.165% | Fees: $0.0589 | trailing_stop
+  BULLAUSDT       | Dir: LONG  | Entry: 0.027220 | Exit: 0.027942 | PnL: $+1.3758 | Fund: $+0.4834 | PricePnL%: +13.389% | Fees: $0.0355 | funding
+  STEEMUSDT       | Dir: SHORT | Entry: 0.061590 | Exit: 0.060783 | PnL: $+1.0595 | Fund: $+0.0000 | PricePnL%: +6.546% | Fees: $0.0592 | trailing_stop
+  POWERUSDT       | Dir: SHORT | Entry: 0.897770 | Exit: 0.876930 | PnL: $+1.0375 | Fund: $+0.0000 | PricePnL%: +11.415% | Fees: $0.0461 | trailing_stop
+  STEEMUSDT       | Dir: SHORT | Entry: 0.067840 | Exit: 0.065932 | PnL: $+0.8635 | Fund: $+0.0000 | PricePnL%: +13.999% | Fees: $0.0314 | trailing_stop
+  STEEMUSDT       | Dir: SHORT | Entry: 0.064830 | Exit: 0.062770 | PnL: $+0.8383 | Fund: $+0.0000 | PricePnL%: +15.898% | Fees: $0.0187 | trailing_stop
+  SKRUSDT         | Dir: SHORT | Entry: 0.023237 | Exit: 0.022601 | PnL: $+0.8254 | Fund: $+0.0000 | PricePnL%: +13.720% | Fees: $0.0154 | exchange_sync
+  STEEMUSDT       | Dir: SHORT | Entry: 0.059730 | Exit: 0.057630 | PnL: $+0.8038 | Fund: $-0.2250 | PricePnL%: +17.578% | Fees: $0.0148 | exchange_sync
+  AWEUSDT         | Dir: LONG  | Entry: 0.051040 | Exit: 0.051370 | PnL: $+0.6888 | Fund: $+0.3607 | PricePnL%: +3.228% | Fees: $0.0399 | funding
+
+============================================================
+9. CONFIGURAÇÕES DOS BOTS REAIS
+============================================================
+
+  Bot #16: Bot Binance 00:33 (binance) - Ativo: False
+    Capital: $15.00 | Balance: $14.86 | Leverage: 1x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_strongest | Direction: both
+    Auto Max Symbols: 2 | Auto Min Score: 90 | Window: 60min
+    Stop Loss: 3.00% / $0.00 | Min Profit: 0.15%
+    Entry: 35s | Exit: 120s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 1.00%
+
+  Bot #22: Bot Binance 09:57 (binance) - Ativo: False
+    Capital: $10.00 | Balance: $10.01 | Leverage: 1x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_expiring | Direction: both
+    Auto Max Symbols: 1 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 2.00% / $0.00 | Min Profit: 0.15%
+    Entry: 30s | Exit: 120s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 0.50%
+
+  Bot #25: FORTONASSS (binance) - Ativo: False
+    Capital: $25.00 | Balance: $24.92 | Leverage: 1x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_strongest | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 85 | Window: 60min
+    Stop Loss: 1.50% / $0.00 | Min Profit: 0.15%
+    Entry: 25s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 0.50%
+
+  Bot #27: Ao contrario (binance) - Ativo: False
+    Capital: $25.00 | Balance: $25.53 | Leverage: 5x
+    Fee: taker @ 0.0005%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 50 | Window: 7000min
+    Stop Loss: 2.50% / $0.00 | Min Profit: 0.00%
+    Entry: 5s | Exit: 520s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 3.00%
+
+  Bot #28: Bot Binance 01:07 (binance) - Ativo: False
+    Capital: $10.00 | Balance: $9.95 | Leverage: 2x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_expiring | Direction: both
+    Auto Max Symbols: 2 | Auto Min Score: 70 | Window: 30min
+    Stop Loss: 1.20% / $0.00 | Min Profit: 0.08%
+    Entry: 25s | Exit: 35s | Maker Timeout: 6s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 0.00%
+
+  Bot #29: Bot Binance 01:25 (binance) - Ativo: False
+    Capital: $10.00 | Balance: $10.13 | Leverage: 1x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_expiring | Direction: both
+    Auto Max Symbols: 1 | Auto Min Score: 75 | Window: 60min
+    Stop Loss: 2.50% / $0.00 | Min Profit: 0.08%
+    Entry: 20s | Exit: 30s | Maker Timeout: 5s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 0.00%
+
+  Bot #31: Bot Binance 01:07 ? (binance) - Ativo: False
+    Capital: $10.05 | Balance: $10.02 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_expiring | Direction: both
+    Auto Max Symbols: 2 | Auto Min Score: 80 | Window: 30min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 25s | Exit: 35s | Maker Timeout: 6s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 0.00%
+
+  Bot #32: Ao contrario ? (binance) - Ativo: False
+    Capital: $25.53 | Balance: $27.72 | Leverage: 5x
+    Fee: taker @ 0.0005%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 70 | Window: 7000min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 5s | Exit: 1700s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 3.00%
+
+  Bot #33: TAKER Funding R (binance) - Ativo: False
+    Capital: $25.00 | Balance: $26.39 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 5s | Exit: 1700s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 2.50%
+
+  Bot #36: TAKE Funding R (binance) - Ativo: False
+    Capital: $25.00 | Balance: $33.30 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 30.00% / $0.00 | Min Profit: 0.00%
+    Entry: 2s | Exit: 20000s | Maker Timeout: 8s
+    CT Sort: funding_rate | Trailing Stop: 0.00% | Take Profit: 2.50%
+
+  Bot #37: Ao contrario (binance) - Ativo: False
+    Capital: $25.00 | Balance: $26.30 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 4 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 30.00% / $0.00 | Min Profit: 0.00%
+    Entry: 2s | Exit: 20000s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 3.00%
+
+  Bot #38: Bot Binance 22:26 (binance) - Ativo: False
+    Capital: $12.00 | Balance: $12.69 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_strongest | Direction: both
+    Auto Max Symbols: 2 | Auto Min Score: 90 | Window: 60min
+    Stop Loss: 30.00% / $0.00 | Min Profit: 0.08%
+    Entry: 25s | Exit: 700s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 2.00%
+
+  Bot #39: Bot Binance 04:51 (binance) - Ativo: False
+    Capital: $12.00 | Balance: $12.84 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_strongest | Direction: both
+    Auto Max Symbols: 2 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 30.00% / $0.00 | Min Profit: 0.08%
+    Entry: 25s | Exit: 700s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.00% | Take Profit: 1.00%
+
+  Bot #40: TAKE FD 24-02 - 12-56 (binance) - Ativo: False
+    Capital: $36.00 | Balance: $35.17 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 5 | Auto Min Score: 50 | Window: 60min
+    Stop Loss: 15.00% / $0.00 | Min Profit: 0.00%
+    Entry: 1s | Exit: 20000s | Maker Timeout: 8s
+    CT Sort: funding_rate | Trailing Stop: 1.50% | Take Profit: 2.50%
+
+  Bot #43: Score (binance) - Ativo: True
+    Capital: $35.00 | Balance: $31.19 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 5 | Auto Min Score: 86 | Window: 60min
+    Stop Loss: 0.00% / $3.00 | Min Profit: 0.00%
+    Entry: 2s | Exit: 30s | Maker Timeout: 3s
+    CT Sort: score | Trailing Stop: 0.70% | Take Profit: 0.00%
+
+  Bot #44: CONSERVADORA2 (binance) - Ativo: True
+    Capital: $20.00 | Balance: $20.89 | Leverage: 1x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_strongest | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 90 | Window: 60min
+    Stop Loss: 0.00% / $2.00 | Min Profit: 0.08%
+    Entry: 12s | Exit: 240s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.40% | Take Profit: 0.00%
+
+  Bot #45: Bot Binance 17:13 (binance) - Ativo: True
+    Capital: $23.00 | Balance: $23.26 | Leverage: 3x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: auto_highest_rate | Direction: both
+    Auto Max Symbols: 3 | Auto Min Score: 65 | Window: 30min
+    Stop Loss: 0.00% / $1.00 | Min Profit: 0.08%
+    Entry: 10s | Exit: 5s | Maker Timeout: 2s
+    CT Sort: funding_rate | Trailing Stop: 0.00% | Take Profit: 0.15%
+
+  Bot #46: Bot Teste (binance) - Ativo: False
+    Capital: $6.00 | Balance: $6.00 | Leverage: 3x
+    Fee: taker @ 0.0005%
+    Auto Mode: True | Op Mode: manual | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #48: ESPUSDT TESTE (binance) - Ativo: False
+    Capital: $10.00 | Balance: $9.86 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 1.50% | Take Profit: 0.00%
+
+  Bot #53: STEEMUSDT TESTE (binance) - Ativo: False
+    Capital: $10.00 | Balance: $10.26 | Leverage: 3x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.30% | Take Profit: 0.00%
+
+  Bot #54: STEEMUSDT TESTE (binance) - Ativo: False
+    Capital: $12.00 | Balance: $12.04 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #55: STEEMUSDT TESTE (binance) - Ativo: False
+    Capital: $12.00 | Balance: $12.28 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #56: STEEMUSDT MANUAL (binance) - Ativo: False
+    Capital: $6.00 | Balance: $6.04 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual_position | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 40s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #57: STEEMUSDT MANUAL (binance) - Ativo: False
+    Capital: $10.00 | Balance: $10.21 | Leverage: 2x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual_position | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 2.00% / $0.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 8s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #59: STEEMUSDT MANUAL (binance) - Ativo: False
+    Capital: $10.00 | Balance: $10.23 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: manual_position | Direction: both
+    Auto Max Symbols: 8 | Auto Min Score: 50.0 | Window: 60min
+    Stop Loss: 0.00% / $1.00 | Min Profit: 0.00%
+    Entry: 30s | Exit: 30s | Maker Timeout: 35s
+    CT Sort: score | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+  Bot #62: Bot Binance 00:26 (binance) - Ativo: True
+    Capital: $15.00 | Balance: $15.61 | Leverage: 5x
+    Fee: maker @ 0.0002%
+    Auto Mode: True | Op Mode: counter_trend | Direction: both
+    Auto Max Symbols: 3 | Auto Min Score: 95 | Window: 60min
+    Stop Loss: 0.00% / $0.00 | Min Profit: 0.00%
+    Entry: 45s | Exit: 30s | Maker Timeout: 30s
+    CT Sort: funding_rate | Trailing Stop: 0.50% | Take Profit: 0.00%
+
+============================================================
+10. CONFIGURAÇÕES DO SISTEMA DE SCORE
+============================================================
+  score_thresholds: {"forte": 80, "fraco": 40, "moderado": 60}
+  score_weights: {"apy": 40, "int": 10, "vol": 20, "consistency": 15}
+
+============================================================
+11. HISTÓRICO DE FUNDING RATES (ÚLTIMOS 2 DIAS)
+============================================================
+  Top 30 moedas por magnitude de taxa média (desde 2026-02-24 12:28 UTC):
+  ENSOUSDT        | Snaps: 389 | AvgRate: -0.7223% | MaxRate: +0.0050% | MinRate: -2.0000% | StdDev: 0.6548 | AvgVol: $170,584,199 | AvgVolat: -5.78%
+  POWERUSDT       | Snaps: 389 | AvgRate: -0.6923% | MaxRate: +0.2238% | MinRate: -2.5000% | StdDev: 0.8402 | AvgVol: $597,397,041 | AvgVolat: 51.22%
+  DENTUSDT        | Snaps: 194 | AvgRate: -0.5590% | MaxRate: -0.0090% | MinRate: -1.5485% | StdDev: 0.4392 | AvgVol: $833,439,092,815 | AvgVolat: 51.96%
+  HOLOUSDT        | Snaps: 389 | AvgRate: -0.3247% | MaxRate: +0.0050% | MinRate: -1.3805% | StdDev: 0.2864 | AvgVol: $452,744,462 | AvgVolat: 7.78%
+  CAMPUSDT        | Snaps: 195 | AvgRate: -0.3236% | MaxRate: +0.0050% | MinRate: -2.4356% | StdDev: 0.5433 | AvgVol: $994,511,926 | AvgVolat: 0.45%
+  STEEMUSDT       | Snaps: 203 | AvgRate: -0.2562% | MaxRate: -0.0252% | MinRate: -1.8144% | StdDev: 0.2297 | AvgVol: $1,753,292,169 | AvgVolat: 9.56%
+  DGBUSDT         | Snaps: 195 | AvgRate: -0.2511% | MaxRate: +0.0100% | MinRate: -1.3268% | StdDev: 0.3127 | AvgVol: $36,530,602 | AvgVolat: 3.79%
+  AXLUSDT         | Snaps: 389 | AvgRate: -0.2173% | MaxRate: +0.0862% | MinRate: -2.0000% | StdDev: 0.4078 | AvgVol: $673,496,644 | AvgVolat: 9.59%
+  AWEUSDT         | Snaps: 389 | AvgRate: -0.2138% | MaxRate: +0.0050% | MinRate: -0.8074% | StdDev: 0.1383 | AvgVol: $92,834,113 | AvgVolat: 1.30%
+  WETUSDT         | Snaps: 203 | AvgRate: -0.2095% | MaxRate: +0.0050% | MinRate: -1.8170% | StdDev: 0.4397 | AvgVol: $95,812,599 | AvgVolat: 10.06%
+  ESPUSDT         | Snaps: 389 | AvgRate: -0.2089% | MaxRate: +0.0237% | MinRate: -0.8936% | StdDev: 0.1599 | AvgVol: $2,924,040,437 | AvgVolat: 9.38%
+  GNOUSDT         | Snaps: 195 | AvgRate: -0.1959% | MaxRate: +0.0100% | MinRate: -0.5902% | StdDev: 0.1781 | AvgVol: $905 | AvgVolat: 5.68%
+  DUSKUSDT        | Snaps: 389 | AvgRate: -0.1794% | MaxRate: +0.0100% | MinRate: -0.6937% | StdDev: 0.1493 | AvgVol: $219,077,635 | AvgVolat: 7.33%
+  GPSUSDT         | Snaps: 389 | AvgRate: -0.1745% | MaxRate: +0.0013% | MinRate: -0.4636% | StdDev: 0.1264 | AvgVol: $3,094,603,765 | AvgVolat: -12.56%
+  ARCUSDT         | Snaps: 389 | AvgRate: +0.1714% | MaxRate: +0.5491% | MinRate: +0.0050% | StdDev: 0.1233 | AvgVol: $1,728,359,721 | AvgVolat: -11.90%
+  SKRUSDT         | Snaps: 389 | AvgRate: -0.1672% | MaxRate: +0.0013% | MinRate: -0.6729% | StdDev: 0.1158 | AvgVol: $3,790,709,748 | AvgVolat: 0.86%
+  BARDUSDT        | Snaps: 389 | AvgRate: -0.1532% | MaxRate: +0.4764% | MinRate: -1.3968% | StdDev: 0.3535 | AvgVol: $38,850,653 | AvgVolat: 3.72%
+  HUSDT           | Snaps: 389 | AvgRate: -0.1457% | MaxRate: +0.0013% | MinRate: -0.6231% | StdDev: 0.1654 | AvgVol: $168,546,494 | AvgVolat: -0.33%
+  BLASTUSDT       | Snaps: 195 | AvgRate: -0.1272% | MaxRate: +0.0100% | MinRate: -0.6478% | StdDev: 0.1852 | AvgVol: $976,324,749 | AvgVolat: 3.90%
+  BOBUSDT         | Snaps: 194 | AvgRate: -0.1240% | MaxRate: +0.0050% | MinRate: -0.3561% | StdDev: 0.1122 | AvgVol: $1,401,032,544 | AvgVolat: 6.11%
+  ATOMUSDT        | Snaps: 389 | AvgRate: -0.1144% | MaxRate: +0.0100% | MinRate: -0.4058% | StdDev: 0.1508 | AvgVol: $14,246,614 | AvgVolat: -2.40%
+  SONICUSDT       | Snaps: 203 | AvgRate: -0.1087% | MaxRate: +0.0025% | MinRate: -0.3065% | StdDev: 0.0768 | AvgVol: $87,292,796 | AvgVolat: 5.84%
+  ESUSDT          | Snaps: 195 | AvgRate: -0.1017% | MaxRate: +0.0050% | MinRate: -0.3115% | StdDev: 0.0605 | AvgVol: $1,732,034 | AvgVolat: 3.64%
+  KERNELUSDT      | Snaps: 389 | AvgRate: -0.0942% | MaxRate: +0.0050% | MinRate: -1.0263% | StdDev: 0.1132 | AvgVol: $70,930,258 | AvgVolat: 7.20%
+  GUAUSDT         | Snaps: 194 | AvgRate: +0.0932% | MaxRate: +0.1652% | MinRate: +0.0302% | StdDev: 0.0359 | AvgVol: $88,731,820 | AvgVolat: 19.13%
+  TRUUSDT         | Snaps: 203 | AvgRate: +0.0904% | MaxRate: +0.6496% | MinRate: +0.0100% | StdDev: 0.0722 | AvgVol: $340,407,016 | AvgVolat: 3.75%
+  L3USDT          | Snaps: 195 | AvgRate: -0.0895% | MaxRate: +0.0100% | MinRate: -1.2352% | StdDev: 0.2571 | AvgVol: $155,474,174 | AvgVolat: 6.56%
+  ORDERUSDT       | Snaps: 389 | AvgRate: -0.0843% | MaxRate: +0.0100% | MinRate: -1.0999% | StdDev: 0.2000 | AvgVol: $131,901,035 | AvgVolat: 6.73%
+  OGNUSDT         | Snaps: 389 | AvgRate: -0.0836% | MaxRate: +0.0100% | MinRate: -0.3855% | StdDev: 0.0946 | AvgVol: $254,360,809 | AvgVolat: 3.24%
+  DUSDT           | Snaps: 194 | AvgRate: -0.0812% | MaxRate: +0.0050% | MinRate: -1.1481% | StdDev: 0.2117 | AvgVol: $627,714,891 | AvgVolat: 3.73%
+
+============================================================
+12. CRUZAMENTO: MOEDAS OPERADAS vs HISTORICO DE FUNDING (2 DIAS)
+============================================================
+  FOGOUSDT        |   3 trades | WR: 33% | PnL: $-0.7435 | AvgFR: -0.0199% | StdFR: 0.0365 | Vol24h: $933,844,971 | Volat: 0.66%
+  WETUSDT         |   3 trades | WR: 67% | PnL: $-0.2486 | AvgFR: -0.2095% | StdFR: 0.4397 | Vol24h: $95,812,599 | Volat: 10.06%
+  AGLDUSDT        |   1 trades | WR: 0% | PnL: $-0.1374 | AvgFR: -0.0474% | StdFR: 0.0642 | Vol24h: $94,722,778 | Volat: -0.59%
+  BARDUSDT        |   2 trades | WR: 50% | PnL: $-0.1204 | AvgFR: -0.1532% | StdFR: 0.3535 | Vol24h: $38,850,653 | Volat: 3.72%
+  STABLEUSDT      |   2 trades | WR: 0% | PnL: $-0.1101 | AvgFR: -0.0533% | StdFR: 0.0315 | Vol24h: $677,319,124 | Volat: 7.13%
+  API3USDT        |   1 trades | WR: 0% | PnL: $-0.1015 | AvgFR: -0.0514% | StdFR: 0.1460 | Vol24h: $15,893,823 | Volat: 4.68%
+  DUSKUSDT        |   3 trades | WR: 33% | PnL: $-0.0977 | AvgFR: -0.1794% | StdFR: 0.1493 | Vol24h: $219,077,635 | Volat: 7.33%
+  BERAUSDT        |   1 trades | WR: 0% | PnL: $-0.0941 | AvgFR: -0.0134% | StdFR: 0.0170 | Vol24h: $64,336,853 | Volat: 5.03%
+  ONTUSDT         |   2 trades | WR: 0% | PnL: $-0.0539 | AvgFR: -0.0288% | StdFR: 0.1070 | Vol24h: $79,661,147 | Volat: 4.78%
+  DENTUSDT        |   3 trades | WR: 0% | PnL: $-0.0364 | AvgFR: -0.5590% | StdFR: 0.4392 | Vol24h: $833,439,092,815 | Volat: 51.96%
+  SOMIUSDT        |   1 trades | WR: 0% | PnL: $-0.0305 | AvgFR: -0.0255% | StdFR: 0.0400 | Vol24h: $149,122,267 | Volat: 4.98%
+  BOBUSDT         |   3 trades | WR: 33% | PnL: $+0.0030 | AvgFR: -0.1240% | StdFR: 0.1122 | Vol24h: $1,401,032,544 | Volat: 6.11%
+  SONICUSDT       |   1 trades | WR: 100% | PnL: $+0.0086 | AvgFR: -0.1087% | StdFR: 0.0768 | Vol24h: $87,292,796 | Volat: 5.84%
+  DUSDT           |   1 trades | WR: 100% | PnL: $+0.0116 | AvgFR: -0.0812% | StdFR: 0.2117 | Vol24h: $627,714,891 | Volat: 3.73%
+  HOLOUSDT        |   3 trades | WR: 67% | PnL: $+0.0385 | AvgFR: -0.3247% | StdFR: 0.2864 | Vol24h: $452,744,462 | Volat: 7.78%
+  AZTECUSDT       |   7 trades | WR: 29% | PnL: $+0.0481 | AvgFR: -0.0212% | StdFR: 0.0222 | Vol24h: $1,235,582,323 | Volat: 1.59%
+  GPSUSDT         |   1 trades | WR: 100% | PnL: $+0.0786 | AvgFR: -0.1745% | StdFR: 0.1264 | Vol24h: $3,094,603,765 | Volat: -12.56%
+  OMUSDT          |   3 trades | WR: 100% | PnL: $+0.1266 | AvgFR: +0.0000% | StdFR: 0.0000 | Vol24h: $0 | Volat: 0.00%
+  LAUSDT          |   3 trades | WR: 67% | PnL: $+0.1324 | AvgFR: -0.0745% | StdFR: 0.2052 | Vol24h: $158,627,639 | Volat: 6.65%
+  OGNUSDT         |   1 trades | WR: 100% | PnL: $+0.1361 | AvgFR: -0.0836% | StdFR: 0.0946 | Vol24h: $254,360,809 | Volat: 3.24%
+  STORJUSDT       |   2 trades | WR: 100% | PnL: $+0.1541 | AvgFR: -0.0112% | StdFR: 0.0170 | Vol24h: $53,540,004 | Volat: 4.18%
+  ARCUSDT         |   1 trades | WR: 100% | PnL: $+0.1870 | AvgFR: +0.1714% | StdFR: 0.1233 | Vol24h: $1,728,359,721 | Volat: -11.90%
+  COWUSDT         |   1 trades | WR: 100% | PnL: $+0.2064 | AvgFR: -0.0256% | StdFR: 0.0608 | Vol24h: $16,451,861 | Volat: 1.20%
+  AXLUSDT         |   3 trades | WR: 100% | PnL: $+0.2316 | AvgFR: -0.2173% | StdFR: 0.4078 | Vol24h: $673,496,644 | Volat: 9.59%
+  LPTUSDT         |   1 trades | WR: 100% | PnL: $+0.2430 | AvgFR: -0.0421% | StdFR: 0.0536 | Vol24h: $3,169,557 | Volat: 4.47%
+  UMAUSDT         |   1 trades | WR: 100% | PnL: $+0.2792 | AvgFR: -0.0462% | StdFR: 0.0368 | Vol24h: $16,422,494 | Volat: 1.20%
+  FLOWUSDT        |   2 trades | WR: 50% | PnL: $+0.3002 | AvgFR: -0.0145% | StdFR: 0.0453 | Vol24h: $114,405,318 | Volat: 3.21%
+  ENSOUSDT        |  10 trades | WR: 40% | PnL: $+0.3315 | AvgFR: -0.7223% | StdFR: 0.6548 | Vol24h: $170,584,199 | Volat: -5.78%
+  KERNELUSDT      |   2 trades | WR: 100% | PnL: $+0.3764 | AvgFR: -0.0942% | StdFR: 0.1132 | Vol24h: $70,930,258 | Volat: 7.20%
+  ARPAUSDT        |   1 trades | WR: 100% | PnL: $+0.3974 | AvgFR: -0.0165% | StdFR: 0.0283 | Vol24h: $149,684,078 | Volat: 1.76%
+  BELUSDT         |   1 trades | WR: 100% | PnL: $+0.4159 | AvgFR: +0.0038% | StdFR: 0.0129 | Vol24h: $17,062,135 | Volat: 1.76%
+  JTOUSDT         |   2 trades | WR: 100% | PnL: $+0.4486 | AvgFR: -0.0268% | StdFR: 0.0255 | Vol24h: $36,320,847 | Volat: 3.09%
+  AWEUSDT         |  18 trades | WR: 78% | PnL: $+0.8728 | AvgFR: -0.2138% | StdFR: 0.1383 | Vol24h: $92,834,113 | Volat: 1.30%
+  ESPUSDT         |   9 trades | WR: 78% | PnL: $+1.6665 | AvgFR: -0.2089% | StdFR: 0.1599 | Vol24h: $2,924,040,437 | Volat: 9.38%
+  SKRUSDT         |   7 trades | WR: 71% | PnL: $+2.5206 | AvgFR: -0.1672% | StdFR: 0.1158 | Vol24h: $3,790,709,748 | Volat: 0.86%
+  BULLAUSDT       |  11 trades | WR: 54% | PnL: $+4.0129 | AvgFR: +0.0144% | StdFR: 0.0096 | Vol24h: $5,550,409,681 | Volat: -30.47%
+  STEEMUSDT       |  37 trades | WR: 86% | PnL: $+8.5052 | AvgFR: -0.2562% | StdFR: 0.2297 | Vol24h: $1,753,292,169 | Volat: 9.56%
+  POWERUSDT       |  21 trades | WR: 67% | PnL: $+8.6985 | AvgFR: -0.6923% | StdFR: 0.8402 | Vol24h: $597,397,041 | Volat: 51.22%
+
+============================================================
+13. PnL POR DIA
+============================================================
+  26/02/2026 |   21 trades | WR: 43% | PnL: $+0.0556
+  25/02/2026 |   62 trades | WR: 81% | PnL: $+13.3578
+  24/02/2026 |   53 trades | WR: 68% | PnL: $+11.2543
+  23/02/2026 |   28 trades | WR: 54% | PnL: $+3.5436
+  22/02/2026 |   11 trades | WR: 64% | PnL: $+0.4460
+
+============================================================
+14. ANÁLISE DE FEES vs LUCROS
+============================================================
+  Total Fees Pagos:       $3.6752
+  Total Funding Recebido: $+7.0634
+  Total Variação Preço:   $+25.2691
+  Ratio Fees/Funding:     52.0% (% do funding que vai pra fees)
+  Fee Médio por Trade:    $0.021001
+  Funding Médio por Trade:$+0.040362
+
+============================================================
+15. DISTRIBUIÇÃO DE VARIAÇÃO DE PREÇO (PricePnL%)
+============================================================
+  < -2%           |   26 trades | PnL Total: $-13.7331 | PnL Médio: $-0.528195
+  -2% a -1%       |   19 trades | PnL Total: $-1.6240 | PnL Médio: $-0.085472
+  -1% a -0.5%     |    9 trades | PnL Total: $+0.0642 | PnL Médio: $+0.007128
+  -0.5% a 0%      |   21 trades | PnL Total: $+0.8616 | PnL Médio: $+0.041029
+  0% a +0.5%      |   21 trades | PnL Total: $+0.5825 | PnL Médio: $+0.027740
+  +0.5% a +1%     |    8 trades | PnL Total: $+1.2142 | PnL Médio: $+0.151771
+  +1% a +2%       |   11 trades | PnL Total: $+0.7298 | PnL Médio: $+0.066349
+  > +2%           |   60 trades | PnL Total: $+40.5620 | PnL Médio: $+0.676033
+
+============================================================
+16. TRADES ABERTOS (POSIÇÕES ATIVAS AGORA)
+============================================================
+  Nenhuma posição aberta no momento.

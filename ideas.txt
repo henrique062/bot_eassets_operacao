@@ -1,0 +1,10 @@
+Vamos precisar também de uma forma de comparar a análise que a IA fez com o mercado e aos poucos em cada moeda e colocando uma barrinha de confiança da análise da IA para saber se a análise da IA realmente está boa ou se precisa ser ajustada. E com isso, a cada vez que for rodada a skill, ela vai analisar o histórico daquilo e ver o que ela pode se automelhorar na sua própria skill, pois ali acaba sendo o histórico uma memória.
+
+
+-Será que a Skill realmente está analisando o que foi feito em todo o projeto? Por exemplo, o painel é montado com as moedas e as métricas que tem ali no JSON. Então o que eu quero dizer com isso é se a minha skill ela compara essas moedas e faça a listra comparando as moedas e também comparando com o que ela analisou.
+
+
+- Adicionar para puxar automaticamente o JSON lá do rapaz da ecryptos.
+
+
+>>>> Todas as metricas que tem feitas pelo script python com base no json, também devem ser feitas quanod a ia usar a skill ou seja ter um segundo painel aexatemtene igual, mporém com todas as metricas e dizeres feitos pela ia com base em toda estratega de manuais e os dados do json

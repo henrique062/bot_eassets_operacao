@@ -1,0 +1,19 @@
+{"id": 1976, "level": "INFO", "module": "RealTrading", "message": "[Bot #45 | open_attempt] [POWERUSDT] Tentando abrir LONG 11.0 POWERUSDT @ ~1.85719", "created_at": "2026-02-26 13:59:52.203773+00:00"}
+{"id": 1977, "level": "INFO", "module": "RealTrading", "message": "Abrindo LONG 11.0 POWERUSDT (POWER/USDT:USDT) hedge=True fee=maker", "created_at": "2026-02-26 13:59:52.204416+00:00"}
+{"id": 1978, "level": "INFO", "module": "Order", "message": "Maker limit buy 11.0 POWER/USDT:USDT @ 1.84273 \u2014 aguardando preenchimento...", "created_at": "2026-02-26 13:59:54.333026+00:00"}
+{"id": 1980, "level": "INFO", "module": "RealTrading", "message": "[Bot #45 | open_success] [POWERUSDT] Posi\u00e7\u00e3o aberta: LONG 11.0 POWERUSDT @ 1.84273", "created_at": "2026-02-26 13:59:55.818530+00:00"}
+{"id": 1984, "level": "INFO", "module": "SyncLoop", "message": "POWERUSDT sincronizado. PnL estimado: 0.2515 USDT. Novo saldo: 23.4471 USDT.", "created_at": "2026-02-26 13:59:57.629991+00:00"}
+{"id": 1987, "level": "INFO", "module": "CounterTrend", "message": "Abrindo SHORT 16.0 POWERUSDT (POWER/USDT:USDT) | funding anterior: -0.011220", "created_at": "2026-02-26 14:00:04.816772+00:00"}
+{"id": 1988, "level": "INFO", "module": "RealTrading", "message": "[Bot #43 | open_attempt] [POWERUSDT] Tentando abrir SHORT 16.0 POWERUSDT @ ~1.81468", "created_at": "2026-02-26 14:00:04.818026+00:00"}
+{"id": 1989, "level": "INFO", "module": "Order", "message": "Maker limit sell 16.0 POWER/USDT:USDT @ 1.84177 \u2014 aguardando preenchimento...", "created_at": "2026-02-26 14:00:05.515174+00:00"}
+{"id": 1991, "level": "INFO", "module": "RealTrading", "message": "[Bot #43 | open_success] [POWERUSDT] Posi\u00e7\u00e3o aberta: SHORT 16.0 POWERUSDT @ 1.80336", "created_at": "2026-02-26 14:00:10.474150+00:00"}
+{"id": 1993, "level": "INFO", "module": "RealTrading", "message": "[WARN] _monitor_and_close_position 45/POWERUSDT: cancel_order TP: binance {\"code\":-2011,\"msg\":\"Unknown order sent.\"}", "created_at": "2026-02-26 14:00:30.178295+00:00"}
+{"id": 1994, "level": "INFO", "module": "RealTrading", "message": "Fechando POWERUSDT (POWER/USDT:USDT) hedge=True fee=maker... motivo: funding", "created_at": "2026-02-26 14:00:30.527035+00:00"}
+{"id": 1995, "level": "INFO", "module": "RealTrading", "message": "[Bot #45 | close_attempt] [POWERUSDT] Fechando POWERUSDT @ ~1.8363 | motivo: funding", "created_at": "2026-02-26 14:00:30.526687+00:00"}
+{"id": 1997, "level": "INFO", "module": "RealTrading", "message": "POWERUSDT: posi\u00e7\u00e3o j\u00e1 fechada na exchange \u2014 sincronizando DB.", "created_at": "2026-02-26 14:00:34.019529+00:00"}
+{"id": 1998, "level": "INFO", "module": "RealTrading", "message": "[Bot #45 | close_success] [POWERUSDT] Posi\u00e7\u00e3o POWERUSDT sincronizada \u2014 fechada na exchange @ ~1.8428", "created_at": "2026-02-26 14:00:34.349795+00:00"}
+{"id": 1999, "level": "INFO", "module": "RealTrading", "message": "POWERUSDT: posi\u00e7\u00e3o j\u00e1 removida do DB por outra task \u2014 pulando registro de trade.", "created_at": "2026-02-26 14:00:34.353377+00:00"}
+{"id": 2000, "level": "INFO", "module": "CounterTrend", "message": "Abrindo SHORT 13.0 POWERUSDT (POWER/USDT:USDT) | funding anterior: -0.011220", "created_at": "2026-02-26 14:00:47.803637+00:00"}
+{"id": 2001, "level": "INFO", "module": "RealTrading", "message": "[Bot #62 | open_attempt] [POWERUSDT] Tentando abrir SHORT 13.0 POWERUSDT @ ~1.83536", "created_at": "2026-02-26 14:00:47.837221+00:00"}
+{"id": 2002, "level": "INFO", "module": "Order", "message": "Maker limit sell 13.0 POWER/USDT:USDT @ 1.83536 \u2014 aguardando preenchimento...", "created_at": "2026-02-26 14:00:48.509635+00:00"}
+{"id": 2004, "level": "INFO", "module": "RealTrading", "message": "[Bot #62 | open_success] [POWERUSDT] Posi\u00e7\u00e3o aberta: SHORT 13.0 POWERUSDT @ 1.83536", "created_at": "2026-02-26 14:00:54.001901+00:00"}

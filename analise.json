@@ -1,0 +1,24 @@
+{
+  "resumo_btc": "BTC OVERSOLD extremo (RSI 30m=18.9 / 1h=25.2 / 1D=23.4). Janela tecnicamente aberta (reset), mas frágil: OI trend=-0.54 e dia -3.09%, sem confirmação de estabilização. Gate aberto com cautela; só o setup mais limpo justifica COMPRAR.",
+  "janela_aberta": true,
+  "ativos": [
+    {"symbol": "BTWUSDT", "veredito": "COMPRAR", "confianca": 62, "fase": "IGNICAO", "razao": "Dois nucleos + 5/7. OIt=+26.9 capital novo, T/OI 300->352K explodindo, TPM 2948/2732 quente, LSR=0.798 fuel, RSI 1h=67/4h=68 saudavel runway, EXP confluente. Fragil pelo gate BTC; funding+."},
+    {"symbol": "BEATUSDT", "veredito": "OBSERVAR", "confianca": 58, "fase": "IGNICAO", "razao": "LSR=0.423 maior combustivel short, TPM 4958/7668, OIt=+15 OI entrando, score 70->88, RSI 1h=58 runway. Mas 4h=73/1D=93 esticado, entrada tardia."},
+    {"symbol": "ALLOUSDT", "veredito": "OBSERVAR", "confianca": 52, "fase": "IGNICAO", "razao": "EXP forte 4h=186/1D=548, TPM 2925/4217, LSR=0.876 fuel, RSI 1h=53 runway. OIt=-0.15 flat, sem OI novo nao sustenta."},
+    {"symbol": "PLAYUSDT", "veredito": "OBSERVAR", "confianca": 50, "fase": "ACUMULACAO", "razao": "Mola comprimida range 4h=3/1D=3, OIt=+20.7 entrando forte, EXP confluente. TPM 606/987 frio pre-ignicao."},
+    {"symbol": "SLXUSDT", "veredito": "OBSERVAR", "confianca": 48, "fase": "IGNICAO", "razao": "T/OI=746K robos intensos, TPM 2873/3645 quente, EXP 1h=49 confluente, RSI 1h=59/4h=57 saudavel. OIt=+1.8 flat, LSR subindo sem fuel."},
+    {"symbol": "BASEDUSDT", "veredito": "OBSERVAR", "confianca": 46, "fase": "ACUMULACAO", "razao": "Compressao maxima range 1h=5/4h=5, OIt=+9.8, score 8->34, RSI 1h=61 runway. TPM 532/256 modesto/caindo, acumulo cedo."},
+    {"symbol": "SENTUSDT", "veredito": "OBSERVAR", "confianca": 44, "fase": "IGNICAO", "razao": "OIt=+18.7 entrando, funding NEG -0.00013, score 35->54. Mas TPM 725->341 caindo 1h e RSI 1h=73 quente."},
+    {"symbol": "POWERUSDT", "veredito": "OBSERVAR", "confianca": 40, "fase": "DISTRIBUICAO", "razao": "TPM 1806/2400, EXP ok. RSI 4h=84.6 exaustao, OIt desacelerou 30->7, score 90->84. Tarde."},
+    {"symbol": "PORTALUSDT", "veredito": "OBSERVAR", "confianca": 36, "fase": "ACUMULACAO", "razao": "Compressao range 1h=5, funding NEG -0.00073 shorts presos. TPM 187/254 morto, sem ignicao."},
+    {"symbol": "STGUSDT", "veredito": "OBSERVAR", "confianca": 35, "fase": "ACUMULACAO", "razao": "Tudo morno, TPM 535, OIt=+9 desacelerando. Neutro."},
+    {"symbol": "1000RATSUSDT", "veredito": "OBSERVAR", "confianca": 34, "fase": "ACUMULACAO", "razao": "Score 42->58, EXP subindo, range 1D=5. TPM 260/129 fraco/caindo."},
+    {"symbol": "JCTUSDT", "veredito": "EVITAR", "confianca": 30, "fase": "DISTRIBUICAO", "razao": "+32% dia, RSI 1h=78/4h=73/1D=76 no pico, funding+, LSR=1.59. FOMO tardio, oportunidade passou."},
+    {"symbol": "VELVETUSDT", "veredito": "EVITAR", "confianca": 26, "fase": "DISTRIBUICAO", "razao": "+34%, RSI 1D=94.6 blow-off top. OI travou 32->0.87 dinheiro parou, score 100->88. Topo."},
+    {"symbol": "GWEIUSDT", "veredito": "EVITAR", "confianca": 24, "fase": "NEUTRO", "razao": "TPM 479/907 fraco, OIt=-2.86 caindo. Sem combustao."},
+    {"symbol": "ZEREBROUSDT", "veredito": "EVITAR", "confianca": 18, "fase": "RESET", "razao": "OIt=-17.5 desalavancando, score 68->43, EXP 5m negativo."},
+    {"symbol": "WLDUSDT", "veredito": "EVITAR", "confianca": 18, "fase": "RESET", "razao": "OIt=-19.5 colapso de OI, EXP 5m=-6.66. Desalavancagem."},
+    {"symbol": "HUSDT", "veredito": "EVITAR", "confianca": 10, "fase": "RESET", "razao": "EXP -240 no 1h perdendo forca vs BTC, OIt=-38, RSI 25. TPM 11K so acelera queda. Armadilha downside."},
+    {"symbol": "ZESTUSDT", "veredito": "EVITAR", "confianca": 16, "fase": "NEUTRO", "razao": "EXP negativo, OIt=-14 colapsando."}
+  ]
+}

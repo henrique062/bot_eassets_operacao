@@ -1,0 +1,5 @@
+{'id': 33, 'session_name': 'TAKER Funding R', 'symbols': ['POWERUSDT', 'AWEUSDT', 'ARCUSDT', 'ENSOUSDT']}
+{'id': 32, 'session_name': 'Ao contrario ?', 'symbols': ['POWERUSDT', 'AWEUSDT', 'ARCUSDT', 'ENSOUSDT']}
+{'id': 31, 'session_name': 'Bot Binance 01:07 ?', 'symbols': []}
+{'id': 30, 'session_name': 'Bot Binance 01:25 ?', 'symbols': ['POWERUSDT']}
+{'id': 29, 'session_name': 'Bot Binance 01:25', 'symbols': []}

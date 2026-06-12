@@ -1,0 +1,1 @@
+ALTER TABLE real_config ADD COLUMN IF NOT EXISTS preset_name VARCHAR(50) NULL;

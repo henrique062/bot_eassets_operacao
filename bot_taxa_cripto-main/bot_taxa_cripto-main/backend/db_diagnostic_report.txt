@@ -1,0 +1,645 @@
+====================================================================================================
+DIAGNÓSTICO PROFUNDO DO BANCO DE DADOS
+Data: 2026-02-24 18:50 UTC
+====================================================================================================
+
+================================================================================
+PARTE 1: INVESTIGAÇÃO DOS SNAPSHOTS DE FUNDING RATE
+================================================================================
+
+  1a. Total de registros em funding_rate_snapshots: 78184
+  1b. Oldest snapshot: 2026-02-21 12:31:04.175530+00:00
+      Newest snapshot: 2026-02-21 20:09:28.804440+00:00
+      Distinct days:   1
+
+  1c. Registros por exchange:
+      binance: 41379
+      bybit: 36805
+
+  1d. Symbols únicos nos snapshots: 818
+  1e. Amostra de symbols nos snapshots:
+      0GUSDT
+      1000000BABYDOGEUSDT
+      1000000BOBUSDT
+      1000000CHEEMSUSDT
+      1000000MOGUSDT
+      10000QUBICUSDT
+      10000SATSUSDT
+      1000BONKPERP
+      1000BONKUSDC
+      1000BONKUSDT
+      1000BTTUSDT
+      1000CATUSDT
+      1000CHEEMSUSDT
+      1000FLOKIUSDT
+      1000LUNCUSDT
+      1000NEIROCTOPERP
+      1000NEIROCTOUSDT
+      1000PEPEPERP
+      1000PEPEUSDC
+      1000PEPEUSDT
+      1000RATSUSDT
+      1000SATSUSDT
+      1000SHIBUSDC
+      1000SHIBUSDT
+      1000TAGUSDT
+      1000TOSHIUSDT
+      1000TURBOUSDT
+      1000WHYUSDT
+      1000XECUSDT
+      1000XUSDT
+
+  1f. Symbols operados nos trades (28):
+      AGLDUSDT
+      ARCUSDT
+      ARPAUSDT
+      AWEUSDT
+      AZTECUSDT
+      BELUSDT
+      BERAUSDT
+      BOBUSDT
+      BULLAUSDT
+      COWUSDT
+      DUSKUSDT
+      ENSOUSDT
+      FLOWUSDT
+      FOGOUSDT
+      JTOUSDT
+      KERNELUSDT
+      LAUSDT
+      LPTUSDT
+      OGNUSDT
+      OMUSDT
+      ONTUSDT
+      POWERUSDT
+      SKRUSDT
+      SOMIUSDT
+      STABLEUSDT
+      STEEMUSDT
+      STORJUSDT
+      UMAUSDT
+
+  1g. Cruzamento symbol (trades vs snapshots):
+      AGLDUSDT             -> Total:    133 | Bybit:     65 | Binance:     68
+      ARCUSDT              -> Total:    133 | Bybit:     67 | Binance:     66
+      ARPAUSDT             -> Total:    135 | Bybit:     67 | Binance:     68
+      AWEUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      AZTECUSDT            -> Total:    135 | Bybit:     67 | Binance:     68
+      BELUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      BERAUSDT             -> Total:    135 | Bybit:     67 | Binance:     68
+      BOBUSDT              -> Total:     68 | Bybit:      0 | Binance:     68
+      BULLAUSDT            -> Total:     68 | Bybit:      0 | Binance:     68
+      COWUSDT              -> Total:    134 | Bybit:     66 | Binance:     68
+      DUSKUSDT             -> Total:    135 | Bybit:     67 | Binance:     68
+      ENSOUSDT             -> Total:    135 | Bybit:     67 | Binance:     68
+      FLOWUSDT             -> Total:    135 | Bybit:     67 | Binance:     68
+      FOGOUSDT             -> Total:    133 | Bybit:     67 | Binance:     66
+      JTOUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      KERNELUSDT           -> Total:    130 | Bybit:     67 | Binance:     63
+      LAUSDT               -> Total:    134 | Bybit:     66 | Binance:     68
+      LPTUSDT              -> Total:    134 | Bybit:     66 | Binance:     68
+      OGNUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      OMUSDT               -> Total:     68 | Bybit:      0 | Binance:     68
+      ONTUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      POWERUSDT            -> Total:    123 | Bybit:     62 | Binance:     61
+      SKRUSDT              -> Total:    135 | Bybit:     67 | Binance:     68
+      SOMIUSDT             -> Total:    107 | Bybit:     42 | Binance:     65
+      STABLEUSDT           -> Total:    109 | Bybit:     41 | Binance:     68
+      STEEMUSDT            -> Total:    101 | Bybit:     33 | Binance:     68
+      STORJUSDT            -> Total:    110 | Bybit:     42 | Binance:     68
+      UMAUSDT              -> Total:    100 | Bybit:     32 | Binance:     68
+
+  1h. Snapshots com funding_rate_pct != 0: 75122
+
+  1i. 10 snapshots mais recentes:
+      binance  | AWEUSDT         | FR: -0.009514 | FR%: -0.9514% | Vol: $433,396,504 | Volat: -5.52% | 2026-02-21 20:09:28.804440+00:00
+      binance  | AGLDUSDT        | FR: -0.007170 | FR%: -0.7170% | Vol: $257,318,150 | Volat: 22.28% | 2026-02-21 20:09:28.804440+00:00
+      binance  | DUSKUSDT        | FR: -0.005867 | FR%: -0.5867% | Vol: $185,053,768 | Volat: -7.64% | 2026-02-21 20:09:28.804440+00:00
+      binance  | YGGUSDT         | FR: -0.003445 | FR%: -0.3445% | Vol: $4,235,150,296 | Volat: 20.78% | 2026-02-21 20:09:28.804440+00:00
+      binance  | ZILUSDT         | FR: -0.002455 | FR%: -0.2455% | Vol: $6,640,256,141 | Volat: 3.17% | 2026-02-21 20:09:28.804440+00:00
+      binance  | AXSUSDT         | FR: -0.001871 | FR%: -0.1871% | Vol: $52,370,179 | Volat: 4.82% | 2026-02-21 20:09:28.804440+00:00
+      binance  | AZTECUSDT       | FR: -0.001649 | FR%: -0.1649% | Vol: $14,654,499,209 | Volat: 6.84% | 2026-02-21 20:09:28.804440+00:00
+      binance  | VANAUSDT        | FR: -0.001580 | FR%: -0.1580% | Vol: $58,933,772 | Volat: 5.77% | 2026-02-21 20:09:28.804440+00:00
+      binance  | TRUUSDT         | FR: -0.001532 | FR%: -0.1532% | Vol: $182,739,276 | Volat: -1.79% | 2026-02-21 20:09:28.804440+00:00
+      binance  | ENSOUSDT        | FR: -0.001483 | FR%: -0.1483% | Vol: $145,176,267 | Volat: 1.37% | 2026-02-21 20:09:28.804440+00:00
+
+  1j. Snapshots nos últimos 2 dias: 0
+
+
+================================================================================
+PARTE 2: AUDITORIA COMPLETA DO BANCO DE DADOS
+================================================================================
+
+  2a. Todas as tabelas no schema public (19):
+      ai_reports                               | Colunas:   8 | Registros: 7
+      bot_ai_analyses                          | Colunas:   8 | Registros: 3
+      exchange_symbols                         | Colunas:   4 | Registros: 1081
+      funding_rate_snapshots                   | Colunas:  12 | Registros: 78184
+      leads                                    | Colunas:  20 | Registros: 1
+      mensagens                                | Colunas:  10 | Registros: 33
+      n8n_chat_histories                       | Colunas:   4 | Registros: 20
+      paper_config                             | Colunas:  28 | Registros: 6
+      paper_positions                          | Colunas:  14 | Registros: 0
+      paper_trades                             | Colunas:  21 | Registros: 2329
+      real_config                              | Colunas:  30 | Registros: 14
+      real_order_logs                          | Colunas:  10 | Registros: 121
+      real_positions                           | Colunas:  16 | Registros: 1
+      real_trades                              | Colunas:  22 | Registros: 75
+      saved_strategies                         | Colunas:   5 | Registros: 4
+      system_config                            | Colunas:   6 | Registros: 11
+      system_settings                          | Colunas:   4 | Registros: 5
+      user_settings                            | Colunas:   6 | Registros: 2
+      users                                    | Colunas:   7 | Registros: 2
+
+  2b. Detalhamento de colunas por tabela:
+
+      === ai_reports ===
+          id                                  integer                   NOT NULL DEFAULT nextval('ai_reports_id_seq'::regclass)
+          exchange                            character varying         NOT NULL
+          general_stats                       jsonb                     NOT NULL
+          market_overview                     text                      NULL    
+          recommended_coins                   jsonb                     NOT NULL
+          is_accurate                         boolean                   NULL    
+          accuracy_details                    text                      NULL    
+          created_at                          timestamp with time zone  NULL     DEFAULT CURRENT_TIMESTAMP
+
+      === bot_ai_analyses ===
+          id                                  integer                   NOT NULL DEFAULT nextval('bot_ai_analyses_id_seq'::regclass)
+          config_id                           integer                   NULL    
+          analysis_text                       text                      NULL    
+          suggested_config                    jsonb                     NULL    
+          applied                             boolean                   NULL     DEFAULT false
+          applied_at                          timestamp with time zone  NULL    
+          created_at                          timestamp with time zone  NULL     DEFAULT now()
+          trigger_type                        character varying         NULL     DEFAULT 'manual'::character varying
+
+      === exchange_symbols ===
+          exchange                            character varying         NOT NULL
+          symbol                              character varying         NOT NULL
+          status                              character varying         NULL    
+          updated_at                          timestamp with time zone  NULL     DEFAULT now()
+
+      === funding_rate_snapshots ===
+          id                                  bigint                    NOT NULL DEFAULT nextval('funding_rate_snapshots_id_seq'::regclass)
+          exchange                            character varying         NOT NULL
+          symbol                              character varying         NOT NULL
+          funding_rate                        numeric                   NOT NULL
+          funding_rate_pct                    numeric                   NOT NULL
+          annualized_rate                     numeric                   NOT NULL DEFAULT 0
+          last_price                          numeric                   NOT NULL DEFAULT 0
+          volume_24h                          numeric                   NOT NULL DEFAULT 0
+          price_24h_pcnt                      numeric                   NOT NULL DEFAULT 0
+          funding_interval                    smallint                  NOT NULL DEFAULT 8
+          captured_at                         timestamp with time zone  NOT NULL DEFAULT now()
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+
+      === leads ===
+          id                                  integer                   NOT NULL DEFAULT nextval('leads_id_seq'::regclass)
+          criado_em                           timestamp with time zone  NULL     DEFAULT CURRENT_TIMESTAMP
+          atualizado_em                       timestamp with time zone  NULL    
+          telefone                            character varying         NOT NULL
+          nome                                character varying         NULL    
+          bloqueio_ia                         boolean                   NULL     DEFAULT false
+          status                              character varying         NULL     DEFAULT 'novo'::character varying
+          primeira_interacao                  boolean                   NULL     DEFAULT true
+          qualificado                         boolean                   NULL     DEFAULT false
+          necessita_followup                  boolean                   NULL     DEFAULT false
+          etapa_funil                         character varying         NULL    
+          interesse                           character varying         NULL    
+          origem                              character varying         NULL    
+          sentimento                          character varying         NULL    
+          score_intencao                      integer                   NULL     DEFAULT 0
+          total_mensagens                     integer                   NULL     DEFAULT 0
+          data_ultima_interacao               timestamp with time zone  NULL    
+          atendente_responsavel               character varying         NULL    
+          token_instancia                     character varying         NULL    
+          tags                                ARRAY                     NULL    
+
+      === mensagens ===
+          id                                  integer                   NOT NULL DEFAULT nextval('mensagens_id_seq'::regclass)
+          criado_em                           timestamp with time zone  NULL     DEFAULT CURRENT_TIMESTAMP
+          atualizado_em                       timestamp with time zone  NULL    
+          telefone                            character varying         NOT NULL
+          nome                                character varying         NULL    
+          mensagem_id                         character varying         NULL    
+          token_instancia                     character varying         NULL    
+          conteudo_cliente                    text                      NULL    
+          conteudo_ia                         text                      NULL    
+          conteudo_atendente                  text                      NULL    
+
+      === n8n_chat_histories ===
+          id                                  integer                   NOT NULL DEFAULT nextval('n8n_chat_histories_id_seq'::regclass)
+          session_id                          character varying         NOT NULL
+          message                             text                      NOT NULL
+          created_at                          timestamp with time zone  NULL     DEFAULT CURRENT_TIMESTAMP
+
+      === paper_config ===
+          id                                  integer                   NOT NULL DEFAULT nextval('paper_config_id_seq'::regclass)
+          session_name                        character varying         NOT NULL DEFAULT 'default'::character varying
+          symbols                             ARRAY                     NOT NULL DEFAULT '{}'::text[]
+          capital                             numeric                   NOT NULL DEFAULT 1000.0
+          balance                             numeric                   NOT NULL DEFAULT 1000.0
+          leverage                            smallint                  NOT NULL DEFAULT 1
+          fee_type                            character varying         NOT NULL DEFAULT 'maker'::character varying
+          fee_rate                            numeric                   NOT NULL DEFAULT 0.0002
+          auto_mode                           boolean                   NOT NULL DEFAULT true
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          active                              boolean                   NOT NULL DEFAULT false
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          started_at                          timestamp with time zone  NULL    
+          ended_at                            timestamp with time zone  NULL    
+          stop_loss_pct                       numeric                   NULL    
+          stop_loss_usd                       numeric                   NULL    
+          min_profit_pct                      numeric                   NULL    
+          entry_seconds                       integer                   NULL     DEFAULT 30
+          exit_seconds                        integer                   NULL     DEFAULT 30
+          user_id                             integer                   NULL    
+          target_take_profit_pct              numeric                   NULL    
+          operation_mode                      character varying         NULL     DEFAULT 'manual'::character varying
+          auto_direction                      character varying         NULL     DEFAULT 'both'::character varying
+          auto_max_symbols                    integer                   NULL     DEFAULT 8
+          auto_min_score                      numeric                   NULL     DEFAULT 50.0
+          auto_window_minutes                 integer                   NULL     DEFAULT 60
+          maker_timeout_seconds               smallint                  NULL     DEFAULT 8
+
+      === paper_positions ===
+          id                                  integer                   NOT NULL DEFAULT nextval('paper_positions_id_seq'::regclass)
+          config_id                           integer                   NOT NULL
+          symbol                              character varying         NOT NULL
+          direction                           character varying         NOT NULL
+          entry_price                         numeric                   NOT NULL
+          size                                numeric                   NOT NULL
+          value                               numeric                   NOT NULL
+          funding_rate                        numeric                   NOT NULL DEFAULT 0
+          funding_rate_pct                    numeric                   NOT NULL DEFAULT 0
+          open_time                           character varying         NULL    
+          open_timestamp                      bigint                    NOT NULL
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+
+      === paper_trades ===
+          id                                  bigint                    NOT NULL DEFAULT nextval('paper_trades_id_seq'::regclass)
+          config_id                           integer                   NOT NULL
+          symbol                              character varying         NOT NULL
+          direction                           character varying         NOT NULL
+          entry_price                         numeric                   NOT NULL
+          exit_price                          numeric                   NOT NULL
+          funding_rate                        numeric                   NOT NULL
+          funding_pnl                         numeric                   NOT NULL DEFAULT 0
+          price_pnl                           numeric                   NOT NULL DEFAULT 0
+          fee_cost                            numeric                   NOT NULL DEFAULT 0
+          total_pnl                           numeric                   NOT NULL DEFAULT 0
+          total_pnl_pct                       numeric                   NOT NULL DEFAULT 0
+          balance_after                       numeric                   NOT NULL
+          open_time                           character varying         NULL    
+          close_time                          character varying         NULL    
+          trade_timestamp                     bigint                    NOT NULL
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          close_reason                        character varying         NOT NULL DEFAULT 'funding'::character varying
+          price_pnl_pct                       numeric                   NOT NULL DEFAULT 0
+
+      === real_config ===
+          id                                  integer                   NOT NULL DEFAULT nextval('real_config_id_seq'::regclass)
+          session_name                        character varying         NOT NULL DEFAULT 'default'::character varying
+          symbols                             ARRAY                     NOT NULL DEFAULT '{}'::text[]
+          capital                             numeric                   NOT NULL DEFAULT 100.0
+          balance                             numeric                   NOT NULL DEFAULT 100.0
+          leverage                            smallint                  NOT NULL DEFAULT 1
+          fee_type                            character varying         NOT NULL DEFAULT 'maker'::character varying
+          fee_rate                            numeric                   NOT NULL DEFAULT 0.0002
+          auto_mode                           boolean                   NOT NULL DEFAULT true
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          active                              boolean                   NOT NULL DEFAULT false
+          stop_loss_pct                       numeric                   NULL    
+          stop_loss_usd                       numeric                   NULL    
+          min_profit_pct                      numeric                   NULL    
+          entry_seconds                       smallint                  NOT NULL DEFAULT 30
+          exit_seconds                        smallint                  NOT NULL DEFAULT 30
+          started_at                          timestamp with time zone  NULL    
+          ended_at                            timestamp with time zone  NULL    
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          user_id                             integer                   NULL    
+          target_take_profit_pct              numeric                   NULL    
+          operation_mode                      character varying         NULL     DEFAULT 'manual'::character varying
+          auto_direction                      character varying         NULL     DEFAULT 'both'::character varying
+          auto_max_symbols                    integer                   NULL     DEFAULT 8
+          auto_min_score                      numeric                   NULL     DEFAULT 50.0
+          auto_window_minutes                 integer                   NULL     DEFAULT 60
+          maker_timeout_seconds               smallint                  NULL     DEFAULT 8
+          ct_sort_criteria                    character varying         NOT NULL DEFAULT 'score'::character varying
+          trailing_stop_pct                   numeric                   NULL     DEFAULT NULL::numeric
+
+      === real_order_logs ===
+          id                                  bigint                    NOT NULL DEFAULT nextval('real_order_logs_id_seq'::regclass)
+          config_id                           integer                   NOT NULL
+          log_level                           character varying         NOT NULL DEFAULT 'INFO'::character varying
+          event                               character varying         NOT NULL
+          symbol                              character varying         NULL    
+          direction                           character varying         NULL    
+          exchange                            character varying         NULL    
+          message                             text                      NULL    
+          details                             jsonb                     NULL    
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+
+      === real_positions ===
+          id                                  integer                   NOT NULL DEFAULT nextval('real_positions_id_seq'::regclass)
+          config_id                           integer                   NOT NULL
+          symbol                              character varying         NOT NULL
+          direction                           character varying         NOT NULL
+          entry_price                         numeric                   NOT NULL
+          size                                numeric                   NOT NULL
+          value                               numeric                   NOT NULL
+          funding_rate                        numeric                   NOT NULL DEFAULT 0
+          funding_rate_pct                    numeric                   NOT NULL DEFAULT 0
+          open_time                           character varying         NULL    
+          open_timestamp                      bigint                    NOT NULL
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          open_order_id                       text                      NULL    
+          tp_limit_order_id                   text                      NULL    
+
+      === real_trades ===
+          id                                  bigint                    NOT NULL DEFAULT nextval('real_trades_id_seq'::regclass)
+          config_id                           integer                   NOT NULL
+          symbol                              character varying         NOT NULL
+          direction                           character varying         NOT NULL
+          entry_price                         numeric                   NOT NULL
+          exit_price                          numeric                   NOT NULL
+          funding_rate                        numeric                   NOT NULL
+          funding_pnl                         numeric                   NOT NULL DEFAULT 0
+          price_pnl                           numeric                   NOT NULL DEFAULT 0
+          fee_cost                            numeric                   NOT NULL DEFAULT 0
+          total_pnl                           numeric                   NOT NULL DEFAULT 0
+          total_pnl_pct                       numeric                   NOT NULL DEFAULT 0
+          balance_after                       numeric                   NOT NULL
+          open_time                           character varying         NULL    
+          close_time                          character varying         NULL    
+          trade_timestamp                     bigint                    NOT NULL
+          exchange                            character varying         NOT NULL DEFAULT 'binance'::character varying
+          close_reason                        character varying         NULL    
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          price_pnl_pct                       numeric                   NOT NULL DEFAULT 0
+          reconciled_at                       timestamp with time zone  NULL    
+
+      === saved_strategies ===
+          id                                  integer                   NOT NULL DEFAULT nextval('saved_strategies_id_seq'::regclass)
+          name                                character varying         NOT NULL
+          config                              jsonb                     NOT NULL
+          created_at                          timestamp with time zone  NULL     DEFAULT now()
+          user_id                             integer                   NULL    
+
+      === system_config ===
+          id                                  integer                   NOT NULL DEFAULT nextval('system_config_id_seq'::regclass)
+          chave                               character varying         NOT NULL
+          valor                               text                      NULL    
+          descricao                           character varying         NULL    
+          criado_em                           timestamp with time zone  NULL     DEFAULT now()
+          atualizado_em                       timestamp with time zone  NULL    
+
+      === system_settings ===
+          key                                 character varying         NOT NULL
+          value                               jsonb                     NOT NULL
+          description                         text                      NULL    
+          updated_at                          timestamp with time zone  NULL     DEFAULT CURRENT_TIMESTAMP
+
+      === user_settings ===
+          id                                  integer                   NOT NULL DEFAULT nextval('user_settings_id_seq'::regclass)
+          user_id                             integer                   NOT NULL
+          key                                 character varying         NOT NULL
+          value                               jsonb                     NOT NULL DEFAULT '{}'::jsonb
+          description                         text                      NULL    
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+
+      === users ===
+          id                                  integer                   NOT NULL DEFAULT nextval('users_id_seq'::regclass)
+          email                               character varying         NOT NULL
+          password_hash                       text                      NOT NULL
+          role                                character varying         NOT NULL DEFAULT 'user'::character varying
+          active                              boolean                   NOT NULL DEFAULT true
+          created_at                          timestamp with time zone  NOT NULL DEFAULT now()
+          updated_at                          timestamp with time zone  NOT NULL DEFAULT now()
+
+  2c. Indexes existentes:
+      [ai_reports] ai_reports_pkey
+          CREATE UNIQUE INDEX ai_reports_pkey ON public.ai_reports USING btree (id)
+      [ai_reports] idx_ai_reports_created_at
+          CREATE INDEX idx_ai_reports_created_at ON public.ai_reports USING btree (created_at DESC)
+      [bot_ai_analyses] bot_ai_analyses_pkey
+          CREATE UNIQUE INDEX bot_ai_analyses_pkey ON public.bot_ai_analyses USING btree (id)
+      [bot_ai_analyses] idx_bot_ai_analyses_config
+          CREATE INDEX idx_bot_ai_analyses_config ON public.bot_ai_analyses USING btree (config_id)
+      [exchange_symbols] exchange_symbols_pkey
+          CREATE UNIQUE INDEX exchange_symbols_pkey ON public.exchange_symbols USING btree (exchange, symbol)
+      [funding_rate_snapshots] funding_rate_snapshots_pkey
+          CREATE UNIQUE INDEX funding_rate_snapshots_pkey ON public.funding_rate_snapshots USING btree (id)
+      [funding_rate_snapshots] idx_frs_captured_at
+          CREATE INDEX idx_frs_captured_at ON public.funding_rate_snapshots USING btree (captured_at DESC)
+      [funding_rate_snapshots] idx_frs_dedup
+          CREATE UNIQUE INDEX idx_frs_dedup ON public.funding_rate_snapshots USING btree (exchange, symbol, captured_at)
+      [funding_rate_snapshots] idx_frs_exchange_symbol_captured
+          CREATE INDEX idx_frs_exchange_symbol_captured ON public.funding_rate_snapshots USING btree (exchange, symbol, captured_at DESC)
+      [funding_rate_snapshots] idx_frs_funding_rate_captured
+          CREATE INDEX idx_frs_funding_rate_captured ON public.funding_rate_snapshots USING btree (funding_rate, captured_at DESC)
+      [leads] idx_leads_bloqueio_ia
+          CREATE INDEX idx_leads_bloqueio_ia ON public.leads USING btree (bloqueio_ia)
+      [leads] idx_leads_data_ultima_interacao
+          CREATE INDEX idx_leads_data_ultima_interacao ON public.leads USING btree (data_ultima_interacao)
+      [leads] idx_leads_qualificado
+          CREATE INDEX idx_leads_qualificado ON public.leads USING btree (qualificado)
+      [leads] idx_leads_status
+          CREATE INDEX idx_leads_status ON public.leads USING btree (status)
+      [leads] idx_leads_telefone
+          CREATE INDEX idx_leads_telefone ON public.leads USING btree (telefone)
+      [leads] leads_pkey
+          CREATE UNIQUE INDEX leads_pkey ON public.leads USING btree (id)
+      [leads] leads_telefone_key
+          CREATE UNIQUE INDEX leads_telefone_key ON public.leads USING btree (telefone)
+      [mensagens] idx_mensagens_criado_em
+          CREATE INDEX idx_mensagens_criado_em ON public.mensagens USING btree (criado_em DESC)
+      [mensagens] idx_mensagens_mensagem_id
+          CREATE INDEX idx_mensagens_mensagem_id ON public.mensagens USING btree (mensagem_id)
+      [mensagens] idx_mensagens_telefone
+          CREATE INDEX idx_mensagens_telefone ON public.mensagens USING btree (telefone)
+      [mensagens] mensagens_pkey
+          CREATE UNIQUE INDEX mensagens_pkey ON public.mensagens USING btree (id)
+      [n8n_chat_histories] idx_chat_histories_created_at
+          CREATE INDEX idx_chat_histories_created_at ON public.n8n_chat_histories USING btree (created_at DESC)
+      [n8n_chat_histories] idx_chat_histories_session_created
+          CREATE INDEX idx_chat_histories_session_created ON public.n8n_chat_histories USING btree (session_id, created_at DESC)
+      [n8n_chat_histories] idx_chat_histories_session_id
+          CREATE INDEX idx_chat_histories_session_id ON public.n8n_chat_histories USING btree (session_id)
+      [n8n_chat_histories] n8n_chat_histories_pkey
+          CREATE UNIQUE INDEX n8n_chat_histories_pkey ON public.n8n_chat_histories USING btree (id)
+      [paper_config] idx_paper_config_active
+          CREATE INDEX idx_paper_config_active ON public.paper_config USING btree (active, exchange)
+      [paper_config] idx_paper_config_active_created
+          CREATE INDEX idx_paper_config_active_created ON public.paper_config USING btree (active, created_at DESC)
+      [paper_config] idx_paper_config_active_user
+          CREATE INDEX idx_paper_config_active_user ON public.paper_config USING btree (active, user_id)
+      [paper_config] idx_paper_config_user_id
+          CREATE INDEX idx_paper_config_user_id ON public.paper_config USING btree (user_id)
+      [paper_config] paper_config_pkey
+          CREATE UNIQUE INDEX paper_config_pkey ON public.paper_config USING btree (id)
+      [paper_positions] idx_paper_positions_config_id
+          CREATE INDEX idx_paper_positions_config_id ON public.paper_positions USING btree (config_id)
+      [paper_positions] idx_paper_positions_config_symbol
+          CREATE UNIQUE INDEX idx_paper_positions_config_symbol ON public.paper_positions USING btree (config_id, symbol)
+      [paper_positions] idx_paper_positions_exchange_symbol
+          CREATE INDEX idx_paper_positions_exchange_symbol ON public.paper_positions USING btree (exchange, symbol)
+      [paper_positions] paper_positions_pkey
+          CREATE UNIQUE INDEX paper_positions_pkey ON public.paper_positions USING btree (id)
+      [paper_trades] idx_paper_trades_config_created
+          CREATE INDEX idx_paper_trades_config_created ON public.paper_trades USING btree (config_id, created_at DESC)
+      [paper_trades] idx_paper_trades_config_symbol
+          CREATE INDEX idx_paper_trades_config_symbol ON public.paper_trades USING btree (config_id, symbol, trade_timestamp DESC)
+      [paper_trades] idx_paper_trades_config_ts
+          CREATE INDEX idx_paper_trades_config_ts ON public.paper_trades USING btree (config_id, trade_timestamp DESC)
+      [paper_trades] idx_paper_trades_exchange_symbol
+          CREATE INDEX idx_paper_trades_exchange_symbol ON public.paper_trades USING btree (exchange, symbol)
+      [paper_trades] idx_paper_trades_timestamp
+          CREATE INDEX idx_paper_trades_timestamp ON public.paper_trades USING btree (trade_timestamp DESC)
+      [paper_trades] paper_trades_pkey
+          CREATE UNIQUE INDEX paper_trades_pkey ON public.paper_trades USING btree (id)
+      [real_config] idx_real_config_active
+          CREATE INDEX idx_real_config_active ON public.real_config USING btree (active) WHERE (active = true)
+      [real_config] idx_real_config_active_user
+          CREATE INDEX idx_real_config_active_user ON public.real_config USING btree (active, user_id)
+      [real_config] idx_real_config_user_active
+          CREATE INDEX idx_real_config_user_active ON public.real_config USING btree (user_id, active)
+      [real_config] idx_real_config_user_id
+          CREATE INDEX idx_real_config_user_id ON public.real_config USING btree (user_id)
+      [real_config] real_config_pkey
+          CREATE UNIQUE INDEX real_config_pkey ON public.real_config USING btree (id)
+      [real_order_logs] idx_real_order_logs_config_created
+          CREATE INDEX idx_real_order_logs_config_created ON public.real_order_logs USING btree (config_id, created_at DESC)
+      [real_order_logs] idx_real_order_logs_config_id
+          CREATE INDEX idx_real_order_logs_config_id ON public.real_order_logs USING btree (config_id, created_at DESC)
+      [real_order_logs] idx_real_order_logs_created_at
+          CREATE INDEX idx_real_order_logs_created_at ON public.real_order_logs USING btree (created_at DESC)
+      [real_order_logs] idx_real_order_logs_level
+          CREATE INDEX idx_real_order_logs_level ON public.real_order_logs USING btree (config_id, log_level)
+      [real_order_logs] real_order_logs_pkey
+          CREATE UNIQUE INDEX real_order_logs_pkey ON public.real_order_logs USING btree (id)
+      [real_positions] idx_real_positions_config_id
+          CREATE INDEX idx_real_positions_config_id ON public.real_positions USING btree (config_id)
+      [real_positions] idx_real_positions_config_symbol
+          CREATE INDEX idx_real_positions_config_symbol ON public.real_positions USING btree (config_id, symbol)
+      [real_positions] real_positions_pkey
+          CREATE UNIQUE INDEX real_positions_pkey ON public.real_positions USING btree (id)
+      [real_trades] idx_real_trades_config_created
+          CREATE INDEX idx_real_trades_config_created ON public.real_trades USING btree (config_id, created_at DESC)
+      [real_trades] idx_real_trades_config_id
+          CREATE INDEX idx_real_trades_config_id ON public.real_trades USING btree (config_id)
+      [real_trades] idx_real_trades_timestamp
+          CREATE INDEX idx_real_trades_timestamp ON public.real_trades USING btree (trade_timestamp DESC)
+      [real_trades] real_trades_pkey
+          CREATE UNIQUE INDEX real_trades_pkey ON public.real_trades USING btree (id)
+      [saved_strategies] idx_saved_strategies_name
+          CREATE INDEX idx_saved_strategies_name ON public.saved_strategies USING btree (name)
+      [saved_strategies] idx_saved_strategies_user_id
+          CREATE INDEX idx_saved_strategies_user_id ON public.saved_strategies USING btree (user_id)
+      [saved_strategies] saved_strategies_name_key
+          CREATE UNIQUE INDEX saved_strategies_name_key ON public.saved_strategies USING btree (name)
+      [saved_strategies] saved_strategies_pkey
+          CREATE UNIQUE INDEX saved_strategies_pkey ON public.saved_strategies USING btree (id)
+      [system_config] ix_system_config_chave
+          CREATE UNIQUE INDEX ix_system_config_chave ON public.system_config USING btree (chave)
+      [system_config] ix_system_config_id
+          CREATE INDEX ix_system_config_id ON public.system_config USING btree (id)
+      [system_config] system_config_pkey
+          CREATE UNIQUE INDEX system_config_pkey ON public.system_config USING btree (id)
+      [system_settings] system_settings_pkey
+          CREATE UNIQUE INDEX system_settings_pkey ON public.system_settings USING btree (key)
+      [user_settings] idx_user_settings_user_key
+          CREATE INDEX idx_user_settings_user_key ON public.user_settings USING btree (user_id, key)
+      [user_settings] user_settings_pkey
+          CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (id)
+      [user_settings] user_settings_user_id_key_key
+          CREATE UNIQUE INDEX user_settings_user_id_key_key ON public.user_settings USING btree (user_id, key)
+      [users] idx_users_email
+          CREATE INDEX idx_users_email ON public.users USING btree (email)
+      [users] users_email_key
+          CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)
+      [users] users_pkey
+          CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)
+
+  2d. Foreign Keys:
+      bot_ai_analyses.config_id -> real_config.id (bot_ai_analyses_config_id_fkey)
+      paper_config.user_id -> users.id (paper_config_user_id_fkey)
+      paper_positions.config_id -> paper_config.id (paper_positions_config_id_fkey)
+      paper_trades.config_id -> paper_config.id (paper_trades_config_id_fkey)
+      real_config.user_id -> users.id (real_config_user_id_fkey)
+      real_positions.config_id -> real_config.id (real_positions_config_id_fkey)
+      real_trades.config_id -> real_config.id (real_trades_config_id_fkey)
+      saved_strategies.user_id -> users.id (saved_strategies_user_id_fkey)
+      user_settings.user_id -> users.id (user_settings_user_id_fkey)
+
+  2e. Unique Constraints:
+      [leads] leads_telefone_key ON (telefone)
+      [saved_strategies] saved_strategies_name_key ON (name)
+      [user_settings] user_settings_user_id_key_key ON (user_id, key)
+      [users] users_email_key ON (email)
+
+  2f. Views:
+      v_leads_resumo:  SELECT l.id,
+    l.telefone,
+    l.nome,
+    l.status,
+    l.qualificado,
+    l.bloqueio_ia,
+    l.criado_em,
+    l.data_ultima_interacao,
+    count(m.id) AS total_mensagens,
+    count(
+        CASE
+...
+      v_leads_ativos:  SELECT id,
+    criado_em,
+    atualizado_em,
+    telefone,
+    nome,
+    bloqueio_ia,
+    status,
+    primeira_interacao,
+    qualificado,
+    necessita_followup,
+    etapa_funil,
+    interesse,
+    ...
+      v_leads_followup:  SELECT l.id,
+    l.criado_em,
+    l.atualizado_em,
+    l.telefone,
+    l.nome,
+    l.bloqueio_ia,
+    l.status,
+    l.primeira_interacao,
+    l.qualificado,
+    l.necessita_followup,
+    l.etapa_funi...
+
+  2g. Sequences:
+      leads_id_seq
+      mensagens_id_seq
+      n8n_chat_histories_id_seq
+      system_config_id_seq
+      paper_config_id_seq
+      paper_positions_id_seq
+      paper_trades_id_seq
+      funding_rate_snapshots_id_seq
+      saved_strategies_id_seq
+      real_config_id_seq
+      real_positions_id_seq
+      real_trades_id_seq
+      ai_reports_id_seq
+      users_id_seq
+      user_settings_id_seq
+      bot_ai_analyses_id_seq
+      real_order_logs_id_seq
