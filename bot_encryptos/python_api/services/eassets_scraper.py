@@ -251,7 +251,7 @@ def _export_json(page, timeout_ms):
             copy_button.evaluate("el => el.click()")
             js_click_attempted = True
 
-        if time.monotonic() - last_progress_change > stall_timeout_s:
+        if last_progress and time.monotonic() - last_progress_change > stall_timeout_s:
             break
 
         page.wait_for_timeout(1_000)
