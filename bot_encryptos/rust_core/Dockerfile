@@ -6,13 +6,17 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+ENV CARGO_BUILD_JOBS=2
+ENV RUSTFLAGS="-C codegen-units=4"
+
 WORKDIR /app
 COPY Cargo.toml Cargo.lock* ./
-# Cache dependencies layer
-RUN mkdir src && echo "fn main(){}" > src/main.rs && cargo build --release && rm -rf src
+RUN mkdir src && echo "fn main(){}" > src/main.rs \
+    && cargo build --release --jobs 2 \
+    && rm -rf src
 
 COPY src ./src
-RUN touch src/main.rs && cargo build --release
+RUN touch src/main.rs && cargo build --release --jobs 2
 
 # ---- Runtime ----
 FROM debian:bookworm-slim
