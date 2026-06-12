@@ -330,6 +330,7 @@ impl WatchlistManager {
 
         let price = klines_4h
             .as_ref()
+            .ok()
             .and_then(|k| k.last())
             .map(|k| k.close)
             .unwrap_or(0.0);
