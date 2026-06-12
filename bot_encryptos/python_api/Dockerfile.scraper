@@ -1,7 +1,8 @@
 FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN playwright install chromium --with-deps
+RUN python -m playwright install chromium --with-deps
 COPY . .
 CMD ["python", "-m", "services.eassets_loop"]
