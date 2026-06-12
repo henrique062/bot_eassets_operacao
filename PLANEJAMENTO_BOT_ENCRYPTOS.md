@@ -848,46 +848,109 @@ DELETE /api/eassets/watchlist/{symbol}     # Remove manualmente do loop
 ## Fases de Desenvolvimento
 
 ### Fase 1 — Infraestrutura
-- [ ] Criar pasta `bot_encryptos/` neste diretório
-- [ ] `docker-compose.yml` com serviços: rust_core, python_api, db, nginx
-- [ ] `.env.example` com todas as variáveis
-- [ ] Migration `001_create_eassets_tables.sql`
-- [ ] `database.py` Python + `postgres.rs` Rust (ambos conectam ao mesmo PostgreSQL)
+- [x] Criar pasta `bot_encryptos/` neste diretório
+- [x] `docker-compose.yml` com serviços: rust_core, python_api, eassets_scraper, db, nginx
+- [x] `.env.example` com todas as variáveis
+- [x] Migration `001_create_eassets_tables.sql`
+- [x] `database.py` Python + `postgres.rs` Rust (ambos conectam ao mesmo PostgreSQL)
 
 ### Fase 2 — Dados de Mercado (Rust)
-- [ ] `bybit_rest.rs` — tickers, OI, LSR, funding, klines (adaptar bybit_service.py → Rust)
-- [ ] `bybit_ws.rs` — WebSocket trades em tempo real (tokio-tungstenite)
-- [ ] `btc_monitor.rs` — RSI BTC calculado localmente em múltiplos timeframes
+- [x] `bybit_rest.rs` — tickers, OI, LSR, funding, klines com cache TTL
+- [x] `bybit_ws.rs` — WebSocket publicTrade (tokio-tungstenite), DashMap+AtomicU64
+- [x] `btc_monitor.rs` — RSI Wilder 14p em 30m/1h, atualiza a cada 30s
 
 ### Fase 3 — Engine Encryptos (Rust)
-- [ ] `scorer.rs` — calcula todos os sinais + score 0–100
-- [ ] `signal_filter.rs` — checklist 6 filtros
-- [ ] `decision.rs` — loop principal de decisão (tokio task)
+- [x] `scorer.rs` — score 0–100 (30/25/20/15/10)
+- [x] `signal_filter.rs` — checklist 6 filtros obrigatórios
+- [x] `decision.rs` — loop 2s, coleta sinais → filtros → score → abre posição
 
 ### Fase 4 — Execução de Ordens (Rust)
-- [ ] `bybit_executor.rs` — ordens signed Bybit REST (adaptar lógica real_trader.py → Rust)
-- [ ] `position_manager.rs` — HashMap em memória + persistência PostgreSQL via sqlx
-- [ ] `risk_manager.rs` — tokio task por posição (stop/TP/trailing)
-- [ ] **hook de stop → chama `watchlist_manager::on_stop_triggered()`**
+- [x] `bybit_executor.rs` — HMAC-SHA256 signed, Bybit v5 REST
+- [x] `position_manager.rs` — DashMap em memória + persistência PostgreSQL via sqlx
+- [x] `risk_manager.rs` — tokio task por posição (stop/TP/trailing a cada 1s)
+- [x] **hook de stop → chama `watchlist_manager::on_stop_triggered()`**
 
 ### Fase 4b — PCL: Persistent Candidate Loop (Rust)
-- [ ] `watchlist_manager.rs` — máquina de estados WATCHLIST/COOLDOWN/CANDIDATE/INVALIDATED/COMPLETED
-- [ ] `structural_validator.rs` — avalia 5 critérios de persistência estrutural após stop
-- [ ] Tabela `eassets_watchlist` criada na migration `001_create_eassets_tables.sql`
-- [ ] Loop PCL: tokio task rodando a cada 60s, verifica moedas com cooldown expirado
-- [ ] Integrar re-entrada com `decision_engine::try_open()` (mesma função, `attempt_count` incrementado)
-- [ ] Logs PCL nos `eassets_order_logs` (PCL_ADDED, PCL_REENTRY, PCL_INVALIDATED, etc.)
+- [x] `watchlist_manager.rs` — máquina de estados WATCHLIST/COOLDOWN/CANDIDATE/INVALIDATED/COMPLETED
+- [x] `structural_validator.rs` — 5 critérios de persistência estrutural + tracker de streak
+- [x] Tabela `eassets_watchlist` na migration `001_create_eassets_tables.sql`
+- [x] Loop PCL: tokio task a cada 60s, verifica moedas com cooldown expirado
+- [x] Re-entrada via `decision_engine::try_open()` com `attempt_count` incrementado
+- [x] Logs PCL em `eassets_order_logs` (PCL_ADDED, PCL_REENTRY, PCL_INVALIDATED, etc.)
 
 ### Fase 5 — API Python + Scraper + Migração
-- [ ] `routes_bot.py`, `routes_trades.py`, `routes_config.py`
-- [ ] `routes_scraper.py` — endpoints de controle do scraper (capture manual, status, raw-snapshots)
-- [ ] `rust_bridge.py` — cliente HTTP para controlar Rust core
-- [ ] `eassets_scraper.py` — portado do eassets-main sem alteração de lógica
-- [ ] `eassets_loop.py` — loop background: captura → `eassets_raw_snapshots` → POST Rust
-- [ ] `Dockerfile.scraper` — imagem com Playwright + Chromium
-- [ ] `main.py` FastAPI com lifespan
-- [ ] `002_migrate_sqlite_data.py` — script de migração SQLite → PostgreSQL
-- [ ] Tabela `eassets_raw_snapshots` na migration `001`
+- [x] `routes_bot.py`, `routes_trades.py`, `routes_config.py`, `routes_scraper.py`
+- [x] `rust_bridge.py` — cliente httpx para controlar Rust core
+- [x] `eassets_scraper.py` — portado do eassets-main + `ingest_snapshot()`
+- [x] `eassets_loop.py` — loop asyncio com state global e `trigger_now()`
+- [x] `Dockerfile.scraper` — imagem Playwright + Chromium
+- [x] `main.py` FastAPI com lifespan
+- [x] `002_migrate_sqlite_data.py` — migração SQLite → PostgreSQL
+- [x] Tabela `eassets_raw_snapshots` na migration `001`
+
+### Fase 5b — Frontend (Next.js)
+**Stack:** Next.js 15 (App Router) · Tailwind CSS · shadcn/ui · Lucide icons · Recharts
+
+```
+bot_encryptos/frontend/
+├── app/
+│   ├── layout.tsx              # Layout raiz + ThemeProvider
+│   ├── page.tsx                # Dashboard principal (redirect → /dashboard)
+│   ├── dashboard/
+│   │   └── page.tsx            # Visão geral: engine status, posições, PnL do dia
+│   ├── positions/
+│   │   └── page.tsx            # Posições abertas em tempo real
+│   ├── trades/
+│   │   └── page.tsx            # Histórico de trades com filtros
+│   ├── signals/
+│   │   └── page.tsx            # Score Encryptos por moeda + status BTC reset
+│   ├── watchlist/
+│   │   └── page.tsx            # PCL — moedas em monitoramento persistente
+│   ├── scraper/
+│   │   └── page.tsx            # eAssets scraper: status, captura manual, histórico
+│   └── config/
+│       └── page.tsx            # Configurações do bot (capital, leverage, thresholds)
+├── components/
+│   ├── ui/                     # shadcn/ui components
+│   ├── layout/
+│   │   ├── sidebar.tsx
+│   │   └── header.tsx
+│   ├── dashboard/
+│   │   ├── engine-status-card.tsx
+│   │   ├── btc-reset-badge.tsx
+│   │   ├── pnl-summary.tsx
+│   │   └── positions-table.tsx
+│   ├── signals/
+│   │   ├── signals-table.tsx
+│   │   └── score-bar.tsx
+│   └── charts/
+│       ├── pnl-chart.tsx       # Recharts — PnL acumulado
+│       └── trades-chart.tsx
+├── lib/
+│   ├── api.ts                  # Fetch wrapper → python_api :8000
+│   └── types.ts                # Tipos TypeScript espelhando as tabelas eassets_*
+├── hooks/
+│   └── use-polling.ts          # Polling genérico com SWR/interval
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+**Páginas principais:**
+| Rota | Conteúdo |
+|------|----------|
+| `/dashboard` | Cards: engine ON/OFF, BTC reset status, posições abertas, PnL dia/total |
+| `/positions` | Tabela live de posições: símbolo, direção, preço entrada, PnL atual, SL/TP |
+| `/trades` | Histórico paginado, filtro por símbolo/data, PnL por trade |
+| `/signals` | Ranking de moedas por score Encryptos, badges de filtros passados/falhos |
+| `/watchlist` | PCL — estado de cada moeda, tentativas, cooldown restante |
+| `/scraper` | Status do loop eAssets, botão "Capturar agora", histórico de capturas |
+| `/config` | Formulário completo de `eassets_bot_config` (capital, leverage, thresholds) |
+
+- [ ] Criar `bot_encryptos/frontend/` com estrutura Next.js 15
+- [ ] Integrar com `python_api` via `NEXT_PUBLIC_API_URL`
+- [ ] Adicionar serviço `frontend` no `docker-compose.yml`
 
 ### Fase 6 — Deploy VPS
 - [ ] Testar `docker compose up --build` localmente

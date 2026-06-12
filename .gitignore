@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.local
+*.db
+
+# Rust
+bot_encryptos/rust_core/target/
+bot_encryptos/rust_core/Cargo.lock
+
+# Next.js
+bot_encryptos/frontend/.next/
+bot_encryptos/frontend/node_modules/
+bot_encryptos/frontend/.env.local
+
+# Docker volumes / secrets
+postgres_data/
+
+# Agent memory (internal)
+.claude/agent-memory/
