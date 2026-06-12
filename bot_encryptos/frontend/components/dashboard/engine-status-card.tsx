@@ -60,11 +60,12 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
       }
 
       try {
-        config = await api.getLatestConfig()
-      } catch (err) {
-        if (!(err instanceof ApiError && err.status === 404)) {
-          throw err
+        const latestConfig = await api.getLatestConfig()
+        if (latestConfig) {
+          config = latestConfig
         }
+      } catch (err) {
+        throw err
       }
 
       const bybitBalance = await api.getBybitBalance()

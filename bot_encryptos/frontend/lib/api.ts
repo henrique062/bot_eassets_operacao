@@ -86,7 +86,7 @@ export const api = {
   getScraperStatus: () => apiFetch<ScraperStatus>("/api/eassets/scraper/status"),
   triggerScrape: () => apiFetch("/api/eassets/scraper/capture", { method: "POST" }),
 
-  getLatestConfig: () => apiFetch<BotConfig>("/api/eassets/config/latest"),
+  getLatestConfig: () => apiFetch<BotConfig | null>("/api/eassets/config/latest"),
   getConfig: (configId: number) =>
     apiFetch<BotConfig>(`/api/eassets/config/${configId}`),
   saveConfig: (config: BotConfig) =>

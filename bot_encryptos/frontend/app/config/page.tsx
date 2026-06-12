@@ -110,9 +110,11 @@ export default function ConfigPage() {
       let nextConfig = DEFAULT_CONFIG
 
       if (configResult.status === "fulfilled") {
-        nextConfig = configResult.value
-        setConfigId(configResult.value.id)
-      } else if (!(configResult.reason instanceof ApiError && configResult.reason.status === 404)) {
+        if (configResult.value) {
+          nextConfig = configResult.value
+          setConfigId(configResult.value.id)
+        }
+      } else {
         setError("Erro ao carregar configuracao salva.")
       }
 

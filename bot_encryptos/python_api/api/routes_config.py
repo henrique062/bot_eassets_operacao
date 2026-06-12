@@ -81,8 +81,6 @@ async def get_latest_config() -> dict[str, Any]:
     """Return the most recent bot configuration, preferring an active session."""
     pool = get_pool()
     config = await repo.get_latest_config(pool)
-    if config is None:
-        raise HTTPException(status_code=404, detail="No config found")
     return _ok(config)
 
 
