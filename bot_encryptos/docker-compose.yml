@@ -20,8 +20,8 @@ services:
 
   python_api:
     build:
-      context: ./python_api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: ./bot_encryptos/python_api/Dockerfile
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -47,8 +47,8 @@ services:
 
   eassets_scraper:
     build:
-      context: ./python_api
-      dockerfile: Dockerfile.scraper
+      context: ..
+      dockerfile: ./bot_encryptos/python_api/Dockerfile.scraper
     restart: unless-stopped
     depends_on:
       - python_api

@@ -1,8 +1,9 @@
 FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-COPY requirements.txt .
+COPY bot_encryptos/python_api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m playwright install chromium --with-deps
-COPY . .
+COPY bot_encryptos/python_api/ ./
+COPY gerar_painel.py ./gerar_painel.py
 CMD ["python", "-m", "services.eassets_loop"]
