@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { usePolling } from "@/hooks/use-polling"
-import { api } from "@/lib/api"
+import { api, ApiError } from "@/lib/api"
 import { formatTimeBRT } from "@/lib/utils"
 
 export default function ScraperPage() {
   const { data: status, error, mutate } = usePolling("scraper-status", api.getScraperStatus, 5000)
   const [triggering, setTriggering] = useState(false)
-  const [triggerResult, setTriggerResult] = useState<"ok" | "error" | null>(null)
+  const [triggerResult, setTriggerResult] = useState<"ok" | "running" | "error" | null>(null)
 
   async function handleTrigger() {
     setTriggering(true)
@@ -21,8 +21,12 @@ export default function ScraperPage() {
       await api.triggerScrape()
       setTriggerResult("ok")
       mutate()
-    } catch {
-      setTriggerResult("error")
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setTriggerResult("running")
+      } else {
+        setTriggerResult("error")
+      }
     } finally {
       setTriggering(false)
     }
@@ -56,6 +60,16 @@ export default function ScraperPage() {
         >
           <XCircle className="h-4 w-4" aria-hidden="true" />
           Erro ao iniciar captura.
+        </div>
+      )}
+
+      {triggerResult === "running" && (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300 flex items-center gap-2"
+        >
+          <Clock className="h-4 w-4" aria-hidden="true" />
+          Ja existe uma captura em andamento.
         </div>
       )}
 

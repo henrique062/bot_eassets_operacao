@@ -12,12 +12,37 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? ""
 
+export class ApiError extends Error {
+  status: number
+  detail?: string
+
+  constructor(status: number, detail?: string) {
+    super(detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`)
+    this.name = "ApiError"
+    this.status = status
+    this.detail = detail
+  }
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...options,
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  if (!res.ok) {
+    let detail: string | undefined
+    try {
+      const json = await res.json()
+      detail =
+        typeof json?.detail === "string"
+          ? json.detail
+          : typeof json?.error === "string"
+            ? json.error
+            : undefined
+    } catch {}
+
+    throw new ApiError(res.status, detail)
+  }
   const json = await res.json()
   return json.data ?? json
 }
