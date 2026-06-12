@@ -37,10 +37,10 @@ export const api = {
   getTradesBySymbol: (symbol: string) =>
     apiFetch<Trade[]>(`/api/eassets/trades/${symbol}`),
 
-  getSignals: () => apiFetch<SignalData[]>("/api/eassets/market/signals"),
+  getSignals: () => apiFetch<SignalData[]>("/api/eassets/bot/market/signals"),
   getBtcStatus: async () => {
     const data = await apiFetch<Record<string, number | boolean | null> | null>(
-      "/api/eassets/market/btc-status"
+      "/api/eassets/bot/market/btc-status"
     )
 
     const status: BtcStatus = {
