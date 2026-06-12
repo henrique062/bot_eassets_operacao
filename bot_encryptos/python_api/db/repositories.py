@@ -253,6 +253,32 @@ async def get_active_configs(pool: asyncpg.Pool) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+async def set_config_active(
+    pool: asyncpg.Pool,
+    config_id: int,
+    active: bool,
+    paused: bool = False,
+) -> bool:
+    """Mark a config session as active/inactive and update session timestamps."""
+    row = await pool.fetchrow(
+        """
+        UPDATE eassets_bot_config
+        SET
+            active = $2,
+            paused = $3,
+            started_at = CASE WHEN $2 THEN NOW() ELSE started_at END,
+            ended_at = CASE WHEN $2 THEN NULL ELSE NOW() END,
+            updated_at = NOW()
+        WHERE id = $1
+        RETURNING id
+        """,
+        config_id,
+        active,
+        paused,
+    )
+    return row is not None
+
+
 # ---------------------------------------------------------------------------
 # Watchlist
 # ---------------------------------------------------------------------------

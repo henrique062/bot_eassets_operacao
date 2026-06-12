@@ -228,7 +228,10 @@ def _export_json(page, timeout_ms):
     js_click_attempted = False
     last_progress = None
     last_invalid = None
-    deadline = time.monotonic() + (timeout_ms / 1000)
+    stall_timeout_s = max(timeout_ms / 1000, 30)
+    hard_timeout_s = max(stall_timeout_s * 3, 300)
+    deadline = time.monotonic() + hard_timeout_s
+    last_progress_change = time.monotonic()
 
     while time.monotonic() < deadline:
         for raw in reversed(_clipboard_texts(page)):
@@ -239,11 +242,17 @@ def _export_json(page, timeout_ms):
             except EassetsScrapeError as exc:
                 last_invalid = exc
 
-        last_progress = _export_progress(page) or last_progress
+        current_progress = _export_progress(page)
+        if current_progress and current_progress != last_progress:
+            last_progress = current_progress
+            last_progress_change = time.monotonic()
 
         if not js_click_attempted and time.monotonic() - click_started_at > 3:
             copy_button.evaluate("el => el.click()")
             js_click_attempted = True
+
+        if time.monotonic() - last_progress_change > stall_timeout_s:
+            break
 
         page.wait_for_timeout(1_000)
 

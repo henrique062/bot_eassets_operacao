@@ -80,6 +80,8 @@ async def start_bot(body: StartBotRequest) -> dict[str, Any]:
         logger.error("rust_bridge.start failed for config_id={}: {}", config_id, exc)
         raise HTTPException(status_code=502, detail=f"Rust core unreachable: {exc}") from exc
 
+    await repo.set_config_active(pool, config_id, True)
+
     return _ok({"config_id": config_id, "session_name": body.session_name})
 
 
@@ -95,6 +97,9 @@ async def stop_bot(config_id: int) -> dict[str, Any]:
     except Exception as exc:
         logger.error("rust_bridge.stop failed config_id={}: {}", config_id, exc)
         raise HTTPException(status_code=502, detail=f"Rust core unreachable: {exc}") from exc
+
+    pool = get_pool()
+    await repo.set_config_active(pool, config_id, False)
 
     return _ok(result)
 
