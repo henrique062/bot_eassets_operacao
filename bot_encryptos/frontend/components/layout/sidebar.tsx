@@ -11,11 +11,13 @@ import {
   Eye,
   RefreshCw,
   Settings,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/analise", label: "Análise Manual", icon: BarChart3 },
   { href: "/positions", label: "Posições", icon: TrendingUp },
   { href: "/trades", label: "Trades", icon: History },
   { href: "/signals", label: "Sinais", icon: Zap },

@@ -9,6 +9,12 @@ import type {
   SignalData,
   WatchlistEntry,
   ScraperStatus,
+  PanelSnapshot,
+  PanelData,
+  SetupData,
+  RadarData,
+  TopoRow,
+  SymbolHistory,
 } from "./types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? ""
@@ -98,4 +104,22 @@ export const api = {
     }),
   getBybitBalance: () =>
     apiFetch<BybitBalance>("/api/eassets/config/bybit/balance"),
+
+  // Painel de análise manual (metodologia Encryptos)
+  getPanelSnapshots: () =>
+    apiFetch<PanelSnapshot[]>("/api/eassets/panel/snapshots"),
+  getPanelLatest: () => apiFetch<PanelData>("/api/eassets/panel/latest"),
+  getPanelSnapshot: (snapshotId: number) =>
+    apiFetch<PanelData>(`/api/eassets/panel/snapshot/${snapshotId}`),
+  getPanelSetup: (snapshotId?: number) =>
+    apiFetch<SetupData>(
+      `/api/eassets/panel/setup${snapshotId ? `?snapshot_id=${snapshotId}` : ""}`
+    ),
+  getPanelRadar: (snapshotId?: number) =>
+    apiFetch<RadarData>(
+      `/api/eassets/panel/radar${snapshotId ? `?snapshot_id=${snapshotId}` : ""}`
+    ),
+  getPanelTopo: () => apiFetch<TopoRow[]>("/api/eassets/panel/topo"),
+  getPanelHistory: (symbol: string) =>
+    apiFetch<SymbolHistory>(`/api/eassets/panel/historico/${symbol}`),
 }

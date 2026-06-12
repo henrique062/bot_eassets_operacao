@@ -426,3 +426,172 @@ async def get_raw_snapshots(
         limit,
     )
     return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Painel (análise manual de moedas — metodologia Encryptos)
+# ---------------------------------------------------------------------------
+
+async def list_panel_snapshots(
+    pool: asyncpg.Pool,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    """Return snapshot headers (most recent first) for the panel selector."""
+    rows = await pool.fetch(
+        """
+        SELECT id, timestamp, exchange, setup, symbols, btc_reset, ingested_at
+        FROM eassets_snapshots
+        ORDER BY timestamp DESC
+        LIMIT $1
+        """,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_latest_snapshot_id(pool: asyncpg.Pool) -> int | None:
+    """Return the id of the most recent snapshot, or None when empty."""
+    row = await pool.fetchrow(
+        "SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT 1"
+    )
+    return int(row["id"]) if row else None
+
+
+async def get_snapshot_meta(pool: asyncpg.Pool, snapshot_id: int) -> dict[str, Any] | None:
+    """Return a single snapshot header by id."""
+    row = await pool.fetchrow(
+        """
+        SELECT id, timestamp, exchange, setup, mode, symbols, btc_reset, ingested_at, source
+        FROM eassets_snapshots
+        WHERE id = $1
+        """,
+        snapshot_id,
+    )
+    return dict(row) if row else None
+
+
+async def get_panel_metrics(pool: asyncpg.Pool, snapshot_id: int) -> list[dict[str, Any]]:
+    """Return every per-symbol metric row for a snapshot, ranked ascending."""
+    rows = await pool.fetch(
+        """
+        SELECT symbol, rank, score, setup, price, price_change_1d,
+               exp_1d, exp_4h, exp_1h, oi_trend, lsr, lsr_trend, rsi_4h,
+               oi_usd, trades_min, range_4h, range_1d, trades_1d, toi,
+               setup_score, setup_grade, raw_json
+        FROM eassets_metrics
+        WHERE snapshot_id = $1
+        ORDER BY rank ASC NULLS LAST
+        """,
+        snapshot_id,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_symbol_raw(
+    pool: asyncpg.Pool,
+    snapshot_id: int,
+    symbol: str,
+) -> str | None:
+    """Return the raw per-symbol JSON blob for one metric row (e.g. BTCUSDT)."""
+    row = await pool.fetchrow(
+        "SELECT raw_json FROM eassets_metrics WHERE snapshot_id = $1 AND symbol = $2",
+        snapshot_id,
+        symbol,
+    )
+    return row["raw_json"] if row else None
+
+
+async def get_symbol_panel_history(
+    pool: asyncpg.Pool,
+    symbol: str,
+    limit: int = 60,
+) -> list[dict[str, Any]]:
+    """Return the metric history of a symbol across snapshots (newest first)."""
+    rows = await pool.fetch(
+        """
+        SELECT s.id AS snapshot_id, s.timestamp, m.rank, m.score, m.setup,
+               m.price, m.price_change_1d, m.exp_1d, m.exp_4h, m.exp_1h,
+               m.oi_trend, m.lsr, m.lsr_trend, m.rsi_4h, m.oi_usd, m.toi
+        FROM eassets_metrics m
+        JOIN eassets_snapshots s ON s.id = m.snapshot_id
+        WHERE m.symbol = $1
+        ORDER BY s.timestamp DESC
+        LIMIT $2
+        """,
+        symbol,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_top_appearances(
+    pool: asyncpg.Pool,
+    top_n: int = 10,
+    snapshot_limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Aggregate how often each symbol ranked within the TOP-N across snapshots."""
+    rows = await pool.fetch(
+        """
+        WITH recent AS (
+            SELECT id FROM eassets_snapshots
+            ORDER BY timestamp DESC LIMIT $2
+        )
+        SELECT m.symbol,
+               COUNT(*)                       AS appearances,
+               MIN(m.rank)                     AS best_rank,
+               ROUND(AVG(m.rank), 1)           AS avg_rank,
+               MAX(m.score)                    AS max_score,
+               ROUND(AVG(m.score), 1)          AS avg_score
+        FROM eassets_metrics m
+        JOIN recent r ON r.id = m.snapshot_id
+        WHERE m.rank <= $1
+        GROUP BY m.symbol
+        ORDER BY appearances DESC, avg_rank ASC
+        LIMIT 50
+        """,
+        top_n,
+        snapshot_limit,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_toi_persistence(
+    pool: asyncpg.Pool,
+    snapshot_limit: int = 30,
+    top_n: int = 30,
+) -> dict[str, int]:
+    """Count, per symbol, in how many recent snapshots it ranked in the TOP-N by T/OI."""
+    rows = await pool.fetch(
+        """
+        WITH recent AS (
+            SELECT id FROM eassets_snapshots
+            ORDER BY timestamp DESC LIMIT $1
+        ),
+        ranked AS (
+            SELECT m.symbol,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY m.snapshot_id
+                       ORDER BY m.toi DESC NULLS LAST
+                   ) AS toi_rank
+            FROM eassets_metrics m
+            JOIN recent r ON r.id = m.snapshot_id
+            WHERE m.toi IS NOT NULL
+        )
+        SELECT symbol, COUNT(*) AS days_top
+        FROM ranked
+        WHERE toi_rank <= $2
+        GROUP BY symbol
+        """,
+        snapshot_limit,
+        top_n,
+    )
+    return {r["symbol"]: int(r["days_top"]) for r in rows}
+
+
+async def count_snapshots(pool: asyncpg.Pool, limit: int = 30) -> int:
+    """Return the number of snapshots (capped at limit) for persistence ratios."""
+    row = await pool.fetchrow(
+        "SELECT COUNT(*) AS n FROM (SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT $1) t",
+        limit,
+    )
+    return int(row["n"]) if row else 0

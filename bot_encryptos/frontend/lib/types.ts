@@ -129,3 +129,153 @@ export interface ApiResponse<T> {
   data: T
   error?: string
 }
+
+// ---------------------------------------------------------------------------
+// Painel de análise manual (metodologia Encryptos)
+// ---------------------------------------------------------------------------
+
+export interface PanelSnapshot {
+  id: number
+  timestamp: string
+  timestamp_brt: string
+  exchange: string | null
+  setup: string | null
+  symbols: number | null
+  btc_reset: boolean | null
+}
+
+export interface BtcMacro {
+  state: string
+  safe: boolean
+  reset: boolean
+  rsi_30m: number | null
+  rsi_1h: number | null
+  rsi_5m: number | null
+}
+
+export interface PanelMeta {
+  id: number
+  timestamp: string
+  timestamp_brt: string
+  exchange: string | null
+  setup: string | null
+  symbols: number | null
+  btc_reset: boolean | null
+}
+
+export interface PanelRow {
+  symbol: string
+  asset: string
+  rank: number | null
+  score: number | null
+  setup: string | null
+  price: number | null
+  change: number | null
+  exp1d: number | null
+  exp4h: number | null
+  exp1h: number | null
+  oitrend: number | null
+  lsr: number | null
+  lsrtrend: number | null
+  rsi4h: number | null
+  oiusd: number | null
+  trades: number | null
+  range4h: number | null
+  range1d: number | null
+  trades1d: number | null
+  toi: number | null
+  entry_score: number | null
+  entry_grade: string
+}
+
+export interface PanelData {
+  meta: PanelMeta
+  btc: BtcMacro
+  rows: PanelRow[]
+}
+
+export interface SetupChecklist {
+  exp_pos: boolean
+  tpm_hot: boolean
+  lsr_fuel: boolean
+  oi_in: boolean
+  rsi_runway: boolean
+  accumulation: boolean
+  funding_neg: boolean
+}
+
+export interface SetupRow {
+  symbol: string
+  asset: string
+  rank: number | null
+  score: number | null
+  setup_grade: string
+  setup_cls: string
+  setup_score: number
+  checklist: SetupChecklist
+  trap: boolean
+  change: number | null
+  lsr: number | null
+  oitrend: number | null
+}
+
+export interface SetupData {
+  meta: PanelMeta
+  btc: BtcMacro
+  rows: SetupRow[]
+}
+
+export interface RadarRow {
+  symbol: string
+  asset: string
+  toi: number | null
+  oiusd: number | null
+  trades1d: number | null
+  rank: number | null
+  score: number | null
+  setup: string | null
+  change: number | null
+  days_top: number
+  total_snaps: number
+}
+
+export interface RadarData {
+  meta: PanelMeta
+  rows: RadarRow[]
+}
+
+export interface TopoRow {
+  symbol: string
+  asset: string
+  appearances: number
+  best_rank: number | null
+  avg_rank: number | null
+  max_score: number | null
+  avg_score: number | null
+}
+
+export interface HistoryPoint {
+  snapshot_id: number
+  timestamp: string
+  timestamp_brt: string
+  rank: number | null
+  score: number | null
+  setup: string | null
+  price: number | null
+  change: number | null
+  exp1d: number | null
+  exp4h: number | null
+  exp1h: number | null
+  oitrend: number | null
+  lsr: number | null
+  lsrtrend: number | null
+  rsi4h: number | null
+  oiusd: number | null
+  toi: number | null
+}
+
+export interface SymbolHistory {
+  symbol: string
+  asset: string
+  history: HistoryPoint[]
+}

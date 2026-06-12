@@ -73,6 +73,7 @@ app = FastAPI(
 # Register routers
 from api.routes_bot import router as bot_router
 from api.routes_config import router as config_router
+from api.routes_panel import router as panel_router
 from api.routes_scraper import router as scraper_router
 from api.routes_trades import router as trades_router
 
@@ -80,6 +81,7 @@ app.include_router(bot_router)
 app.include_router(trades_router)
 app.include_router(config_router)
 app.include_router(scraper_router)
+app.include_router(panel_router)
 
 
 # ---------------------------------------------------------------------------
