@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from database import get_pool
 from db import repositories as repo
 from services import rust_bridge
+from services.bybit_account import get_wallet_balance
 
 router = APIRouter(prefix="/api/eassets/bot", tags=["bot"])
 
@@ -71,6 +72,18 @@ async def start_bot(body: StartBotRequest) -> dict[str, Any]:
     """
     pool = get_pool()
     config_data = body.model_dump()
+
+    if config_data.get("exchange", "bybit").lower() == "bybit":
+        bybit_balance = await get_wallet_balance()
+        if not bybit_balance.get("connected"):
+            raise HTTPException(
+                status_code=502,
+                detail=str(bybit_balance.get("error") or "Saldo Bybit indisponivel."),
+            )
+
+        config_data["capital"] = bybit_balance["capital"]
+        config_data["balance"] = bybit_balance["balance"]
+
     config_id = await repo.save_config(pool, config_data)
     logger.info("Bot session created config_id={}", config_id)
 

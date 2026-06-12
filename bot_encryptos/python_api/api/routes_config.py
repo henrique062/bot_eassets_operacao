@@ -89,13 +89,7 @@ async def get_latest_config() -> dict[str, Any]:
 @router.get("/bybit/balance", summary="Read current Bybit wallet balances")
 async def get_bybit_balance() -> dict[str, Any]:
     """Return live capital/balance values derived from the configured Bybit account."""
-    try:
-        balance = await get_wallet_balance()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch Bybit balance: {exc}") from exc
-
+    balance = await get_wallet_balance()
     return _ok(balance)
 
 

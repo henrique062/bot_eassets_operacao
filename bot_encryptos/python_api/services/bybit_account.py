@@ -31,9 +31,24 @@ def _sign(query_string: str, timestamp_ms: str) -> str:
     ).hexdigest()
 
 
-async def get_wallet_balance() -> dict[str, float | str | None]:
+def _disconnected(error: str) -> dict[str, bool | float | str | None]:
+    return {
+        "connected": False,
+        "error": error,
+        "account_type": None,
+        "coin": "USDT",
+        "capital": None,
+        "balance": None,
+        "equity": None,
+        "wallet_balance": None,
+        "total_wallet_balance": None,
+        "total_available_balance": None,
+    }
+
+
+async def get_wallet_balance() -> dict[str, bool | float | str | None]:
     if not BYBIT_API_KEY or not BYBIT_API_SECRET:
-        raise RuntimeError("Bybit API credentials are not configured.")
+        return _disconnected("Bybit API credentials are not configured.")
 
     timestamp_ms = str(int(time.time() * 1000))
     params = {
@@ -50,16 +65,26 @@ async def get_wallet_balance() -> dict[str, float | str | None]:
         "X-BAPI-RECV-WINDOW": _RECV_WINDOW,
     }
 
-    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        response = await client.get(
-            f"{BYBIT_BASE_URL}/v5/account/wallet-balance?{query_string}",
-            headers=headers,
-        )
-        response.raise_for_status()
-        payload = response.json()
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            response = await client.get(
+                f"{BYBIT_BASE_URL}/v5/account/wallet-balance?{query_string}",
+                headers=headers,
+            )
+            response.raise_for_status()
+            payload = response.json()
+    except httpx.HTTPStatusError as exc:
+        try:
+            payload = exc.response.json()
+            message = payload.get("retMsg") or payload.get("ret_msg")
+        except Exception:
+            message = None
+        return _disconnected(message or f"Bybit returned HTTP {exc.response.status_code}.")
+    except Exception as exc:
+        return _disconnected(f"Failed to fetch Bybit balance: {exc}")
 
     if payload.get("retCode") != 0:
-        raise RuntimeError(payload.get("retMsg") or "Bybit wallet-balance request failed.")
+        return _disconnected(payload.get("retMsg") or "Bybit wallet-balance request failed.")
 
     account = (payload.get("result", {}).get("list") or [{}])[0]
     coins = account.get("coin") or []
@@ -74,6 +99,8 @@ async def get_wallet_balance() -> dict[str, float | str | None]:
     balance = total_available_balance or coin_wallet_balance or coin_equity or capital
 
     return {
+        "connected": True,
+        "error": None,
         "account_type": account.get("accountType"),
         "coin": "USDT",
         "capital": capital,

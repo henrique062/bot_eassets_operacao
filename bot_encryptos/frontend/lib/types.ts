@@ -92,10 +92,12 @@ export interface ScraperStatus {
 }
 
 export interface BybitBalance {
+  connected: boolean
+  error: string | null
   account_type: string | null
   coin: string
-  capital: number
-  balance: number
+  capital: number | null
+  balance: number | null
   equity: number | null
   wallet_balance: number | null
   total_wallet_balance: number | null

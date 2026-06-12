@@ -29,8 +29,18 @@ const DEFAULT_CONFIG: BotConfig = {
   pcl_max_attempts: 3,
 }
 
+function hasLiveBybitBalance(
+  bybitBalance: BybitBalance | null
+): bybitBalance is BybitBalance & { connected: true; capital: number; balance: number } {
+  return Boolean(
+    bybitBalance?.connected &&
+      typeof bybitBalance.capital === "number" &&
+      typeof bybitBalance.balance === "number"
+  )
+}
+
 function applyBybitBalance(config: BotConfig, bybitBalance: BybitBalance | null): BotConfig {
-  if (!bybitBalance) return config
+  if (!hasLiveBybitBalance(bybitBalance)) return config
 
   return {
     ...config,
@@ -109,6 +119,9 @@ export default function ConfigPage() {
       if (bybitResult.status === "fulfilled") {
         setBybitBalance(bybitResult.value)
         nextConfig = applyBybitBalance(nextConfig, bybitResult.value)
+        if (!bybitResult.value.connected) {
+          setError((prev) => prev ?? bybitResult.value.error ?? "Saldo Bybit indisponivel.")
+        }
       } else {
         setError((prev) => prev ?? "Saldo Bybit indisponivel. Verifique API key/secret.")
       }
@@ -158,7 +171,11 @@ export default function ConfigPage() {
     try {
       const freshBalance = await api.getBybitBalance()
       setBybitBalance(freshBalance)
-      setConfig((prev) => applyBybitBalance(prev, freshBalance))
+      if (hasLiveBybitBalance(freshBalance)) {
+        setConfig((prev) => applyBybitBalance(prev, freshBalance))
+      } else {
+        setError(freshBalance.error ?? "Erro ao consultar saldo da Bybit.")
+      }
     } catch (err) {
       if (err instanceof ApiError && err.detail) {
         setError(err.detail)
@@ -267,7 +284,7 @@ export default function ConfigPage() {
             id="capital"
             step="0.01"
             value={config.capital}
-            readOnly={Boolean(bybitBalance)}
+            readOnly={hasLiveBybitBalance(bybitBalance)}
             onChange={(v) => setField("capital", v)}
           />
           <FormField
@@ -275,7 +292,7 @@ export default function ConfigPage() {
             id="balance"
             step="0.01"
             value={config.balance}
-            readOnly={Boolean(bybitBalance)}
+            readOnly={hasLiveBybitBalance(bybitBalance)}
             onChange={(v) => setField("balance", v)}
           />
           <FormField
@@ -284,10 +301,15 @@ export default function ConfigPage() {
             value={config.leverage}
             onChange={(v) => setField("leverage", v)}
           />
-          {bybitBalance && (
+          {hasLiveBybitBalance(bybitBalance) && (
             <p className="sm:col-span-2 text-xs text-[#6b7280]">
               Bybit sincronizada: capital {bybitBalance.capital.toFixed(2)} USD, disponivel{" "}
               {bybitBalance.balance.toFixed(2)} USD.
+            </p>
+          )}
+          {bybitBalance && !bybitBalance.connected && (
+            <p className="sm:col-span-2 text-xs text-amber-300">
+              Bybit indisponivel: {bybitBalance.error ?? "falha ao consultar saldo."}
             </p>
           )}
         </CardContent>

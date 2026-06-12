@@ -16,14 +16,21 @@ interface EngineStatusCardProps {
 
 export function EngineStatusCard({ status, activeConfigId, onAction }: EngineStatusCardProps) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleStop() {
     if (!activeConfigId) return
     setLoading(true)
+    setError(null)
     try {
       await api.stopBot(activeConfigId)
       onAction()
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.detail) {
+        setError(err.detail)
+      } else {
+        setError("Erro ao parar o bot.")
+      }
     } finally {
       setLoading(false)
     }
@@ -31,6 +38,7 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
 
   async function handleStart() {
     setLoading(true)
+    setError(null)
     try {
       let config: BotConfig = {
         session_name: "default",
@@ -59,18 +67,31 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
         }
       }
 
-      try {
-        const bybitBalance = await api.getBybitBalance()
-        config = {
-          ...config,
-          capital: bybitBalance.capital,
-          balance: bybitBalance.balance,
-        }
-      } catch {}
+      const bybitBalance = await api.getBybitBalance()
+      if (
+        !bybitBalance.connected ||
+        typeof bybitBalance.capital !== "number" ||
+        typeof bybitBalance.balance !== "number"
+      ) {
+        throw new Error(bybitBalance.error ?? "Saldo Bybit indisponivel.")
+      }
+
+      config = {
+        ...config,
+        capital: bybitBalance.capital,
+        balance: bybitBalance.balance,
+      }
 
       await api.startBot(config)
       onAction()
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.detail) {
+        setError(err.detail)
+      } else if (err instanceof Error && err.message) {
+        setError(err.message)
+      } else {
+        setError("Erro ao iniciar o bot.")
+      }
     } finally {
       setLoading(false)
     }
@@ -83,9 +104,9 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
       <CardHeader>
         <CardTitle>Engine Status</CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-between gap-4">
+      <CardContent className="space-y-3">
         {status ? (
-          <>
+          <div className="flex items-center justify-between gap-4">
             <Badge variant={isRunning ? "success" : "danger"}>
               {status.engine_status}
             </Badge>
@@ -110,10 +131,11 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
                 </>
               )}
             </Button>
-          </>
+          </div>
         ) : (
           <div className="h-6 w-32 animate-pulse rounded bg-[#2a2d3a]" aria-hidden="true" />
         )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
       </CardContent>
     </Card>
   )

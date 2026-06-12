@@ -20,6 +20,18 @@ def _ok(data: Any) -> dict[str, Any]:
     return {"ok": True, "data": data}
 
 
+async def _resolve_config_id(config_id: int | None) -> int | None:
+    if config_id is not None:
+        return config_id
+
+    pool = get_pool()
+    latest_config = await repo.get_latest_config(pool)
+    if latest_config is None:
+        return None
+
+    return int(latest_config["id"])
+
+
 @router.post("/api/eassets/scraper/capture", summary="Trigger a manual scrape")
 async def capture_now() -> dict[str, Any]:
     """Trigger an immediate eAssets panel scrape outside the regular interval.
@@ -74,15 +86,19 @@ async def list_raw_snapshots(
 
 @router.get("/api/eassets/watchlist", summary="Watchlist entries for a session")
 async def get_watchlist(
-    config_id: int = Query(..., description="Bot session id"),
+    config_id: int | None = Query(None, description="Bot session id"),
 ) -> dict[str, Any]:
     """Return all PCL watchlist entries for a bot session.
 
     Args:
-        config_id: ID of the eassets_bot_config row.
+        config_id: ID of the eassets_bot_config row. Falls back to the latest config.
     """
+    resolved_config_id = await _resolve_config_id(config_id)
+    if resolved_config_id is None:
+        return _ok([])
+
     pool = get_pool()
-    entries = await repo.get_watchlist(pool, config_id)
+    entries = await repo.get_watchlist(pool, resolved_config_id)
     return _ok(entries)
 
 
