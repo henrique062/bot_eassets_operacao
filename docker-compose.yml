@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  rust_core:
+    build: ./bot_encryptos/rust_core
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - BYBIT_API_KEY=${BYBIT_API_KEY}
+      - BYBIT_API_SECRET=${BYBIT_API_SECRET}
+      - BYBIT_BASE_URL=${BYBIT_BASE_URL:-https://api.bybit.com}
+      - BYBIT_SYMBOLS=${BYBIT_SYMBOLS:-BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,AVAXUSDT,DOTUSDT,LINKUSDT}
+      - RUST_CORE_PORT=${RUST_CORE_PORT:-8001}
+      - PYTHON_API_URL=${PYTHON_API_URL:-http://python_api:8000}
+      - DEFAULT_LEVERAGE=${DEFAULT_LEVERAGE:-5}
+      - DEFAULT_MAX_POSITIONS=${DEFAULT_MAX_POSITIONS:-5}
+      - DEFAULT_MIN_SCORE=${DEFAULT_MIN_SCORE:-65}
+
+  python_api:
+    build:
+      context: ./bot_encryptos/python_api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rust_core
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RUST_CORE_URL=${RUST_CORE_URL:-http://rust_core:8001}
+      - EASSETS_EMAIL=${EASSETS_EMAIL}
+      - EASSETS_PASSWORD=${EASSETS_PASSWORD}
+      - EASSETS_INTERVAL_SECONDS=${EASSETS_INTERVAL_SECONDS:-1800}
+      - EASSETS_AUTO_ENABLED=${EASSETS_AUTO_ENABLED:-1}
+      - EASSETS_HEADLESS=${EASSETS_HEADLESS:-1}
+      - EASSETS_TIMEOUT_MS=${EASSETS_TIMEOUT_MS:-120000}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash-preview-05-20}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - PYTHON_API_PORT=${PYTHON_API_PORT:-8000}
+
+  eassets_scraper:
+    build:
+      context: ./bot_encryptos/python_api
+      dockerfile: Dockerfile.scraper
+    restart: unless-stopped
+    depends_on:
+      - python_api
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RUST_CORE_URL=${RUST_CORE_URL:-http://rust_core:8001}
+      - EASSETS_EMAIL=${EASSETS_EMAIL}
+      - EASSETS_PASSWORD=${EASSETS_PASSWORD}
+      - EASSETS_INTERVAL_SECONDS=${EASSETS_INTERVAL_SECONDS:-1800}
+      - EASSETS_AUTO_ENABLED=${EASSETS_AUTO_ENABLED:-1}
+      - EASSETS_HEADLESS=${EASSETS_HEADLESS:-1}
+      - EASSETS_TIMEOUT_MS=${EASSETS_TIMEOUT_MS:-120000}
+
+  frontend:
+    build:
+      context: ./bot_encryptos/frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - python_api
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://python_api:8000}
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./bot_encryptos/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - python_api
+      - frontend
