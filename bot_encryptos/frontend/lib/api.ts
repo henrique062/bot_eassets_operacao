@@ -1,7 +1,9 @@
 import type {
-  BotStatus,
+  ActiveBotSession,
+  BtcStatus,
   BotConfig,
   Position,
+  SessionStatus,
   Trade,
   SignalData,
   WatchlistEntry,
@@ -21,23 +23,34 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getBotStatus: () => apiFetch<BotStatus>("/api/eassets/bot/status"),
+  listActiveSessions: () => apiFetch<ActiveBotSession[]>("/api/eassets/bot/status"),
+  getBotStatus: (configId: number) => apiFetch<SessionStatus>(`/api/eassets/bot/status/${configId}`),
   startBot: (config: BotConfig) =>
     apiFetch("/api/eassets/bot/start", { method: "POST", body: JSON.stringify(config) }),
   stopBot: (configId: number) =>
     apiFetch(`/api/eassets/bot/stop/${configId}`, { method: "POST" }),
 
-  getPositions: () => apiFetch<Position[]>("/api/eassets/positions"),
-  getTrades: (skip = 0, limit = 50) =>
-    apiFetch<Trade[]>(`/api/eassets/trades?skip=${skip}&limit=${limit}`),
+  getPositions: (configId: number) =>
+    apiFetch<Position[]>(`/api/eassets/positions?config_id=${configId}`),
+  getTrades: (configId: number, skip = 0, limit = 50) =>
+    apiFetch<Trade[]>(`/api/eassets/trades?config_id=${configId}&skip=${skip}&limit=${limit}`),
   getTradesBySymbol: (symbol: string) =>
     apiFetch<Trade[]>(`/api/eassets/trades/${symbol}`),
 
   getSignals: () => apiFetch<SignalData[]>("/api/eassets/market/signals"),
-  getBtcStatus: () =>
-    apiFetch<{ btc_rsi_30m: number; btc_rsi_1h: number; is_reset: boolean }>(
+  getBtcStatus: async () => {
+    const data = await apiFetch<Record<string, number | boolean | null> | null>(
       "/api/eassets/market/btc-status"
-    ),
+    )
+
+    const status: BtcStatus = {
+      rsi_30m: typeof data?.rsi_30m === "number" ? data.rsi_30m : null,
+      rsi_1h: typeof data?.rsi_1h === "number" ? data.rsi_1h : null,
+      is_reset: Boolean(data?.is_reset),
+    }
+
+    return status
+  },
 
   getWatchlist: () => apiFetch<WatchlistEntry[]>("/api/eassets/watchlist"),
   removeFromWatchlist: (symbol: string) =>

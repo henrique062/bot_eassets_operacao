@@ -10,16 +10,18 @@ import type { BotStatus, BotConfig } from "@/lib/types"
 
 interface EngineStatusCardProps {
   status: BotStatus | undefined
+  activeConfigId?: number
   onAction: () => void
 }
 
-export function EngineStatusCard({ status, onAction }: EngineStatusCardProps) {
+export function EngineStatusCard({ status, activeConfigId, onAction }: EngineStatusCardProps) {
   const [loading, setLoading] = useState(false)
 
   async function handleStop() {
+    if (!activeConfigId) return
     setLoading(true)
     try {
-      await api.stopBot(1)
+      await api.stopBot(activeConfigId)
       onAction()
     } catch {
     } finally {
@@ -73,7 +75,7 @@ export function EngineStatusCard({ status, onAction }: EngineStatusCardProps) {
               variant={isRunning ? "destructive" : "success"}
               size="sm"
               onClick={isRunning ? handleStop : handleStart}
-              disabled={loading}
+              disabled={loading || (isRunning && !activeConfigId)}
               aria-label={isRunning ? "Parar bot" : "Iniciar bot"}
             >
               {loading ? (

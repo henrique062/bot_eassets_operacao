@@ -8,6 +8,25 @@ export interface BotStatus {
   watchlist_count: number
 }
 
+export interface ActiveBotSession {
+  id: number
+  session_name: string
+  active?: boolean
+}
+
+export interface SessionStatus {
+  config: BotConfig
+  positions: Position[]
+  open_positions: number
+  unrealised_pnl: number
+}
+
+export interface BtcStatus {
+  rsi_30m: number | null
+  rsi_1h: number | null
+  is_reset: boolean
+}
+
 export interface Position {
   id: number
   config_id: number

@@ -40,7 +40,7 @@ export default function SignalsPage() {
           <CardContent>
             {btc ? (
               <p className="text-2xl font-bold font-mono text-white">
-                {btc.btc_rsi_30m.toFixed(1)}
+                {(btc.rsi_30m ?? 0).toFixed(1)}
               </p>
             ) : (
               <div className="h-8 w-20 animate-pulse rounded bg-[#2a2d3a]" aria-hidden="true" />
@@ -55,7 +55,7 @@ export default function SignalsPage() {
           <CardContent>
             {btc ? (
               <p className="text-2xl font-bold font-mono text-white">
-                {btc.btc_rsi_1h.toFixed(1)}
+                {(btc.rsi_1h ?? 0).toFixed(1)}
               </p>
             ) : (
               <div className="h-8 w-20 animate-pulse rounded bg-[#2a2d3a]" aria-hidden="true" />
