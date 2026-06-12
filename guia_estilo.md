@@ -1,6 +1,29 @@
 
 ---
 
+## TEMA DA APLICAÇÃO (Dashboard Phoenix Bot) — DARK
+
+> **IMPORTANTE:** o dashboard do Phoenix Bot (`bot_encryptos/frontend`) usa **tema ESCURO**. A paleta clara descrita no restante deste guia vale para landing pages / produtos claros; **dentro do dashboard, todas as telas (inclusive o Painel de Moedas) seguem o tema dark abaixo.** Os princípios (hierarquia, espaçamento múltiplo de 4, minimalismo, fonte) permanecem.
+
+| Token              | Hex       | Uso                                            |
+|--------------------|-----------|------------------------------------------------|
+| Fundo da página    | #0f1117   | Body / fundo geral                             |
+| Card / superfície  | #1a1d27   | Cards, tabelas, banners                        |
+| Superfície 2       | #15171f   | Rodapés de tabela, inputs                      |
+| Borda              | #2a2d3a   | Divisórias, bordas de card                     |
+| Borda de linha     | #23262f   | Linhas de tabela                               |
+| Texto título       | #f3f4f6   | Títulos / destaque                             |
+| Texto corpo        | #d1d5db   | Texto padrão                                   |
+| Texto secundário   | #9ca3af   | Subtextos                                      |
+| Texto terciário    | #6b7280   | Labels, placeholders                           |
+| Primária (accent)  | #6366f1   | Ações, seleção, links (hover #818cf8)          |
+| Positivo / sucesso | #4ade80   | Valores positivos, OK                          |
+| Negativo / erro    | #f87171   | Valores negativos, erro                        |
+| Alerta             | #fbbf24   | RSI, avisos                                    |
+| Roxo (T/OI forte)  | #c084fc   | Acumulação / SM focado                         |
+
+---
+
 ## PRINCÍPIOS FUNDAMENTAIS
 
 - Consistência: elementos de mesma função devem sempre ocupar o mesmo lugar e ter o mesmo estilo visual.

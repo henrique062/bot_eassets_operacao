@@ -29,7 +29,8 @@ export function SignalsTable({ signals }: SignalsTableProps) {
     return <p className="p-5 text-sm text-[#6b7280]">Nenhum sinal disponível.</p>
   }
 
-  const sorted = [...signals].sort((a, b) => b.score - a.score)
+  const n = (v: number | null | undefined) => (typeof v === "number" && Number.isFinite(v) ? v : 0)
+  const sorted = [...signals].sort((a, b) => n(b.score) - n(a.score))
 
   return (
     <Table aria-label="Sinais de mercado">
@@ -50,29 +51,29 @@ export function SignalsTable({ signals }: SignalsTableProps) {
           <TableRow key={signal.symbol}>
             <TableCell className="font-mono font-medium">{signal.symbol}</TableCell>
             <TableCell>
-              <ScoreBar score={signal.score} />
+              <ScoreBar score={n(signal.score)} />
             </TableCell>
             <TableCell
               className={cn(
                 "font-mono",
-                signal.exp_btc_1h >= 0 ? "text-green-400" : "text-red-400"
+                n(signal.exp_btc_1h) >= 0 ? "text-green-400" : "text-red-400"
               )}
             >
-              {signal.exp_btc_1h >= 0 ? "+" : ""}
-              {signal.exp_btc_1h.toFixed(2)}%
+              {n(signal.exp_btc_1h) >= 0 ? "+" : ""}
+              {n(signal.exp_btc_1h).toFixed(2)}%
             </TableCell>
             <TableCell
               className={cn(
                 "font-mono",
-                signal.exp_btc_1d >= 0 ? "text-green-400" : "text-red-400"
+                n(signal.exp_btc_1d) >= 0 ? "text-green-400" : "text-red-400"
               )}
             >
-              {signal.exp_btc_1d >= 0 ? "+" : ""}
-              {signal.exp_btc_1d.toFixed(2)}%
+              {n(signal.exp_btc_1d) >= 0 ? "+" : ""}
+              {n(signal.exp_btc_1d).toFixed(2)}%
             </TableCell>
-            <TableCell className="font-mono">{signal.trades_min.toFixed(0)}</TableCell>
-            <TableCell className="font-mono">{signal.oi_trend.toFixed(2)}</TableCell>
-            <TableCell className="font-mono">{signal.lsr.toFixed(2)}</TableCell>
+            <TableCell className="font-mono">{n(signal.trades_min).toFixed(0)}</TableCell>
+            <TableCell className="font-mono">{n(signal.oi_trend).toFixed(2)}</TableCell>
+            <TableCell className="font-mono">{n(signal.lsr).toFixed(2)}</TableCell>
             <TableCell>
               {signal.filter_passed ? (
                 <span
@@ -85,8 +86,8 @@ export function SignalsTable({ signals }: SignalsTableProps) {
               ) : (
                 <span
                   className="text-red-400 text-base cursor-help"
-                  aria-label={`Filtros reprovados: ${signal.failed_reasons.join(", ")}`}
-                  title={signal.failed_reasons.join(" | ")}
+                  aria-label={`Filtros reprovados: ${(signal.failed_reasons ?? []).join(", ")}`}
+                  title={(signal.failed_reasons ?? []).join(" | ")}
                 >
                   ❌
                 </span>

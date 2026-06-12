@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/analise", label: "Análise Manual", icon: BarChart3 },
+  { href: "/analise", label: "Painel Moedas", icon: BarChart3 },
   { href: "/positions", label: "Posições", icon: TrendingUp },
   { href: "/trades", label: "Trades", icon: History },
   { href: "/signals", label: "Sinais", icon: Zap },

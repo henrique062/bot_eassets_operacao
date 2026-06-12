@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { RefreshCw, Loader2, CheckCircle, XCircle, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,11 @@ import { formatTimeBRT } from "@/lib/utils"
 
 export default function ScraperPage() {
   const { data: status, error, mutate } = usePolling("scraper-status", api.getScraperStatus, 5000)
+  const { data: snapshots, mutate: mutateSnaps } = usePolling(
+    "scraper-history",
+    api.getPanelSnapshots,
+    30000
+  )
   const [triggering, setTriggering] = useState(false)
   const [triggerResult, setTriggerResult] = useState<"ok" | "running" | "error" | null>(null)
 
@@ -21,6 +27,7 @@ export default function ScraperPage() {
       await api.triggerScrape()
       setTriggerResult("ok")
       mutate()
+      mutateSnaps()
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setTriggerResult("running")
@@ -144,6 +151,56 @@ export default function ScraperPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Capturas</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!snapshots ? (
+            <div className="space-y-2 p-5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-9 animate-pulse rounded bg-[#2a2d3a]" aria-hidden="true" />
+              ))}
+            </div>
+          ) : snapshots.length === 0 ? (
+            <p className="p-5 text-sm text-[#6b7280]">Nenhuma captura registrada ainda.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-[#2a2d3a]">
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Data da captura</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Ativos</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Exchange</th>
+                    <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">BTC Reset</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Ver painel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshots.map((s) => (
+                    <tr key={s.id} className="border-b border-[#23262f] hover:bg-[#20232d]">
+                      <td className="px-4 py-2.5 text-left text-sm text-[#d1d5db] tabular-nums">{s.timestamp_brt}</td>
+                      <td className="px-4 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{s.symbols ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-left text-sm text-[#9ca3af]">{s.exchange ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <Badge variant={s.btc_reset ? "danger" : "muted"}>
+                          {s.btc_reset ? "Em reset" : "Normal"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Link href={`/analise/snapshot/${s.id}`} className="text-sm font-semibold text-[#818cf8] hover:underline">
+                          Abrir
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

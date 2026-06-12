@@ -14,8 +14,8 @@ export default function PainelPage() {
   })
 
   const selector = (
-    <div className="flex flex-col justify-between gap-2 rounded-2xl border border-[#EAECF0] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(16,24,40,0.06)] lg:w-72">
-      <label htmlFor="snap" className="text-sm font-semibold text-[#344054]">
+    <div className="flex flex-col justify-between gap-2 rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-5 py-4 lg:w-72">
+      <label htmlFor="snap" className="text-sm font-semibold text-[#f3f4f6]">
         Snapshot
       </label>
       <select
@@ -24,7 +24,7 @@ export default function PainelPage() {
         onChange={(e) => {
           if (e.target.value) window.location.href = `/analise/snapshot/${e.target.value}`
         }}
-        className="h-10 w-full rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#475467] outline-none focus:border-[#6366f1]"
+        className="h-10 w-full rounded-lg border border-[#2a2d3a] bg-[#15171f] px-3 text-sm text-[#d1d5db] outline-none focus:border-[#6366f1]"
       >
         <option value="">
           {data?.meta?.timestamp_brt ? `Atual · ${data.meta.timestamp_brt}` : "Último"}
@@ -35,7 +35,7 @@ export default function PainelPage() {
           </option>
         ))}
       </select>
-      <span className="text-xs text-[#667085]">
+      <span className="text-xs text-[#6b7280]">
         {snapshots?.length ?? 0} snapshots no histórico
       </span>
     </div>

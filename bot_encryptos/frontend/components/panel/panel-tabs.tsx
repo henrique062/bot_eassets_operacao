@@ -27,7 +27,7 @@ export function PanelTabs() {
             style={
               active
                 ? { backgroundColor: "#6366f1", borderColor: "#6366f1", color: "#FFFFFF" }
-                : { backgroundColor: "#FFFFFF", borderColor: "#D0D5DD", color: "#475467" }
+                : { backgroundColor: "#1a1d27", borderColor: "#2a2d3a", color: "#9ca3af" }
             }
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />

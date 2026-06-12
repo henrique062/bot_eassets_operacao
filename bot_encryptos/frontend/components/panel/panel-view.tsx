@@ -40,11 +40,11 @@ export function PanelView({
   }, [rows])
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {error ? (
         <div
           role="alert"
-          className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] px-6 py-4 text-sm text-[#B42318]"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
         >
           Erro ao carregar o painel. Verifique se já existe algum snapshot capturado.
         </div>
@@ -62,12 +62,12 @@ export function PanelView({
         {selector}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#EAECF0] bg-white shadow-[0_8px_24px_rgba(16,24,40,0.06)]">
+      <div className="overflow-hidden rounded-xl border border-[#2a2d3a] bg-[#1a1d27]">
         <div className="overflow-x-auto">
           <PanelTable rows={visible} loading={Boolean(isLoading)} />
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-[#EAECF0] bg-[#FCFCFD] px-5 py-3">
-          <span className="mr-auto text-xs text-[#667085]">
+        <div className="flex flex-wrap items-center gap-2 border-t border-[#2a2d3a] bg-[#15171f] px-5 py-3">
+          <span className="mr-auto text-xs text-[#6b7280]">
             Exibindo {limit === 0 ? "todos os" : `TOP ${limit} de`} {rows.length} ativos
           </span>
           {VIEW_OPTIONS.map((n) => (
@@ -79,7 +79,7 @@ export function PanelView({
               style={
                 limit === n
                   ? { backgroundColor: "#6366f1", borderColor: "#6366f1", color: "#FFFFFF" }
-                  : { backgroundColor: "#FFFFFF", borderColor: "#D0D5DD", color: "#475467" }
+                  : { backgroundColor: "#1a1d27", borderColor: "#2a2d3a", color: "#9ca3af" }
               }
             >
               {n === 0 ? `TODOS (${rows.length})` : `TOP ${n}`}
@@ -103,19 +103,19 @@ export function KpiCard({
   positive?: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-[#EAECF0] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(16,24,40,0.06)]">
-      <p className="text-xs font-medium uppercase tracking-wide text-[#98A2B3]">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums" style={{ color: positive ? "#039855" : "#344054" }}>
+    <div className="rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-5 py-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-[#6b7280]">{label}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums" style={{ color: positive ? "#4ade80" : "#f3f4f6" }}>
         {value}
       </p>
-      <p className="text-xs text-[#667085]">{sub}</p>
+      <p className="text-xs text-[#6b7280]">{sub}</p>
     </div>
   )
 }
 
 const TH = ({ children, left }: { children: ReactNode; left?: boolean }) => (
   <th
-    className={`whitespace-nowrap px-3 py-3 text-[10px] font-semibold uppercase tracking-wide text-[#98A2B3] ${
+    className={`whitespace-nowrap px-3 py-3 text-[10px] font-semibold uppercase tracking-wide text-[#6b7280] ${
       left ? "text-left" : "text-right"
     }`}
   >
@@ -128,7 +128,7 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
     return (
       <div className="space-y-2 p-5">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-9 animate-pulse rounded-lg bg-[#F2F4F7]" aria-hidden="true" />
+          <div key={i} className="h-9 animate-pulse rounded-lg bg-[#2a2d3a]" aria-hidden="true" />
         ))}
       </div>
     )
@@ -136,7 +136,7 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
 
   if (!rows.length) {
     return (
-      <div className="px-5 py-12 text-center text-sm text-[#667085]">
+      <div className="px-5 py-12 text-center text-sm text-[#6b7280]">
         Nenhum dado no snapshot. Dispare uma captura na aba Scraper.
       </div>
     )
@@ -145,7 +145,7 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
   return (
     <table className="w-full border-collapse">
       <thead>
-        <tr className="border-b border-[#EAECF0]">
+        <tr className="border-b border-[#2a2d3a]">
           <TH left>#</TH>
           <TH left>Ativo</TH>
           <TH>Preço</TH>
@@ -169,28 +169,28 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
           const badge = setupBadgeStyle(r.setup)
           const scoreW = Math.max(4, Math.min(100, r.score ?? 0))
           return (
-            <tr key={r.symbol} className="border-b border-[#F2F4F7] hover:bg-[#FCFCFD]">
-              <td className="px-3 py-2.5 text-left text-sm font-semibold text-[#98A2B3] tabular-nums">
+            <tr key={r.symbol} className="border-b border-[#23262f] hover:bg-[#20232d]">
+              <td className="px-3 py-2.5 text-left text-sm font-semibold text-[#6b7280] tabular-nums">
                 {String(r.rank ?? "").padStart(2, "0")}
               </td>
               <td className="px-3 py-2.5 text-left">
-                <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#344054] hover:text-[#6366f1]">
+                <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
                   {r.asset}
                 </Link>
               </td>
-              <td className="px-3 py-2.5 text-right text-sm tabular-nums">{fmtPrice(r.price)}</td>
+              <td className="px-3 py-2.5 text-right text-sm text-[#d1d5db] tabular-nums">{fmtPrice(r.price)}</td>
               <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: colorPN(r.change) }}>
                 {fmtNum(r.change, 2, true)}%
               </td>
               <td className="px-3 py-2.5">
                 <div className="flex items-center justify-end gap-2">
-                  <span className="text-sm font-semibold text-[#344054] tabular-nums">{r.score ?? "—"}</span>
-                  <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#F2F4F7]">
+                  <span className="text-sm font-semibold text-[#f3f4f6] tabular-nums">{r.score ?? "—"}</span>
+                  <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#2a2d3a]">
                     <span className="block h-full rounded-full" style={{ width: `${scoreW}%`, backgroundColor: "#6366f1" }} />
                   </span>
                 </div>
               </td>
-              <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums" style={{ color: (r.entry_score ?? 0) >= 5 ? "#039855" : "#475467" }}>
+              <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums" style={{ color: (r.entry_score ?? 0) >= 5 ? "#4ade80" : "#9ca3af" }}>
                 {r.entry_grade === "SETUP DE OURO" ? "★ " : ""}{r.entry_score ?? 0}/7
               </td>
               <td className="px-3 py-2.5 text-left">
@@ -201,7 +201,7 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
                   {r.setup ?? "—"}
                 </span>
               </td>
-              <td className="px-3 py-2.5 text-right text-sm text-[#667085] tabular-nums">
+              <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">
                 {r.trades == null ? "—" : Math.round(r.trades)}
               </td>
               <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums" style={{ color: colorToi(r.toi) }}>
@@ -211,9 +211,9 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
               <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: colorPN(r.exp4h) }}>{fmtNum(r.exp4h, 2, true)}</td>
               <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: colorPN(r.exp1h) }}>{fmtNum(r.exp1h, 2, true)}</td>
               <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: colorPN(r.oitrend) }}>{fmtNum(r.oitrend, 2, true)}</td>
-              <td className="px-3 py-2.5 text-right text-sm text-[#667085] tabular-nums">{fmtNum(r.lsr, 3)}</td>
-              <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: "#DC6803" }}>{fmtNum(r.rsi4h, 2)}</td>
-              <td className="px-3 py-2.5 text-right text-sm text-[#475467] tabular-nums">{fmtUsd(r.oiusd)}</td>
+              <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{fmtNum(r.lsr, 3)}</td>
+              <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: "#fbbf24" }}>{fmtNum(r.rsi4h, 2)}</td>
+              <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{fmtUsd(r.oiusd)}</td>
             </tr>
           )
         })}

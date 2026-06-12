@@ -13,39 +13,39 @@ export default function TopoPage() {
   const rows = data ?? []
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {error && (
-        <div role="alert" className="rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] px-6 py-4 text-sm text-[#B42318]">
+        <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           Erro ao carregar o Topo Recorrente.
         </div>
       )}
 
-      <div className="rounded-2xl border border-[#EAECF0] bg-white px-6 py-4 text-sm leading-relaxed text-[#667085] shadow-[0_8px_24px_rgba(16,24,40,0.06)]">
-        <span className="font-semibold text-[#344054]">Topo Recorrente: </span>
+      <div className="rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-6 py-4 text-sm leading-relaxed text-[#9ca3af]">
+        <span className="font-semibold text-[#f3f4f6]">Topo Recorrente: </span>
         moedas que mais apareceram no TOP 10 nos últimos snapshots. Recorrência indica força estrutural persistente
         (não foi pico isolado de um único scan).
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#EAECF0] bg-white shadow-[0_8px_24px_rgba(16,24,40,0.06)]">
+      <div className="overflow-hidden rounded-xl border border-[#2a2d3a] bg-[#1a1d27]">
         <div className="overflow-x-auto">
           {isLoading && !rows.length ? (
             <div className="space-y-2 p-5">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-9 animate-pulse rounded-lg bg-[#F2F4F7]" aria-hidden="true" />
+                <div key={i} className="h-9 animate-pulse rounded-lg bg-[#2a2d3a]" aria-hidden="true" />
               ))}
             </div>
           ) : !rows.length ? (
-            <div className="px-5 py-12 text-center text-sm text-[#667085]">
+            <div className="px-5 py-12 text-center text-sm text-[#6b7280]">
               Sem histórico suficiente ainda. Capture mais snapshots ao longo dos dias.
             </div>
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#EAECF0]">
+                <tr className="border-b border-[#2a2d3a]">
                   {["#", "Ativo", "Aparições TOP 10", "Melhor rank", "Rank médio", "Score máx", "Score médio"].map((h, i) => (
                     <th
                       key={h}
-                      className={`px-3 py-3 text-[10px] font-semibold uppercase tracking-wide text-[#98A2B3] ${i < 2 ? "text-left" : "text-right"}`}
+                      className={`px-3 py-3 text-[10px] font-semibold uppercase tracking-wide text-[#6b7280] ${i < 2 ? "text-left" : "text-right"}`}
                     >
                       {h}
                     </th>
@@ -54,18 +54,18 @@ export default function TopoPage() {
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={r.symbol} className="border-b border-[#F2F4F7] hover:bg-[#FCFCFD]">
-                    <td className="px-3 py-2.5 text-left text-sm text-[#98A2B3] tabular-nums">{i + 1}</td>
+                  <tr key={r.symbol} className="border-b border-[#23262f] hover:bg-[#20232d]">
+                    <td className="px-3 py-2.5 text-left text-sm text-[#6b7280] tabular-nums">{i + 1}</td>
                     <td className="px-3 py-2.5 text-left">
-                      <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#344054] hover:text-[#6366f1]">
+                      <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
                         {r.asset}
                       </Link>
                     </td>
-                    <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#344054] tabular-nums">{r.appearances}</td>
-                    <td className="px-3 py-2.5 text-right text-sm text-[#475467] tabular-nums">{r.best_rank ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-right text-sm text-[#475467] tabular-nums">{fmtNum(r.avg_rank, 1)}</td>
-                    <td className="px-3 py-2.5 text-right text-sm text-[#475467] tabular-nums">{r.max_score ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-right text-sm text-[#475467] tabular-nums">{fmtNum(r.avg_score, 1)}</td>
+                    <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#f3f4f6] tabular-nums">{r.appearances}</td>
+                    <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{r.best_rank ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{fmtNum(r.avg_rank, 1)}</td>
+                    <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{r.max_score ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{fmtNum(r.avg_score, 1)}</td>
                   </tr>
                 ))}
               </tbody>

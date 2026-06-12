@@ -27,8 +27,8 @@ export default function SnapshotPage({ params }: { params: Promise<{ id: string 
         Voltar ao painel atual
       </Link>
       {data?.meta?.timestamp_brt && (
-        <p className="text-sm text-[#667085]">
-          Snapshot de <span className="font-semibold text-[#344054]">{data.meta.timestamp_brt}</span>
+        <p className="text-sm text-[#9ca3af]">
+          Snapshot de <span className="font-semibold text-[#f3f4f6]">{data.meta.timestamp_brt}</span>
         </p>
       )}
       <PanelView data={data} error={error} isLoading={isLoading} />
