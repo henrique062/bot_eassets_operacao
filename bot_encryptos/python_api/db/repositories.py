@@ -1,0 +1,316 @@
+"""
+AsyncPG repository layer — all SQL queries live here.
+
+Each function receives a pool (or connection) and returns plain Python
+dicts/lists so that the API layer can serialise them directly.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+import asyncpg
+from loguru import logger
+
+
+# ---------------------------------------------------------------------------
+# Positions
+# ---------------------------------------------------------------------------
+
+async def get_positions(pool: asyncpg.Pool, config_id: int) -> list[dict[str, Any]]:
+    """Return all open positions for a config session."""
+    rows = await pool.fetch(
+        "SELECT * FROM eassets_positions WHERE config_id = $1 ORDER BY created_at DESC",
+        config_id,
+    )
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Trades
+# ---------------------------------------------------------------------------
+
+async def get_trades(
+    pool: asyncpg.Pool,
+    config_id: int,
+    skip: int = 0,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Return paginated closed trades for a config session."""
+    rows = await pool.fetch(
+        """
+        SELECT * FROM eassets_trades
+        WHERE config_id = $1
+        ORDER BY trade_timestamp DESC
+        OFFSET $2 LIMIT $3
+        """,
+        config_id,
+        skip,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_trades_by_symbol(
+    pool: asyncpg.Pool,
+    symbol: str,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    """Return trades for a specific symbol across all sessions."""
+    rows = await pool.fetch(
+        """
+        SELECT * FROM eassets_trades
+        WHERE symbol = $1
+        ORDER BY trade_timestamp DESC
+        LIMIT $2
+        """,
+        symbol,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Logs
+# ---------------------------------------------------------------------------
+
+async def get_logs(
+    pool: asyncpg.Pool,
+    config_id: int,
+    limit: int = 200,
+) -> list[dict[str, Any]]:
+    """Return order event logs for a config session."""
+    rows = await pool.fetch(
+        """
+        SELECT * FROM eassets_order_logs
+        WHERE config_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+        """,
+        config_id,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+async def get_config(pool: asyncpg.Pool, config_id: int) -> dict[str, Any] | None:
+    """Return a single bot config row, or None if not found."""
+    row = await pool.fetchrow(
+        "SELECT * FROM eassets_bot_config WHERE id = $1",
+        config_id,
+    )
+    return dict(row) if row else None
+
+
+async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
+    """Insert a new bot config row and return its generated id."""
+    row = await pool.fetchrow(
+        """
+        INSERT INTO eassets_bot_config (
+            session_name, exchange, capital, balance, leverage,
+            fee_type, fee_rate, min_tpm, min_oi_trend, max_lsr,
+            min_rsi_btc, max_rsi_btc, min_exp_btc, max_positions, min_score,
+            stop_loss_pct, stop_loss_usd, take_profit_pct,
+            trailing_stop_pct, trailing_start_pct, break_even_at_pct,
+            entry_seconds, exit_seconds,
+            pcl_enabled, pcl_cooldown_minutes, pcl_max_attempts,
+            pcl_min_struct_score, pcl_profit_target_usd, user_id
+        ) VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+            $11,$12,$13,$14,$15,$16,$17,$18,
+            $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+        )
+        RETURNING id
+        """,
+        data.get("session_name"),
+        data.get("exchange", "bybit"),
+        data["capital"],
+        data["balance"],
+        data.get("leverage", 5),
+        data.get("fee_type", "maker"),
+        data.get("fee_rate", 0.0002),
+        data.get("min_tpm", 800),
+        data.get("min_oi_trend", 0),
+        data.get("max_lsr", 1.0),
+        data.get("min_rsi_btc"),
+        data.get("max_rsi_btc", 40.0),
+        data.get("min_exp_btc", 0),
+        data.get("max_positions", 5),
+        data.get("min_score", 65.0),
+        data.get("stop_loss_pct"),
+        data.get("stop_loss_usd"),
+        data.get("take_profit_pct"),
+        data.get("trailing_stop_pct"),
+        data.get("trailing_start_pct"),
+        data.get("break_even_at_pct"),
+        data.get("entry_seconds", 30),
+        data.get("exit_seconds", 30),
+        data.get("pcl_enabled", True),
+        data.get("pcl_cooldown_minutes", 30),
+        data.get("pcl_max_attempts", 3),
+        data.get("pcl_min_struct_score", 3),
+        data.get("pcl_profit_target_usd"),
+        data.get("user_id"),
+    )
+    return row["id"]  # type: ignore[index]
+
+
+async def get_active_configs(pool: asyncpg.Pool) -> list[dict[str, Any]]:
+    """Return all active (running) bot config sessions."""
+    rows = await pool.fetch(
+        "SELECT * FROM eassets_bot_config WHERE active = TRUE ORDER BY started_at DESC"
+    )
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Watchlist
+# ---------------------------------------------------------------------------
+
+async def get_watchlist(pool: asyncpg.Pool, config_id: int) -> list[dict[str, Any]]:
+    """Return all watchlist entries for a config session."""
+    rows = await pool.fetch(
+        """
+        SELECT * FROM eassets_watchlist
+        WHERE config_id = $1
+        ORDER BY added_at DESC
+        """,
+        config_id,
+    )
+    return [dict(r) for r in rows]
+
+
+async def remove_from_watchlist(pool: asyncpg.Pool, config_id: int, symbol: str) -> bool:
+    """Remove a symbol from the watchlist. Returns True if a row was deleted."""
+    result = await pool.execute(
+        "DELETE FROM eassets_watchlist WHERE config_id = $1 AND symbol = $2",
+        config_id,
+        symbol,
+    )
+    return result.endswith("1")
+
+
+# ---------------------------------------------------------------------------
+# Snapshots / metrics
+# ---------------------------------------------------------------------------
+
+async def insert_snapshot(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
+    """Insert an eassets_snapshots row and return its id."""
+    row = await pool.fetchrow(
+        """
+        INSERT INTO eassets_snapshots (timestamp, exchange, setup, mode, symbols, source, btc_reset, trigger)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (timestamp) DO UPDATE SET
+            ingested_at = NOW(),
+            source = EXCLUDED.source
+        RETURNING id
+        """,
+        data["timestamp"],
+        data.get("exchange"),
+        data.get("setup"),
+        data.get("mode"),
+        data.get("symbols"),
+        data.get("source", "scraper"),
+        data.get("btc_reset"),
+        data.get("trigger", "auto"),
+    )
+    return row["id"]  # type: ignore[index]
+
+
+async def insert_metrics(
+    pool: asyncpg.Pool,
+    snapshot_id: int,
+    rows: list[dict[str, Any]],
+) -> None:
+    """Batch-insert computed metrics rows for a snapshot."""
+    if not rows:
+        return
+
+    records = [
+        (
+            snapshot_id,
+            r["symbol"],
+            r.get("rank"),
+            r.get("score"),
+            r.get("badge"),
+            r.get("price_raw"),
+            r.get("change"),
+            r.get("exp1d"),
+            r.get("exp4h"),
+            r.get("exp1h"),
+            r.get("oitrend"),
+            r.get("lsr"),
+            r.get("lsrtrend"),
+            r.get("rsi4h"),
+            r.get("oi_usd_raw"),
+            r.get("trades"),
+            r.get("range4h"),
+            r.get("range1d"),
+            r.get("trades1d"),
+            r.get("toi"),
+            r.get("entry_score"),
+            r.get("entry_grade", ""),
+            r.get("raw_json", "{}"),
+        )
+        for r in rows
+    ]
+
+    await pool.executemany(
+        """
+        INSERT INTO eassets_metrics (
+            snapshot_id, symbol, rank, score, setup,
+            price, price_change_1d, exp_1d, exp_4h, exp_1h,
+            oi_trend, lsr, lsr_trend, rsi_4h, oi_usd,
+            trades_min, range_4h, range_1d, trades_1d, toi,
+            setup_score, setup_grade, raw_json
+        ) VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+            $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+            $21,$22,$23
+        )
+        """,
+        records,
+    )
+
+
+async def insert_raw_snapshot(
+    pool: asyncpg.Pool,
+    snapshot_id: int | None,
+    raw_json: str,
+    status: str = "ok",
+    error_msg: str | None = None,
+) -> int:
+    """Insert a raw JSON blob row and return its id."""
+    row = await pool.fetchrow(
+        """
+        INSERT INTO eassets_raw_snapshots (snapshot_id, raw_json, status, error_msg)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+        """,
+        snapshot_id,
+        raw_json,
+        status,
+        error_msg,
+    )
+    return row["id"]  # type: ignore[index]
+
+
+async def get_raw_snapshots(
+    pool: asyncpg.Pool,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Return the most recent raw snapshot records (without the full JSON blob)."""
+    rows = await pool.fetch(
+        """
+        SELECT id, snapshot_id, captured_at, status, error_msg
+        FROM eassets_raw_snapshots
+        ORDER BY captured_at DESC
+        LIMIT $1
+        """,
+        limit,
+    )
+    return [dict(r) for r in rows]

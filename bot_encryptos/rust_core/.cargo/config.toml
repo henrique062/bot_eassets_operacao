@@ -1,0 +1,10 @@
+# Para compilar localmente no Windows, instale as MSVC Build Tools:
+# https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
+# Workload necessário: "Desenvolvimento para desktop com C++"
+#
+# Ou simplesmente compile via Docker (como será feito na VPS):
+#   docker compose up --build
+#
+# Se tiver Cygwin/link.exe conflitando com MSVC link.exe, adicione:
+# [target.x86_64-pc-windows-msvc]
+# linker = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\<version>\\bin\\Hostx64\\x64\\link.exe"

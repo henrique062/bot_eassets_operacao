@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  rust_core:
+    build: ./rust_core
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  python_api:
+    build:
+      context: ./python_api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rust_core:
+        condition: service_started
+
+  eassets_scraper:
+    build:
+      context: ./python_api
+      dockerfile: Dockerfile.scraper
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - python_api
+    environment:
+      - EASSETS_INTERVAL_SECONDS=1800
+      - EASSETS_AUTO_ENABLED=1
+      - EASSETS_HEADLESS=1
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./python_api/db/migrations/001_create_eassets_tables.sql:/docker-entrypoint-initdb.d/001.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - python_api
+
+volumes:
+  postgres_data:

@@ -1,0 +1,8 @@
+.env
+.env.local
+__pycache__/
+*.pyc
+*.pyo
+target/
+postgres_data/
+*.db
