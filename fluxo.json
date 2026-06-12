@@ -1,0 +1,338 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fundtrader",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2224,
+        400
+      ],
+      "id": "2e0f281a-869c-4888-88bc-77109221b217",
+      "name": "Webhook",
+      "webhookId": "b7a8f6b5-1d16-4565-9bef-db34008b82e1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4c784a02-4553-4c63-b979-738d575547d7",
+              "name": "evento",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "902f9543-4cd9-4479-93ad-12d00ede5a53",
+              "name": "user.id",
+              "value": "={{ $json.body.user.id }}",
+              "type": "number"
+            },
+            {
+              "id": "d9f15d10-03bb-4ab2-9694-73af4b0e8f95",
+              "name": "user.email",
+              "value": "={{ $json.body.user.email }}",
+              "type": "string"
+            },
+            {
+              "id": "96918840-7c57-4fef-94ad-a61a3eac8885",
+              "name": "exchange",
+              "value": "={{ $json.body.bot_config.exchange }}",
+              "type": "string"
+            },
+            {
+              "id": "7d268455-b30c-4401-8e0f-8d7f98f97eb1",
+              "name": "trade.entryPrice",
+              "value": "={{ $json.body.trade.entryPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "5c7fb65f-f51c-4d96-8079-7da20ee90f14",
+              "name": "trade.exitPrice",
+              "value": "={{ $json.body.trade.exitPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "92b5713e-1953-4ced-84bc-feaa1799e028",
+              "name": "trade.LucroPorcentagem",
+              "value": "={{ $json.body.trade.totalPnlPct }}",
+              "type": "number"
+            },
+            {
+              "id": "3782e83d-11a5-4c62-969e-efda0a6e698b",
+              "name": "trade.lucroDolar",
+              "value": "={{ $json.body.trade.totalPnl }}",
+              "type": "number"
+            },
+            {
+              "id": "5e1d121b-1146-469a-a5f7-dcf2ef0d12f1",
+              "name": "trade.motivoFechamento",
+              "value": "={{ $json.body.trade.closeReason }}",
+              "type": "string"
+            },
+            {
+              "id": "f720d98a-95e1-4de4-9a74-fc19cfa69ba1",
+              "name": "trade.openTime",
+              "value": "={{ $json.body.trade.openTime }}",
+              "type": "string"
+            },
+            {
+              "id": "e2462d00-a04e-4588-8eca-1d8dc24fc7f6",
+              "name": "trade.closeTime",
+              "value": "={{ $json.body.trade.closeTime }}",
+              "type": "string"
+            },
+            {
+              "id": "b4b615b0-0f5b-4054-aa23-47d564b5c33b",
+              "name": "trade.symbol",
+              "value": "={{ $json.body.trade.symbol }}",
+              "type": "string"
+            },
+            {
+              "id": "5c6af183-5c02-46db-bbea-8cd519a387a2",
+              "name": "trade.direction",
+              "value": "={{ $json.body.trade.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-1111-2222-3333-444455556666",
+              "name": "leverage",
+              "value": "={{ $json.body.bot_config.leverage }}",
+              "type": "number"
+            },
+            {
+              "id": "a1b2c3d4-1111-2222-3333-444455557777",
+              "name": "operationMode",
+              "value": "={{ $json.body.bot_config.operationMode }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-1111-2222-3333-444455558888",
+              "name": "trade.size",
+              "value": "={{ $json.body.trade.size }}",
+              "type": "number"
+            },
+            {
+              "id": "a1b2c3d4-1111-2222-3333-444455559999",
+              "name": "trade.value",
+              "value": "={{ $json.body.trade.value }}",
+              "type": "number"
+            },
+            {
+              "id": "a1b2c3d4-1111-2222-3333-44445555aaaa",
+              "name": "trade.fundingRatePct",
+              "value": "={{ $json.body.trade.fundingRatePct }}",
+              "type": "number"
+            },
+            {
+              "id": "2674907e-39a1-4cc7-bcce-981216a3ea99",
+              "name": "trade.margin",
+              "value": "={{ $json.body.trade.margin ?? $json.body.trade.entryMargin }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2432,
+        400
+      ],
+      "id": "dfc79802-345f-4aaf-b676-2ab241b9985f",
+      "name": "dados"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const json = item.json || {};\n\n   \n  // Evento\n  const event = json.evento || \"UNKNOWN\";\n  \n  // Usuário\n  const userEmail = (json.user && json.user.email) ? json.user.email : \"Desconhecido\";\n  \n  // Exchange\n  const exchange = json.exchange || \"Desconhecida\";\n  \n  // Bot Config\n  const leverage = json.leverage || \"N/A\";\n  const operationMode = json.operationMode || \"N/A\";\n  \n  // Mapeamento de modos\n  const modeNames = { \"auto_expiring\": \"Sniping\", \"counter_trend\": \"Contra Tend\\u00eancia\", \"manual\": \"Manual\" };\n  const modeDisplay = modeNames[operationMode] || operationMode;\n  \n  // Dados do Trade\n  const trade = json.trade || {};\n  const symbol = trade.symbol || \"N/A\";\n  const direction = trade.direction || \"N/A\";\n  const dirEmoji = direction === \"LONG\" ? \"🟢\" : \"🔴\";\n  \n  const entryPrice = trade.entryPrice !== undefined ? trade.entryPrice : \"N/A\";\n  const exitPrice = trade.exitPrice !== undefined ? trade.exitPrice : \"N/A\";\n  const size = trade.size !== undefined ? trade.size : \"N/A\";\n  const value = trade.value !== undefined ? Number(trade.value).toFixed(2) : \"N/A\";\n  const fundingRatePct = trade.fundingRatePct !== undefined ? Number(trade.fundingRatePct).toFixed(4) : \"N/A\";\n\n  // Motivo: aceitar a nova margem do webhook (trade.margin) sem quebrar payloads legados.\n  const margin = trade.margin !== undefined && trade.margin !== null ? Number(trade.margin).toFixed(4) : \"N/A\";\n  \n  const totalPnl = trade.lucroDolar !== undefined ? trade.lucroDolar : undefined;\n  const totalPnlPct = trade.LucroPorcentagem !== undefined ? trade.LucroPorcentagem : undefined;\n  \n  const closeReason = trade.motivoFechamento || \"N/A\";\n  const openTime = trade.openTime || \"N/A\";\n  const closeTime = trade.closeTime || \"N/A\";\n  \n  // Mapeamento de motivos de fechamento\n  const reasonNames = { \"funding\": \"Funding Rate\", \"timeout\": \"Timeout\", \"stop_loss_pct\": \"Stop Loss %\", \"stop_loss_usd\": \"Stop Loss $\", \"trailing_stop\": \"Trailing Stop\", \"take_profit_target\": \"Take Profit\", \"exchange_sync\": \"Sync Exchange\", \"manual\": \"Manual\" };\n  \n  let msg = ``;\n  \n  if (event === \"OPEN\") {\n    msg += `🚀 *Operação aberta*\\n`;\n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n\\n`;\n    msg += `👤 *Usuário:* ${userEmail}\\n`;\n    msg += `📊 *Exchange:* ${exchange.toUpperCase()}\\n`;\n    msg += `⚙️ *Modo:* ${modeDisplay}\\n`;\n    msg += `🏦 *Alavancagem:* ${leverage}x\\n\\n`;\n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n`;\n    msg += `${dirEmoji} *Par:* ${symbol}\\n`;\n    msg += `🧭 *Direção:* ${direction}\\n`;\n    msg += `💵 *Preço de Entrada:* $${entryPrice}\\n`;\n    msg += `📦 *Quantidade:* ${size}\\n`;\n    msg += `💰 *Valor Posição:* $${value}\\n`;\n    msg += `*Margem:* $${margin}\\n`;\n    msg += `📉 *Funding Rate:* ${fundingRatePct}%\\n\\n`;\n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n`;\n    msg += `⏱️ *Horário:* ${openTime}\\n\\n`;\n    msg += `🤖 _Vorxia Bot_`;\n  } else if (event === \"CLOSED\") {\n    const isProfit = (totalPnl !== undefined && Number(totalPnl) >= 0);\n    const icon = isProfit ? \"✅\" : \"❌\";\n    const resultText = isProfit ? \"LUCRO\" : \"PREJUÍZO\";\n    const reasonDisplay = reasonNames[closeReason] || closeReason;\n    \n    msg += `${icon} *Op Fechada — ${resultText}* ${icon}\\n`;\n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n\\n`;\n    msg += `👤 *Usuário:* ${userEmail}\\n`;\n    msg += `📊 *Exchange:* ${exchange.toUpperCase()}\\n`;\n    msg += `⚙️ *Modo:* ${modeDisplay}\\n`;\n    msg += `🏦 *Alavancagem:* ${leverage}x\\n\\n`;\n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n`;\n    msg += `${dirEmoji} *Par:* ${symbol}\\n`;\n    msg += `🧭 *Direção:* ${direction}\\n`;\n    msg += `💵 *Entrada:* $${entryPrice}\\n`;\n    msg += `💵 *Saída:* $${exitPrice}\\n`;\n    msg += `*Margem:* $${margin}\\n\\n`;\n    \n    const pnlFormatted = totalPnl !== undefined ? Number(totalPnl).toFixed(4) : \"0.0000\";\n    const pnlPctFormatted = totalPnlPct !== undefined ? Number(totalPnlPct).toFixed(2) : \"0.00\";\n    \n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n`;\n    msg += `💵 *Resultado:* $${pnlFormatted}\\n`;\n    msg += `📊 *Resultado %:* ${pnlPctFormatted}%\\n`;\n    msg += `📌 *Motivo:* ${reasonDisplay}\\n\\n`;\n    \n    msg += `━━━━━━━━━━━━━━━━━━━━━\\n`;\n    msg += `⏱️ *Abertura:* ${openTime}\\n`;\n    msg += `🛑 *Fechamento:* ${closeTime}\\n\\n`;\n    msg += `🤖 _Vorxia Bot_`;\n  } else {\n    msg += `🔔 *Novo Evento: ${event}*\\n\\n`;\n    msg += `👤 *Usuário:* ${userEmail}\\n`;\n    msg += `📈 *Par:* ${symbol}`;\n  }\n  \n  item.json.whatsappMessage = msg;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        400
+      ],
+      "id": "779f392e-8ab7-42af-bfd3-7e06ce91614f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c856eb4d-6af7-404f-a08b-79672006b6b5",
+              "name": "whatsappMessage",
+              "value": "={{ $json.whatsappMessage }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2848,
+        400
+      ],
+      "id": "1c2af68c-cfd9-49d4-8635-f524525bba5d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backstage.uazapi.com/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "7ec6bd0c-bcb4-4010-8439-6c0838d64962"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=6281939565"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.whatsappMessage }}"
+            },
+            {
+              "name": "readchat",
+              "value": "={{ true }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4a4379d6-afb6-45c1-aded-2b52c971b312",
+      "name": "ENVIA MENSAGEM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3104,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dados": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "ENVIA MENSAGEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "bot.vorxia.pro",
+          "user-agent": "Python/3.12 aiohttp/3.13.3",
+          "content-length": "654",
+          "accept": "*/*",
+          "accept-encoding": "gzip, deflate",
+          "content-type": "application/json",
+          "x-forwarded-for": "172.18.0.1",
+          "x-forwarded-host": "bot.vorxia.pro",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "3fc08d40e26e",
+          "x-real-ip": "172.18.0.1"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "event": "CLOSED",
+          "timestamp": "2026-02-26T16:32:53.111953+00:00",
+          "user": {
+            "id": 1,
+            "email": "henriquedev062@gmail.com"
+          },
+          "bot_config": {
+            "config_id": 43,
+            "exchange": "binance",
+            "leverage": 5,
+            "operationMode": "counter_trend"
+          },
+          "trade": {
+            "trade_id": 214,
+            "symbol": "STEEMUSDT",
+            "direction": "SHORT",
+            "entryPrice": 0.06344,
+            "exitPrice": 0.06558,
+            "size": 467,
+            "fundingRatePct": 0,
+            "fundingPnl": 0,
+            "pricePnl": -0.99938,
+            "pricePnlPct": -16.797375,
+            "feeCost": 0.000043,
+            "totalPnl": -0.999423,
+            "totalPnlPct": -16.798106,
+            "entryMargin": 5.949620052,
+            "closeReason": "stop_loss_usd",
+            "openTime": "26/02/2026 13:00:06",
+            "closeTime": "26/02/2026 13:32:46"
+          }
+        },
+        "webhookUrl": "https://bot.vorxia.pro/webhook/fundtrader",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "294247a0746ad52f218dd92699c20e4f290b1fb208f96cfa36348cc582272a5a"
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gemini Image Generator"
+  short_description: "Generate and edit images with Gemini API"
+  default_prompt: "Generate or edit an image with gemini-2.5-flash-image and save the output file."

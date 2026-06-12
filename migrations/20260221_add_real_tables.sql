@@ -1,0 +1,62 @@
+CREATE TABLE IF NOT EXISTS real_config (
+    id              SERIAL          PRIMARY KEY,
+    session_name    VARCHAR(100)    NOT NULL DEFAULT 'default',
+    symbols         TEXT[]          NOT NULL DEFAULT '{}',
+    capital         NUMERIC(18, 8)  NOT NULL DEFAULT 100.0 CHECK (capital > 0),
+    balance         NUMERIC(18, 8)  NOT NULL DEFAULT 100.0,
+    leverage        SMALLINT        NOT NULL DEFAULT 1 CHECK (leverage BETWEEN 1 AND 20),
+    fee_type        VARCHAR(10)     NOT NULL DEFAULT 'maker' CHECK (fee_type IN ('maker', 'taker')),
+    fee_rate        NUMERIC(10, 6)  NOT NULL DEFAULT 0.0002 CHECK (fee_rate >= 0),
+    auto_mode       BOOLEAN         NOT NULL DEFAULT TRUE,
+    exchange        VARCHAR(20)     NOT NULL DEFAULT 'binance' CHECK (exchange IN ('binance', 'bybit')),
+    active          BOOLEAN         NOT NULL DEFAULT FALSE,
+    stop_loss_pct   NUMERIC(10, 2)  NULL,
+    stop_loss_usd   NUMERIC(18, 2)  NULL,
+    min_profit_pct  NUMERIC(10, 2)  NULL,
+    entry_seconds   SMALLINT        NOT NULL DEFAULT 30,
+    exit_seconds    SMALLINT        NOT NULL DEFAULT 30,
+    started_at      TIMESTAMPTZ     NULL,
+    ended_at        TIMESTAMPTZ     NULL,
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS real_positions (
+    id                  SERIAL          PRIMARY KEY,
+    config_id           INTEGER         NOT NULL REFERENCES real_config(id) ON DELETE CASCADE,
+    symbol              VARCHAR(30)     NOT NULL,
+    direction           VARCHAR(5)      NOT NULL CHECK (direction IN ('LONG', 'SHORT')),
+    entry_price         NUMERIC(24, 8)  NOT NULL CHECK (entry_price > 0),
+    size                NUMERIC(24, 8)  NOT NULL CHECK (size > 0),
+    value               NUMERIC(24, 8)  NOT NULL CHECK (value > 0),
+    funding_rate        NUMERIC(14, 8)  NOT NULL DEFAULT 0,
+    funding_rate_pct    NUMERIC(14, 6)  NOT NULL DEFAULT 0,
+    open_time           VARCHAR(30)     NULL,
+    open_timestamp      BIGINT          NOT NULL,
+    exchange            VARCHAR(20)     NOT NULL DEFAULT 'binance',
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS real_trades (
+    id                  BIGSERIAL       PRIMARY KEY,
+    config_id           INTEGER         NOT NULL REFERENCES real_config(id) ON DELETE CASCADE,
+    symbol              VARCHAR(30)     NOT NULL,
+    direction           VARCHAR(5)      NOT NULL CHECK (direction IN ('LONG', 'SHORT')),
+    entry_price         NUMERIC(24, 8)  NOT NULL,
+    exit_price          NUMERIC(24, 8)  NOT NULL,
+    funding_rate        NUMERIC(14, 6)  NOT NULL,
+    funding_pnl         NUMERIC(18, 6)  NOT NULL DEFAULT 0,
+    price_pnl           NUMERIC(18, 6)  NOT NULL DEFAULT 0,
+    fee_cost            NUMERIC(18, 6)  NOT NULL DEFAULT 0 CHECK (fee_cost >= 0),
+    total_pnl           NUMERIC(18, 6)  NOT NULL DEFAULT 0,
+    total_pnl_pct       NUMERIC(14, 6)  NOT NULL DEFAULT 0,
+    balance_after       NUMERIC(18, 6)  NOT NULL,
+    open_time           VARCHAR(30)     NULL,
+    close_time          VARCHAR(30)     NULL,
+    trade_timestamp     BIGINT          NOT NULL,
+    exchange            VARCHAR(20)     NOT NULL DEFAULT 'binance',
+    close_reason        VARCHAR(50)     NULL,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);

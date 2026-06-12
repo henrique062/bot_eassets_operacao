@@ -1,0 +1,30 @@
+    session = _sessions.get(session_id)
+    if not session:
+        raise ValueError("Sessão ativa não carregada no runtime. Reinicie o bot e tente novamente.")
+
+    session_cfg = session.get("config", {})
+    session_symbols = [
+        str(s).upper()
+        for s in (session_cfg.get("symbols") or row.get("symbols") or [])
+        if str(s or "").strip()
+    ]
+    if not session_symbols:
+        raise ValueError("Este bot não possui símbolos configurados para disparo.")
+
+    selected_symbol = str(symbol or session_symbols[0]).upper().strip()
+    if selected_symbol not in session_symbols:
+        raise ValueError(f"Símbolo '{selected_symbol}' não pertence a este bot.")
+
+    positions = session.get("positions", {})
+    if selected_symbol in positions:
+        raise ValueError(f"Já existe posição aberta para {selected_symbol}.")
+
+    pending = session.setdefault("pending_snipes", set())
+    if selected_symbol in pending:
+        raise ValueError(f"{selected_symbol} já está com disparo pendente.")
+
+    exchange_name = str(session_cfg.get("exchange") or row.get("exchange") or "binance").lower()
+    operation_mode = str(session_cfg.get("operationMode") or row.get("operation_mode") or "manual")
+
+    if exchange_name == "bybit":
+        import bybit_service as service

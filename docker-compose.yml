@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  # Comentário de controle: microserviço dedicado para agregação de métricas avançadas da Coinalyze.
+  coinalyze-metrics:
+    build:
+      context: ./coinalyze_service
+    ports:
+      - "8010:8010"
+    environment:
+      - COINALYZE_API_KEY=${COINALYZE_API_KEY}
+      - COINALYZE_BASE_URL=${COINALYZE_BASE_URL:-https://api.coinalyze.net/v1}
+      - COINALYZE_DEFAULT_SYMBOLS=${COINALYZE_DEFAULT_SYMBOLS:-6}
+      - COINALYZE_MAX_SYMBOLS=${COINALYZE_MAX_SYMBOLS:-8}
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3-flash-preview}
+      - DATABASE_URL=${DATABASE_URL}
+      - COINALYZE_SERVICE_URL=${COINALYZE_SERVICE_URL:-http://coinalyze-metrics:8010}
+    depends_on:
+      - coinalyze-metrics
+    restart: unless-stopped
+
+  telegram-alert-bot:
+    build:
+      context: ./telegram_alert_bot
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-3}
+      - START_FROM_LATEST=${START_FROM_LATEST:-true}
+      - RECONNECT_DELAY_SECONDS=${RECONNECT_DELAY_SECONDS:-5}
+      - FILTER_USER_IDS=${FILTER_USER_IDS:-}
+      - TELEGRAM_PARSE_MODE=${TELEGRAM_PARSE_MODE:-HTML}
+    restart: unless-stopped

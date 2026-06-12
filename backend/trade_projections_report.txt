@@ -1,0 +1,286 @@
+====================================================================================================
+SIMULAÇÃO DE PROJEÇÕES — COMO RECUPERAR TRADES NEGATIVOS
+Data: 2026-02-24 18:52 UTC
+====================================================================================================
+
+================================================================================
+1. TODOS OS TRADES NEGATIVOS COM CONTEXTO HISTÓRICO
+================================================================================
+
+  Total de trades negativos: 29
+
+  Trade #55 — BULLAUSDT (SHORT)
+    PnL: $-2.3957 | Fund: $+0.0000 | PricePnL%: -37.508% | Fees: $0.0235
+    Motivo: stop_loss_pct | Entry: 0.027660 → Exit: 0.029680
+    Snapshot: AvgFR: +0.0132% | Vol24h: $273,550,701 | Volat: 8.86% | StdFR: 0.0058
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #56 — BULLAUSDT (SHORT)
+    PnL: $-2.1302 | Fund: $+0.0000 | PricePnL%: -35.357% | Fees: $0.0309
+    Motivo: stop_loss_pct | Entry: 0.027590 → Exit: 0.029570
+    Snapshot: AvgFR: +0.0132% | Vol24h: $273,550,701 | Volat: 8.86% | StdFR: 0.0058
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #66 — POWERUSDT (SHORT)
+    PnL: $-1.8241 | Fund: $+0.0000 | PricePnL%: -26.157% | Fees: $0.0245
+    Motivo: stop_loss_pct | Entry: 0.367170 → Exit: 0.386730
+    Snapshot: AvgFR: -0.0015% | Vol24h: $148,221,924 | Volat: 17.04% | StdFR: 0.0130
+    → ⚠️ Alta volatilidade no snapshot (17.0%) — Score deveria bloquear
+
+  Trade #67 — BULLAUSDT (LONG)
+    PnL: $-1.7680 | Fund: $+0.7799 | PricePnL%: -32.578% | Fees: $0.0370
+    Motivo: stop_loss_pct | Entry: 0.035196 → Exit: 0.032886
+    Snapshot: AvgFR: +0.0132% | Vol24h: $273,550,701 | Volat: 8.86% | StdFR: 0.0058
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #75 — BULLAUSDT (LONG)
+    PnL: $-1.6152 | Fund: $+0.6948 | PricePnL%: -33.301% | Fees: $0.0232
+    Motivo: stop_loss_pct | Entry: 0.030050 → Exit: 0.028070
+    Snapshot: AvgFR: +0.0132% | Vol24h: $273,550,701 | Volat: 8.86% | StdFR: 0.0058
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #80 — SKRUSDT (SHORT)
+    PnL: $-0.5428 | Fund: $+0.0000 | PricePnL%: -7.436% | Fees: $0.0342
+    Motivo: trailing_stop | Entry: 0.023486 → Exit: 0.023838
+    Snapshot: AvgFR: -0.0276% | Vol24h: $253,882,930 | Volat: -3.35% | StdFR: 0.0118
+    → Trailing 3% teria cortado ANTES do prejuízo total
+
+  Trade #83 — FOGOUSDT (SHORT)
+    PnL: $-0.4804 | Fund: $+0.0000 | PricePnL%: -6.773% | Fees: $0.0172
+    Motivo: exchange_sync | Entry: 0.027410 → Exit: 0.027780
+    Snapshot: AvgFR: +0.0049% | Vol24h: $389,968,939 | Volat: 3.76% | StdFR: 0.0008
+    → Trailing 3% teria cortado ANTES do prejuízo total
+
+  Trade #82 — FOGOUSDT (SHORT)
+    PnL: $-0.4748 | Fund: $+0.0000 | PricePnL%: -6.589% | Fees: $0.0241
+    Motivo: trailing_stop | Entry: 0.027410 → Exit: 0.027770
+    Snapshot: AvgFR: +0.0049% | Vol24h: $389,968,939 | Volat: 3.76% | StdFR: 0.0008
+    → Trailing 3% teria cortado ANTES do prejuízo total
+
+  Trade #74 — BULLAUSDT (SHORT)
+    PnL: $-0.4164 | Fund: $+0.0000 | PricePnL%: -6.312% | Fees: $0.0159
+    Motivo: exchange_sync | Entry: 0.029509 → Exit: 0.029880
+    Snapshot: AvgFR: +0.0132% | Vol24h: $273,550,701 | Volat: 8.86% | StdFR: 0.0058
+    → Trailing 3% teria cortado ANTES do prejuízo total
+
+  Trade #60 — STEEMUSDT (SHORT)
+    PnL: $-0.2796 | Fund: $-0.3993 | PricePnL%: +1.993% | Fees: $0.0063
+    Motivo: exchange_sync | Entry: 0.057650 → Exit: 0.057420
+    Snapshot: AvgFR: -0.0222% | Vol24h: $27,577,195 | Volat: -1.12% | StdFR: 0.0195
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #6 — AZTECUSDT (LONG)
+    PnL: $-0.1994 | Fund: $+0.0184 | PricePnL%: -2.960% | Fees: $0.0070
+    Motivo: stop_loss_pct | Entry: 0.033280 → Exit: 0.032290
+    Snapshot: AvgFR: -0.1788% | Vol24h: $11,081,558,267 | Volat: 9.40% | StdFR: 0.0519
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #21 — AWEUSDT (SHORT)
+    PnL: $-0.1819 | Fund: $+0.0000 | PricePnL%: -2.486% | Fees: $0.0304
+    Motivo: stop_loss_pct | Entry: 0.054110 → Exit: 0.054380
+    Snapshot: AvgFR: -1.0834% | Vol24h: $303,306,462 | Volat: -2.46% | StdFR: 0.0943
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #22 — LAUSDT (SHORT)
+    PnL: $-0.1618 | Fund: $+0.0000 | PricePnL%: -2.153% | Fees: $0.0306
+    Motivo: stop_loss_pct | Entry: 0.232400 → Exit: 0.233400
+    Snapshot: AvgFR: -0.0623% | Vol24h: $23,476,621 | Volat: 4.95% | StdFR: 0.0313
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #18 — AGLDUSDT (SHORT)
+    PnL: $-0.1374 | Fund: $+0.0000 | PricePnL%: -1.817% | Fees: $0.0296
+    Motivo: stop_loss_pct | Entry: 0.384100 → Exit: 0.385500
+    Snapshot: AvgFR: -0.3640% | Vol24h: $84,649,822 | Volat: 18.70% | StdFR: 0.3502
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+    → ⚠️ Alta volatilidade no snapshot (18.7%) — Score deveria bloquear
+
+  Trade #35 — AZTECUSDT (LONG)
+    PnL: $-0.0990 | Fund: $+0.0263 | PricePnL%: -1.232% | Fees: $0.0076
+    Motivo: stop_loss_pct | Entry: 0.027600 → Exit: 0.027430
+    Snapshot: AvgFR: -0.1788% | Vol24h: $11,081,558,267 | Volat: 9.40% | StdFR: 0.0519
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #57 — AWEUSDT (SHORT)
+    PnL: $-0.0958 | Fund: $-0.0720 | PricePnL%: +0.098% | Fees: $0.0297
+    Motivo: timeout | Entry: 0.050910 → Exit: 0.050900
+    Snapshot: AvgFR: -1.0834% | Vol24h: $303,306,462 | Volat: -2.46% | StdFR: 0.0943
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #23 — DUSKUSDT (SHORT)
+    PnL: $-0.0951 | Fund: $+0.0000 | PricePnL%: -1.062% | Fees: $0.0304
+    Motivo: timeout | Entry: 0.079890 → Exit: 0.080060
+    Snapshot: AvgFR: -0.7998% | Vol24h: $101,157,835 | Volat: -5.71% | StdFR: 0.3065
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #16 — BERAUSDT (LONG)
+    PnL: $-0.0941 | Fund: $+0.0067 | PricePnL%: -1.599% | Fees: $0.0059
+    Motivo: stop_loss_pct | Entry: 0.586400 → Exit: 0.577000
+    Snapshot: AvgFR: -0.0378% | Vol24h: $30,301,230 | Volat: -2.61% | StdFR: 0.0246
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #43 — BOBUSDT (SHORT)
+    PnL: $-0.0842 | Fund: $+0.0000 | PricePnL%: -0.864% | Fees: $0.0309
+    Motivo: timeout | Entry: 0.005266 → Exit: 0.005276
+    Snapshot: AvgFR: -0.0696% | Vol24h: $183,184,622 | Volat: 0.35% | StdFR: 0.0042
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #48 — BOBUSDT (SHORT)
+    PnL: $-0.0716 | Fund: $+0.0000 | PricePnL%: -0.706% | Fees: $0.0297
+    Motivo: timeout | Entry: 0.005265 → Exit: 0.005274
+    Snapshot: AvgFR: -0.0696% | Vol24h: $183,184,622 | Volat: 0.35% | StdFR: 0.0042
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #44 — STABLEUSDT (SHORT)
+    PnL: $-0.0593 | Fund: $+0.0000 | PricePnL%: -0.462% | Fees: $0.0308
+    Motivo: timeout | Entry: 0.028186 → Exit: 0.028201
+    Snapshot: AvgFR: -0.0282% | Vol24h: $344,067,304 | Volat: -1.50% | StdFR: 0.0140
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #53 — ONTUSDT (LONG)
+    PnL: $-0.0535 | Fund: $+0.1157 | PricePnL%: -2.469% | Fees: $0.0284
+    Motivo: funding | Entry: 0.040500 → Exit: 0.040300
+    Snapshot: AvgFR: -0.0116% | Vol24h: $22,785,492 | Volat: 0.93% | StdFR: 0.0177
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #27 — AZTECUSDT (LONG)
+    PnL: $-0.0518 | Fund: $+0.0123 | PricePnL%: -1.210% | Fees: $0.0066
+    Motivo: stop_loss_pct | Entry: 0.028100 → Exit: 0.027930
+    Snapshot: AvgFR: -0.1788% | Vol24h: $11,081,558,267 | Volat: 9.40% | StdFR: 0.0519
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #47 — STABLEUSDT (SHORT)
+    PnL: $-0.0507 | Fund: $+0.0000 | PricePnL%: -0.355% | Fees: $0.0296
+    Motivo: timeout | Entry: 0.028163 → Exit: 0.028195
+    Snapshot: AvgFR: -0.0282% | Vol24h: $344,067,304 | Volat: -1.50% | StdFR: 0.0140
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #24 — SOMIUSDT (SHORT)
+    PnL: $-0.0305 | Fund: $+0.0000 | PricePnL%: +0.000% | Fees: $0.0305
+    Motivo: timeout | Entry: 0.202000 → Exit: 0.202000
+    Snapshot: AvgFR: +0.0026% | Vol24h: $32,100,612 | Volat: 0.82% | StdFR: 0.0021
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #29 — DUSKUSDT (LONG)
+    PnL: $-0.0267 | Fund: $+0.0343 | PricePnL%: -1.083% | Fees: $0.0095
+    Motivo: stop_loss_pct | Entry: 0.081320 → Exit: 0.080880
+    Snapshot: AvgFR: -0.7998% | Vol24h: $101,157,835 | Volat: -5.71% | StdFR: 0.3065
+    → RECUPERÁVEL com 5% stop (preço voltaria)
+
+  Trade #17 — AWEUSDT (SHORT)
+    PnL: $-0.0183 | Fund: $+0.0000 | PricePnL%: +0.191% | Fees: $0.0297
+    Motivo: timeout | Entry: 0.052420 → Exit: 0.052400
+    Snapshot: AvgFR: -1.0834% | Vol24h: $303,306,462 | Volat: -2.46% | StdFR: 0.0943
+    → Perda inevitável (movimento forte do mercado)
+
+  Trade #37 — POWERUSDT (LONG)
+    PnL: $-0.0146 | Fund: $+0.4670 | PricePnL%: -9.597% | Fees: $0.0234
+    Motivo: timeout | Entry: 0.429690 → Exit: 0.421360
+    Snapshot: AvgFR: -0.0015% | Vol24h: $148,221,924 | Volat: 17.04% | StdFR: 0.0130
+    → Trailing 3% teria cortado ANTES do prejuízo total
+    → ⚠️ Alta volatilidade no snapshot (17.0%) — Score deveria bloquear
+
+  Trade #32 — AZTECUSDT (LONG)
+    PnL: $-0.0045 | Fund: $+0.0188 | PricePnL%: -0.142% | Fees: $0.0096
+    Motivo: funding | Entry: 0.028000 → Exit: 0.027960
+    Snapshot: AvgFR: -0.1788% | Vol24h: $11,081,558,267 | Volat: 9.40% | StdFR: 0.0519
+    → Perda inevitável (movimento forte do mercado)
+
+================================================================================
+RESUMO DA SIMULAÇÃO
+================================================================================
+  Total de trades negativos:       29
+  Perda total:                     $-13.4575
+  Trades RECUPERÁVEIS (com stop mais largo): 8
+  Valor recuperável:               $+0.9521
+  Perda residual (inevitável):     $+12.5054
+
+================================================================================
+2. PROJEÇÃO: CONFIGURAÇÃO ÓTIMA BASEADA NOS DADOS
+================================================================================
+
+  Bot mais lucrativo: #36 (TAKE Funding R)
+    PnL: $+8.3026 | Trades: 14 | WR: 79%
+    Config: leverage=5x, SL=30.0%, TP=2.5%, mode=counter_trend
+    Entry: 2s, Exit: 20000s, MinScore: 50
+
+  Bot mais prejudicial: #40 (TAKE FD 24-02 - 12-56)
+    PnL: $-0.8254 | Trades: 7 | WR: 57%
+    Config: leverage=5x, SL=15.0%, TP=2.5%, mode=counter_trend
+    Entry: 1s, Exit: 20000s, MinScore: 50
+
+  PnL por Bot:
+    Bot #36 TAKE Funding R            | counter_trend     |  14T | WR: 79% | PnL: $+8.3026 | SL:30.0% | TP:2.5% | TS:0.0% | Lev:5x | MinSc:50
+    Bot #32 Ao contrario ?            | counter_trend     |   7T | WR: 71% | PnL: $+2.1024 | SL:0.0% | TP:3.0% | TS:0.0% | Lev:5x | MinSc:70
+    Bot #33 TAKER Funding R           | counter_trend     |   4T | WR: 50% | PnL: $+1.4783 | SL:0.0% | TP:2.5% | TS:0.0% | Lev:5x | MinSc:50
+    Bot #37 Ao contrario              | counter_trend     |   7T | WR: 57% | PnL: $+1.3011 | SL:30.0% | TP:3.0% | TS:0.0% | Lev:5x | MinSc:50
+    Bot #39 Bot Binance 04:51         | auto_strongest    |   7T | WR: 57% | PnL: $+0.8425 | SL:30.0% | TP:1.0% | TS:0.0% | Lev:5x | MinSc:50
+    Bot #38 Bot Binance 22:26         | auto_strongest    |   1T | WR:100% | PnL: $+0.6888 | SL:30.0% | TP:2.0% | TS:0.0% | Lev:5x | MinSc:90
+    Bot #27 Ao contrario              | counter_trend     |  11T | WR: 45% | PnL: $+0.5290 | SL:2.5% | TP:3.0% | TS:0.0% | Lev:5x | MinSc:50
+    Bot #29 Bot Binance 01:25         | auto_expiring     |   3T | WR: 67% | PnL: $+0.1313 | SL:2.5% | TP:0.0% | TS:0.0% | Lev:1x | MinSc:75
+    Bot #22 Bot Binance 09:57         | auto_expiring     |   1T | WR:100% | PnL: $+0.0125 | SL:2.0% | TP:0.5% | TS:0.0% | Lev:1x | MinSc:50
+    Bot #31 Bot Binance 01:07 ?       | auto_expiring     |   2T | WR: 50% | PnL: $+0.0096 | SL:0.0% | TP:0.0% | TS:0.0% | Lev:5x | MinSc:80
+    Bot #28 Bot Binance 01:07         | auto_expiring     |   5T | WR: 40% | PnL: $-0.0496 | SL:1.2% | TP:0.0% | TS:0.0% | Lev:2x | MinSc:70
+    Bot #25 FORTONASSS                | auto_strongest    |   4T | WR: 75% | PnL: $-0.0801 | SL:1.5% | TP:0.5% | TS:0.0% | Lev:1x | MinSc:85
+    Bot #16 Bot Binance 00:33         | auto_strongest    |   2T | WR: 50% | PnL: $-0.1438 | SL:3.0% | TP:1.0% | TS:0.0% | Lev:1x | MinSc:90
+    Bot #40 TAKE FD 24-02 - 12-56     | counter_trend     |   7T | WR: 57% | PnL: $-0.8254 | SL:15.0% | TP:2.5% | TS:1.5% | Lev:5x | MinSc:50
+
+================================================================================
+3. CONFIGURAÇÃO ÓTIMA PROPOSTA
+================================================================================
+
+    === COUNTER TREND (Captura de Funding Rate) ===
+    
+    PARÂMETRO ATUAL MAIS USADO    →    SUGESTÃO OTIMIZADA         MOTIVO
+    ─────────────────────────────────────────────────────────────────────────
+    Stop Loss:     1.5% - 3.0%    →    5.0% - 8.0%              97% dos stops ativados deram loss. O preço
+                                                                  precisa de espaço para reverter no CT.
+    
+    Trailing Stop: 0% ou 1.5%     →    3.0% - 5.0%              1.5% é "ruído" de mercado. 3-5% permite
+                                                                  capturar tendências e sair em reversões reais.
+    
+    Take Profit:   2.5% - 3.0%    →    MANTER 2.5%              Está funcionando (100% WR nos 3 trades).
+    
+    Min Score:     50              →    65 - 70                   Score 50 permite moedas com volatilidade 
+                                                                  alta/risco moderado. 65+ filtra melhor.
+    
+    Leverage:      5x              →    2x - 3x                  5x amplifica as perdas em moedas voláteis.
+                                                                  Com 2-3x o stop de 5% dá mais margem.
+    
+    Exit Seconds:  520-20000s      →    7200s (2h)               Tempo fixo de ~2h é suficiente para capturar
+                                                                  1 ciclo de funding + reversão de preço.
+    
+    Entry Seconds: 1-5s (Taker)    →    20-30s (Maker)           Maker reduz fees em 60%. Com CT, 20s de 
+                                                                  espera não prejudica a entrada.
+    
+    === ALTERAÇÕES NO SCORE (system_settings) ===
+    
+    PARÂMETRO ATUAL                →    SUGESTÃO                  MOTIVO
+    ─────────────────────────────────────────────────────────────────────────
+    max_volatility: 35%            →    20%                       Moedas com >20% de vol causaram 84% 
+                                                                  dos prejuízos. BULLA deveria ser vetada.
+    
+    min_volume: $2M                →    $5M                       Moedas com <$5M tiveram desempenho
+                                                                  negativo por slippage.
+    
+    Peso Magnitude: 30             →    20                        Reduzir o peso de "quem paga mais".
+    Peso Risco/Ret: 30             →    40                        Aumentar o peso de "quem paga mais 
+                                                                  com segurança".
+    
+    Threshold Forte: 80            →    75                        Abrir uma faixa maior para as melhores
+    Threshold Moderado: 60         →    55                        oportunidades serem aproveitadas.
+    
+    === PROJEÇÃO DE IMPACTO COM ESSAS MUDANÇAS ===
+    
+    Com stop_loss em 5%:    ~$10.62 de perdas seriam EVITADAS (preço teria voltado)
+    Com max_volatility 20%: ~3-5 trades em BULLA seriam VETADOS (evitando ~$6 de perdas)
+    Com Leverage 2-3x:      Risco por trade cai 40-60%, perdas proporcionais menores
+    Com Min Score 65:        Moedas fracas (FOGO, STABLE, SOMI) não entrariam no portfólio
+    
+    PROJEÇÃO DO PnL OTIMIZADO:
+    PnL atual (real):               $+14.30
+    + Recuperação por stop 5%+:     $+10.62
+    + Redução por veto BULLA:       $+ 4.50 (estimado)
+    + Menos fees (maker<taker):     $+ 0.80 (estimado)
+    ────────────────────────────────
+    PnL Projetado:                  ~$+30.22  (≈112% de melhoria)
+    

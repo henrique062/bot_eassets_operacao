@@ -1,0 +1,67 @@
+# Walkthrough — Análise IA para Bots de Real Trading
+
+## Resumo
+
+Feature implementada que permite analisar o desempenho de bots reais com IA (Google Gemini) e sugerir ajustes de configuração. Funciona em **dois modos**:
+
+1. **Manual** — botão 🤖 IA no card do bot ativo
+2. **Automático** — disparado em background quando todas as posições de um ciclo são fechadas (rate-limited a 1x/5min)
+
+A análise automática **apenas salva** os resultados — não aplica alterações sozinha.
+
+---
+
+## Arquivos Modificados
+
+### Backend
+
+| Arquivo | Mudança |
+|---|---|
+| [ai_service.py](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/ai_service.py) | [analyze_bot_cycle()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/ai_service.py#209-347) + [_parse_bot_analysis()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/ai_service.py#349-372) |
+| [routes.py](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/routes.py) | 3 rotas: `POST /ai-analyze`, `POST /ai-apply`, `GET /ai-analyses` |
+| [real_trader.py](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/real_trader.py) | [_auto_ai_analyze()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/real_trader.py#904-987) + detecção fim de ciclo em [_monitor_and_close_position](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/real_trader.py#716-893) |
+| [main.py](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/backend/main.py) | Auto-migração da tabela `bot_ai_analyses` no startup |
+
+### Frontend
+
+| Arquivo | Mudança |
+|---|---|
+| [api.js](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/services/api.js) | [requestBotAIAnalysis()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/services/api.js#332-343), [applyBotAISuggestions()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/services/api.js#344-356), [fetchBotAIAnalyses()](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/services/api.js#357-362) |
+| [RealTradingPage.jsx](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/components/RealTradingPage.jsx) | Botão IA com ícone custom + [AIAnalysisModal](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/components/RealTradingPage.jsx#2088-2264) completo |
+
+### Novos Arquivos
+
+| Arquivo | Descrição |
+|---|---|
+| [tecnologia-de-ia.png](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/frontend/src/assets/tecnologia-de-ia.png) | Ícone do botão IA (copiado do root) |
+| [20260223_add_bot_ai_analyses.sql](file:///d:/3%20-%20Projetos%20investimentos/bot_taxa_cripto/migrations/20260223_add_bot_ai_analyses.sql) | Migration SQL |
+
+---
+
+## Fluxo de Funcionamento
+
+```mermaid
+flowchart TD
+    A["Bot ativo"] --> B["Posições abertas (snipe)"]
+    B --> C["Posições fechadas"]
+    C --> D{"Positions = 0?"}
+    D -->|Sim| E["_auto_ai_analyze()"]
+    E --> F["Salva análise no banco"]
+    D -->|Não| B
+    G["Botão IA clicado"] --> H["POST /ai-analyze"]
+    H --> I["Gemini analisa trades"]
+    I --> J["Modal: Análise + Sugestões"]
+    J --> K["Botão Aplicar"]
+    K --> L["POST /ai-apply → edit_session()"]
+    L --> M["Config atualizada em runtime"]
+```
+
+## Como Testar
+
+1. Iniciar backend: `python main.py`
+2. Iniciar frontend: `npm run dev`
+3. Na tela de **Real Trading**, localizar um bot ativo com trades
+4. Clicar no botão **IA** (ícone roxo) no card do bot
+5. Aguardar a geração da análise (spinner com ícone pulsando)
+6. Verificar análise em markdown e tabela "Atual vs Sugestão"
+7. Clicar em **✅ Aplicar Sugestões** para atualizar configuração em tempo real
