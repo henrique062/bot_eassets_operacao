@@ -1,36 +1,68 @@
-use crate::config::AppState;
-use crate::engine::scorer::{score, SymbolSignals};
-use crate::engine::signal_filter::check_all;
-use crate::market::bybit_rest::{calc_exp_btc, calc_oi_trend, BybitRestClient};
-use crate::market::bybit_ws::TradeCounter;
-use crate::market::BtcState;
+use crate::config::{python_api_url, AppState, EngineStatus};
+use crate::market::bybit_rest::BybitRestClient;
 use crate::trading::bybit_executor::BybitExecutor;
-use std::collections::VecDeque;
+use crate::trading::position_manager::{Position, PositionManager};
+use crate::trading::risk_manager;
+use crate::trading::watchlist_manager::WatchlistManager;
+use serde::Deserialize;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
-const DECISION_INTERVAL_MS: u64 = 2000;
-const OI_HISTORY_SIZE: usize = 10;
-const LSR_HISTORY_SIZE: usize = 5;
+// Intervalo do loop de decisão. O snapshot eAssets muda a cada ~30min, então
+// não há necessidade de polling agressivo — 15s é folgado e reativo.
+const DECISION_INTERVAL_MS: u64 = 15_000;
 
-/// Inicia o loop principal de decisão em background.
-/// Roda a cada ~2s para cada símbolo monitorado.
+// ---------------------------------------------------------------------------
+// Resposta do endpoint /api/eassets/panel/entry-candidates (python_api)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+struct CandidatesEnvelope {
+    data: CandidatesData,
+}
+
+#[derive(Debug, Deserialize)]
+struct CandidatesData {
+    btc_safe: bool,
+    #[serde(default)]
+    btc_state: Option<String>,
+    #[serde(default)]
+    candidates: Vec<Candidate>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+struct Candidate {
+    symbol: String,
+    #[serde(default)]
+    score: Option<f64>,
+    #[serde(default)]
+    entry_score: Option<i64>,
+    #[serde(default)]
+    grade: Option<String>,
+}
+
+/// Inicia o loop de decisão.
+///
+/// A partir da metodologia Encryptos, a decisão de QUAIS moedas operar vem do
+/// painel (snapshot eAssets), não de um score próprio. O motor consome o
+/// endpoint `entry-candidates` (já filtrado por gate macro do BTC + Setup de
+/// Ouro) e executa LONG na Bybit, respeitando capital, alavancagem e limite de
+/// posições. SL/TP/trailing e PCL ficam a cargo do `risk_manager`.
 pub fn start(
     state: Arc<AppState>,
     rest: Arc<BybitRestClient>,
-    ws_counter: Arc<TradeCounter>,
-    btc_state: Arc<RwLock<BtcState>>,
     executor: Arc<BybitExecutor>,
+    pos_manager: Arc<PositionManager>,
+    watchlist_manager: Arc<WatchlistManager>,
 ) {
     tokio::spawn(async move {
-        info!("Decision loop iniciado");
+        info!("Decision loop iniciado (fonte: ranking do Painel de Moedas)");
+        let http = reqwest::Client::builder()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
         let mut shutdown_rx = (*state.shutdown_rx).clone();
-
-        // Histórico de OI e LSR por símbolo para calcular tendências
-        let oi_history: dashmap::DashMap<String, VecDeque<f64>> = dashmap::DashMap::new();
-        let lsr_history: dashmap::DashMap<String, VecDeque<f64>> = dashmap::DashMap::new();
 
         loop {
             tokio::select! {
@@ -41,99 +73,86 @@ pub fn start(
                     }
                 }
                 _ = tokio::time::sleep(Duration::from_millis(DECISION_INTERVAL_MS)) => {
-                    let cfg = state.get_config().await;
-
-                    // Verifica status do engine
+                    // Só age quando o engine está Running (ativado via /internal/start)
                     {
                         let engine = state.engine.read().await;
-                        if engine.status != crate::config::EngineStatus::Running {
+                        if engine.status != EngineStatus::Running {
                             continue;
                         }
                     }
 
-                    let btc = btc_state.read().await.clone();
-                    let open_positions = state.open_positions_count().await;
+                    let cfg = state.get_config().await;
 
-                    // Obtém preços atuais uma vez para todos os símbolos
-                    let tickers = match rest.get_tickers().await {
-                        Ok(t) => t,
+                    // 1. Busca candidatos no painel (já passa pelo gate do BTC)
+                    let url = format!(
+                        "{}/api/eassets/panel/entry-candidates?min_score={}",
+                        python_api_url(),
+                        cfg.min_score
+                    );
+                    let data = match http.get(&url).send().await {
+                        Ok(resp) => match resp.json::<CandidatesEnvelope>().await {
+                            Ok(env) => env.data,
+                            Err(e) => {
+                                warn!("Falha ao decodificar candidatos do painel: {:#}", e);
+                                continue;
+                            }
+                        },
                         Err(e) => {
-                            warn!("Falha ao obter tickers: {:#}", e);
+                            warn!("Falha ao consultar candidatos do painel: {:#}", e);
                             continue;
                         }
                     };
 
-                    for symbol in &cfg.symbols {
-                        // Obtém preço atual
-                        let price = tickers
-                            .iter()
-                            .find(|t| &t.symbol == symbol)
-                            .and_then(|t| t.last_price.parse::<f64>().ok())
-                            .unwrap_or(0.0);
+                    if !data.btc_safe {
+                        info!(
+                            "BTC sem janela ({}) — nenhuma entrada permitida",
+                            data.btc_state.as_deref().unwrap_or("—")
+                        );
+                        continue;
+                    }
+                    if data.candidates.is_empty() {
+                        continue;
+                    }
 
-                        if price == 0.0 {
+                    // 2. Executa entradas respeitando limite de posições
+                    for cand in &data.candidates {
+                        if pos_manager.count() >= cfg.max_positions as usize {
+                            break;
+                        }
+                        // Já existe posição aberta para esse símbolo?
+                        if pos_manager.get(&cand.symbol).is_some() {
                             continue;
                         }
 
-                        // Coleta sinais assincronamente
-                        let signals = match collect_signals(
-                            symbol,
-                            price,
-                            &rest,
-                            &ws_counter,
-                            &oi_history,
-                            &lsr_history,
-                        )
-                        .await
-                        {
-                            Ok(s) => s,
-                            Err(e) => {
-                                warn!("Falha ao coletar sinais para {}: {:#}", symbol, e);
+                        // Preço atual na Bybit (também valida que o símbolo existe lá)
+                        let price = match current_price(&rest, &cand.symbol).await {
+                            Some(p) if p > 0.0 => p,
+                            _ => {
+                                warn!(
+                                    "{} sem preço na Bybit (símbolo pode não existir lá) — pulando",
+                                    cand.symbol
+                                );
                                 continue;
                             }
                         };
 
-                        // Aplica checklist dos 6 filtros
-                        let filter = check_all(&signals, &cfg, &btc, open_positions);
-                        if !filter.passed {
-                            debug!(
-                                "{} filtrado: {:?}",
-                                symbol,
-                                filter.failed_reasons.first()
-                            );
-                            continue;
-                        }
+                        open_long(
+                            cand,
+                            price,
+                            &cfg,
+                            &state,
+                            &rest,
+                            &executor,
+                            &pos_manager,
+                            &watchlist_manager,
+                        )
+                        .await;
+                    }
 
-                        // Calcula score
-                        let s = score(&signals);
-                        info!("{} passou filtros, score={:.1}", symbol, s);
-
-                        if s < cfg.min_score {
-                            debug!("{} score {:.1} < min_score {:.1}", symbol, s, cfg.min_score);
-                            continue;
-                        }
-
-                        // Abre posição
-                        info!("{} abrindo posição LONG (score={:.1})", symbol, s);
-                        let size = cfg.capital_per_trade * cfg.leverage as f64 / price;
-                        match executor
-                            .open_position(symbol, "Buy", size, &cfg)
-                            .await
-                        {
-                            Ok(result) => {
-                                info!(
-                                    "Posição aberta: {} orderId={}",
-                                    symbol, result.order_id
-                                );
-                                // Atualiza contador de posições abertas
-                                let mut engine = state.engine.write().await;
-                                engine.open_positions += 1;
-                                engine.last_decision_at = Some(chrono::Utc::now());
-                            }
-                            Err(e) => {
-                                warn!("Falha ao abrir posição em {}: {:#}", symbol, e);
-                            }
-                        }
+                    // Mantém o contador do engine em sincronia com as posições reais
+                    {
+                        let mut engine = state.engine.write().await;
+                        engine.open_positions = pos_manager.count();
                     }
                 }
             }
@@ -141,132 +160,100 @@ pub fn start(
     });
 }
 
-/// Coleta todos os sinais necessários para scoring de um símbolo.
-async fn collect_signals(
-    symbol: &str,
+/// Abre uma posição LONG e liga o monitoramento de risco.
+#[allow(clippy::too_many_arguments)]
+async fn open_long(
+    cand: &Candidate,
     price: f64,
+    cfg: &crate::config::BotConfig,
+    state: &Arc<AppState>,
     rest: &Arc<BybitRestClient>,
-    ws_counter: &Arc<TradeCounter>,
-    oi_history: &dashmap::DashMap<String, VecDeque<f64>>,
-    lsr_history: &dashmap::DashMap<String, VecDeque<f64>>,
-) -> anyhow::Result<SymbolSignals> {
-    // Klines para exp_btc em diferentes TFs
-    let (klines_5m, klines_15m, klines_1h, klines_1d, klines_4h) = tokio::join!(
-        rest.get_klines(symbol, "5", 10),
-        rest.get_klines(symbol, "15", 10),
-        rest.get_klines(symbol, "60", 10),
-        rest.get_klines(symbol, "D", 10),
-        rest.get_klines(symbol, "240", 20),
+    executor: &Arc<BybitExecutor>,
+    pos_manager: &Arc<PositionManager>,
+    watchlist_manager: &Arc<WatchlistManager>,
+) {
+    let qty = cfg.capital_per_trade * cfg.leverage as f64 / price;
+    if qty <= 0.0 {
+        return;
+    }
+
+    info!(
+        "Entrada {} (grau={} score={:.0}) — abrindo LONG qty={:.4} @ {:.6}",
+        cand.symbol,
+        cand.grade.as_deref().unwrap_or("—"),
+        cand.score.unwrap_or(0.0),
+        qty,
+        price
     );
 
-    let exp_btc_5m = klines_5m.as_ref().map(|k| calc_exp_btc(k)).unwrap_or(0.0);
-    let exp_btc_15m = klines_15m.as_ref().map(|k| calc_exp_btc(k)).unwrap_or(0.0);
-    let exp_btc_1h = klines_1h.as_ref().map(|k| calc_exp_btc(k)).unwrap_or(0.0);
-    let exp_btc_1d = klines_1d.as_ref().map(|k| calc_exp_btc(k)).unwrap_or(0.0);
-
-    // RSI 4h
-    let rsi_4h = klines_4h
-        .as_ref()
-        .map(|k| {
-            let closes: Vec<f64> = k.iter().map(|c| c.close).collect();
-            crate::market::btc_monitor::calc_rsi(&closes, 14)
-        })
-        .unwrap_or(50.0);
-
-    // Trades por minuto via WS
-    let trades_min = ws_counter.get_trades_per_min(symbol);
-
-    // Open Interest
-    let oi_current = rest.get_open_interest(symbol).await.unwrap_or(0.0);
-
-    // Atualiza histórico de OI
-    let oi_trend = {
-        let mut hist = oi_history
-            .entry(symbol.to_string())
-            .or_insert_with(|| VecDeque::with_capacity(OI_HISTORY_SIZE + 1));
-        hist.push_back(oi_current);
-        if hist.len() > OI_HISTORY_SIZE {
-            hist.pop_front();
-        }
-        let slice: Vec<f64> = hist.iter().copied().collect();
-        calc_oi_trend(&slice)
-    };
-
-    // Long/Short Ratio
-    let (long_r, short_r) = rest
-        .get_long_short_ratio(symbol, "5min")
-        .await
-        .unwrap_or((0.5, 0.5));
-    let lsr = if short_r > 0.0 { long_r / short_r } else { 1.0 };
-
-    // Tendência do LSR
-    let lsr_trend = {
-        let mut hist = lsr_history
-            .entry(symbol.to_string())
-            .or_insert_with(|| VecDeque::with_capacity(LSR_HISTORY_SIZE + 1));
-        hist.push_back(lsr);
-        if hist.len() > LSR_HISTORY_SIZE {
-            hist.pop_front();
-        }
-        if hist.len() >= 2 {
-            hist.back().unwrap() - hist.front().unwrap()
-        } else {
-            0.0
+    let order = match executor.open_position(&cand.symbol, "Buy", qty, cfg).await {
+        Ok(o) => o,
+        Err(e) => {
+            warn!("Falha ao abrir posição em {}: {:#}", cand.symbol, e);
+            return;
         }
     };
 
-    // range_level: derivado da amplitude dos candles 4h (simplificado)
-    let range_level = estimate_range_level(
-        klines_4h.as_deref().unwrap_or(&[]),
-    );
+    // Stop loss / take profit a partir do preço de referência
+    let stop_loss = if cfg.stop_loss_pct > 0.0 {
+        price * (1.0 - cfg.stop_loss_pct / 100.0)
+    } else {
+        0.0
+    };
+    let take_profit = if cfg.take_profit_pct > 0.0 {
+        price * (1.0 + cfg.take_profit_pct / 100.0)
+    } else {
+        0.0
+    };
 
-    Ok(SymbolSignals {
-        symbol: symbol.to_string(),
+    let position = Position::new(
+        cfg.config_id,
+        &cand.symbol,
+        "Buy",
+        qty,
         price,
-        exp_btc_5m,
-        exp_btc_15m,
-        exp_btc_1h,
-        exp_btc_1d,
-        trades_min,
-        oi_trend,
-        lsr,
-        lsr_trend,
-        range_level,
-        range_level_4h: range_level,
-        range_level_1d: 0.0, // preenchido com klines D quando necessário
-        rsi_4h,
-        toi: oi_current,
-    })
+        cand.score.unwrap_or(0.0),
+        stop_loss,
+        take_profit,
+        cfg.trailing_stop_pct,
+        cfg.trailing_start_pct,
+        &order.order_id,
+    );
+
+    if let Err(e) = pos_manager.add(position.clone()).await {
+        warn!("Falha ao persistir posição {}: {:#}", cand.symbol, e);
+    }
+
+    // Define TP/SL na exchange (quando configurados)
+    if stop_loss > 0.0 || take_profit > 0.0 {
+        if let Err(e) = executor
+            .set_tp_sl(&cand.symbol, take_profit, stop_loss, 0)
+            .await
+        {
+            warn!("Falha ao definir TP/SL de {} na Bybit: {:#}", cand.symbol, e);
+        }
+    }
+
+    // Liga o monitoramento de risco (SL/TP/trailing + hook PCL no stop)
+    risk_manager::spawn_for_position(
+        position,
+        state.clone(),
+        rest.clone(),
+        executor.clone(),
+        pos_manager.clone(),
+        watchlist_manager.clone(),
+    );
+
+    // Atualiza timestamp da última decisão
+    let mut engine = state.engine.write().await;
+    engine.last_decision_at = Some(chrono::Utc::now());
 }
 
-/// Estima nível de range (0-5) baseado na amplitude relativa dos candles.
-fn estimate_range_level(klines: &[crate::market::bybit_rest::KlineData]) -> f64 {
-    if klines.is_empty() {
-        return 0.0;
-    }
-    let ranges: Vec<f64> = klines
+/// Busca o último preço de um símbolo na Bybit. Retorna None se não existir.
+async fn current_price(rest: &Arc<BybitRestClient>, symbol: &str) -> Option<f64> {
+    let tickers = rest.get_tickers().await.ok()?;
+    tickers
         .iter()
-        .filter(|k| k.low > 0.0)
-        .map(|k| (k.high - k.low) / k.low * 100.0)
-        .collect();
-
-    if ranges.is_empty() {
-        return 0.0;
-    }
-
-    let avg_range: f64 = ranges.iter().sum::<f64>() / ranges.len() as f64;
-
-    // Escala heurística: amplitude média de candle 4h
-    // < 0.5% → 1, < 1% → 2, < 2% → 3, < 3% → 4, >= 3% → 5
-    if avg_range < 0.5 {
-        1.0
-    } else if avg_range < 1.0 {
-        2.0
-    } else if avg_range < 2.0 {
-        3.0
-    } else if avg_range < 3.0 {
-        4.0
-    } else {
-        5.0
-    }
+        .find(|t| t.symbol == symbol)
+        .and_then(|t| t.last_price.parse::<f64>().ok())
 }

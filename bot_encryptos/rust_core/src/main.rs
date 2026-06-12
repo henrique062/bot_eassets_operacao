@@ -80,13 +80,14 @@ async fn main() -> anyhow::Result<()> {
         wm.start_loop(cfg_arc);
     }
 
-    // Decision loop (inicia somente quando engine for ativado via /internal/start)
+    // Decision loop (inicia somente quando engine for ativado via /internal/start).
+    // Fonte de decisão = ranking do Painel de Moedas (snapshot eAssets), não score próprio.
     engine::decision::start(
         app_state.clone(),
         rest.clone(),
-        ws_counter.clone(),
-        btc_state.clone(),
         executor.clone(),
+        pos_manager.clone(),
+        watchlist_manager.clone(),
     );
 
     // Servidor Axum

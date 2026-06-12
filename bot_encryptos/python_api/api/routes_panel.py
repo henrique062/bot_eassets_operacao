@@ -204,6 +204,83 @@ async def panel_setup(
     return _ok({"meta": _meta_out(meta), "btc": macro, "rows": out})
 
 
+@router.get("/entry-candidates", summary="Candidatos de entrada (consumido pelo motor do bot)")
+async def entry_candidates(
+    min_score: float = Query(0, ge=0, le=100),
+    include_partial: bool = Query(False),
+) -> dict[str, Any]:
+    """Retorna as moedas elegíveis para entrada segundo a metodologia Encryptos.
+
+    Esta é a ÚNICA fonte de decisão de QUAIS moedas o bot opera: o motor Rust
+    consome este endpoint, em vez de calcular score próprio. Reaproveita
+    `gerar_painel.entry_checklist` / `setup_grade` (Setup de Ouro) com o gate
+    macro do BTC.
+
+    Args:
+        min_score: score estrutural mínimo do painel (0-100).
+        include_partial: se True, inclui também grau PARCIAL além de SETUP DE OURO.
+
+    Returns:
+        { btc_safe, btc_state, snapshot_id, snapshot_ts, candidates: [...] }
+        Ordenado por score de entrada e score estrutural (melhor primeiro).
+    """
+    pool = get_pool()
+    sid = await repo.get_latest_snapshot_id(pool)
+    if sid is None:
+        return _ok({"btc_safe": False, "btc_state": "—", "snapshot_id": None,
+                    "snapshot_ts": None, "candidates": []})
+
+    meta = await repo.get_snapshot_meta(pool, sid)
+    metrics = await repo.get_panel_metrics(pool, sid)
+    macro = _btc_macro_from_metrics(metrics)
+    safe = bool(macro.get("safe"))
+
+    allowed = {"SETUP DE OURO"} | ({"PARCIAL"} if include_partial else set())
+
+    candidates: list[dict[str, Any]] = []
+    # Só há candidatos quando a janela macro do BTC está aberta (Reset).
+    if safe:
+        for m in metrics:
+            if m["symbol"] == "BTCUSDT":
+                continue
+            if (m.get("score") or 0) < min_score:
+                continue
+            try:
+                e = json.loads(m.get("raw_json") or "{}")
+            except (json.JSONDecodeError, TypeError):
+                e = {}
+            chk = core.entry_checklist(e)
+            grade, _cls, escore = core.setup_grade(chk, safe)
+            if grade not in allowed:
+                continue
+            if core.is_trap(e):
+                continue
+            candidates.append({
+                "symbol": m["symbol"],
+                "asset": m["symbol"].replace("USDT", ""),
+                "score": m.get("score"),
+                "entry_score": escore,
+                "grade": grade,
+                "price": _f(m.get("price")),
+                "exp_1d": _f(m.get("exp_1d")),
+                "exp_4h": _f(m.get("exp_4h")),
+                "exp_1h": _f(m.get("exp_1h")),
+                "lsr": _f(m.get("lsr")),
+                "oi_trend": _f(m.get("oi_trend")),
+            })
+
+        order = {"SETUP DE OURO": 0, "PARCIAL": 1}
+        candidates.sort(key=lambda c: (order.get(c["grade"], 2), -c["entry_score"], -(c["score"] or 0)))
+
+    return _ok({
+        "btc_safe": safe,
+        "btc_state": macro.get("state"),
+        "snapshot_id": sid,
+        "snapshot_ts": meta.get("timestamp") if meta else None,
+        "candidates": candidates,
+    })
+
+
 @router.get("/radar", summary="Radar de Acumulação — T/OI com persistência")
 async def panel_radar(
     snapshot_id: int | None = Query(None),
