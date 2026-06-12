@@ -91,6 +91,17 @@ export interface ScraperStatus {
   next_run_at: string | null
 }
 
+export interface BybitBalance {
+  account_type: string | null
+  coin: string
+  capital: number
+  balance: number
+  equity: number | null
+  wallet_balance: number | null
+  total_wallet_balance: number | null
+  total_available_balance: number | null
+}
+
 export interface BotConfig {
   id?: number
   session_name: string

@@ -16,6 +16,11 @@ DATABASE_URL: str = os.environ["DATABASE_URL"]
 # --- Rust core bridge ---
 RUST_CORE_URL: str = os.getenv("RUST_CORE_URL", "http://rust_core:8001")
 
+# --- Bybit ---
+BYBIT_API_KEY: str = os.getenv("BYBIT_API_KEY", "")
+BYBIT_API_SECRET: str = os.getenv("BYBIT_API_SECRET", "")
+BYBIT_BASE_URL: str = os.getenv("BYBIT_BASE_URL", "https://api.bybit.com")
+
 # --- eAssets scraper ---
 EASSETS_EMAIL: str = os.getenv("EASSETS_EMAIL", "")
 EASSETS_PASSWORD: str = os.getenv("EASSETS_PASSWORD", "")

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Trash2, Loader2 } from "lucide-react"
+import { Loader2, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/table"
 import { usePolling } from "@/hooks/use-polling"
 import { api } from "@/lib/api"
-import { formatCurrency, formatTimeBRT, cooldownRemaining } from "@/lib/utils"
 import type { WatchlistEntry } from "@/lib/types"
+import { cooldownRemaining, formatCurrency, formatTimeBRT } from "@/lib/utils"
 
 type WatchlistState = WatchlistEntry["state"]
 
@@ -30,13 +30,26 @@ const STATE_VARIANT: Record<WatchlistState, "blue" | "warning" | "success" | "da
   }
 
 export default function WatchlistPage() {
-  const { data: watchlist, error, mutate } = usePolling("watchlist", api.getWatchlist, 5000)
+  const { data: activeSessions, error: sessionsError } = usePolling(
+    "active-sessions",
+    api.listActiveSessions,
+    3000
+  )
+  const activeConfigId = activeSessions?.[0]?.id
+
+  const { data: watchlist, error, mutate } = usePolling(
+    activeConfigId ? `watchlist-${activeConfigId}` : null,
+    () => api.getWatchlist(activeConfigId!),
+    5000
+  )
   const [removing, setRemoving] = useState<string | null>(null)
 
   async function handleRemove(symbol: string) {
+    if (!activeConfigId) return
+
     setRemoving(symbol)
     try {
-      await api.removeFromWatchlist(symbol)
+      await api.removeFromWatchlist(activeConfigId, symbol)
       mutate()
     } catch {
     } finally {
@@ -44,9 +57,11 @@ export default function WatchlistPage() {
     }
   }
 
+  const hasError = Boolean(sessionsError) || Boolean(error)
+
   return (
     <div className="space-y-4">
-      {error && (
+      {hasError && (
         <div
           role="alert"
           className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
@@ -57,10 +72,28 @@ export default function WatchlistPage() {
 
       <Card>
         <CardContent className="p-0">
-          {!watchlist ? (
-            <div className="p-5 space-y-3">
+          {!activeSessions ? (
+            <div className="space-y-3 p-5">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 w-full animate-pulse rounded bg-[#2a2d3a]" aria-hidden="true" />
+                <div
+                  key={i}
+                  className="h-10 w-full animate-pulse rounded bg-[#2a2d3a]"
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          ) : !activeConfigId ? (
+            <p className="p-8 text-center text-sm text-[#6b7280]">
+              Nenhuma sessao ativa no momento.
+            </p>
+          ) : !watchlist ? (
+            <div className="space-y-3 p-5">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 w-full animate-pulse rounded bg-[#2a2d3a]"
+                  aria-hidden="true"
+                />
               ))}
             </div>
           ) : watchlist.length === 0 ? (
@@ -71,12 +104,12 @@ export default function WatchlistPage() {
             <Table aria-label="Watchlist PCL">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Símbolo</TableHead>
+                  <TableHead>Simbolo</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Tentativas</TableHead>
                   <TableHead>PnL Acumulado</TableHead>
                   <TableHead>Cooldown Restante</TableHead>
-                  <TableHead>Última Verificação</TableHead>
+                  <TableHead>Ultima Verificacao</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -93,18 +126,16 @@ export default function WatchlistPage() {
                     <TableCell
                       className={
                         entry.total_pnl_so_far >= 0
-                          ? "text-green-400 font-mono"
-                          : "text-red-400 font-mono"
+                          ? "font-mono text-green-400"
+                          : "font-mono text-red-400"
                       }
                     >
                       {formatCurrency(entry.total_pnl_so_far)}
                     </TableCell>
-                    <TableCell className="text-[#6b7280] text-xs">
-                      {entry.state === "COOLDOWN"
-                        ? cooldownRemaining(entry.cooldown_until)
-                        : "—"}
+                    <TableCell className="text-xs text-[#6b7280]">
+                      {entry.state === "COOLDOWN" ? cooldownRemaining(entry.cooldown_until) : "-"}
                     </TableCell>
-                    <TableCell className="text-[#6b7280] text-xs">
+                    <TableCell className="text-xs text-[#6b7280]">
                       {formatTimeBRT(entry.last_check_at)}
                     </TableCell>
                     <TableCell>

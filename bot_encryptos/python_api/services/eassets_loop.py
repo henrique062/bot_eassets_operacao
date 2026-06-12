@@ -36,6 +36,7 @@ _state: dict[str, Any] = {
     "last_error": None,   # last error message string
     "next_run_at": None,  # ISO timestamp of next scheduled run
 }
+_manual_scrape_task: asyncio.Task[None] | None = None
 
 _RETRY_DELAY_SECONDS = 300  # 5 minutes on error
 
@@ -118,41 +119,47 @@ async def trigger_now(pool) -> dict[str, Any]:  # noqa: ANN001
         pool: asyncpg.Pool.
 
     Returns:
-        dict with snap_id, symbols, timestamp.
+        dict signalling that the manual scrape was accepted.
 
     Raises:
-        EassetsScrapeError: if the scrape fails.
+        RuntimeError: if a scrape is already in progress.
     """
-    from services.eassets_scraper import EassetsScrapeError, ingest_snapshot, scrape_eassets_json  # noqa: F401
+    global _manual_scrape_task
 
-    if _state["running"]:
+    from services.eassets_scraper import ingest_snapshot, scrape_eassets_json
+
+    if _state["running"] or (_manual_scrape_task and not _manual_scrape_task.done()):
         raise RuntimeError("A scrape is already in progress.")
 
-    _state["running"] = True
-    try:
-        loop = asyncio.get_event_loop()
-        data, raw_json = await loop.run_in_executor(
-            None,
-            lambda: scrape_eassets_json(
-                email=EASSETS_EMAIL,
-                password=EASSETS_PASSWORD,
-                headless=EASSETS_HEADLESS,
-                timeout_ms=EASSETS_TIMEOUT_MS,
-            ),
-        )
-        snap_id = await ingest_snapshot(data, raw_json, pool, RUST_CORE_URL)
-        _state["last_ok"] = datetime.now(timezone.utc).isoformat()
-        _state["last_error"] = None
-        return {
-            "snap_id": snap_id,
-            "symbols": data.get("symbols"),
-            "timestamp": data.get("timestamp"),
-        }
-    except Exception as exc:
-        _state["last_error"] = str(exc)
-        raise
-    finally:
-        _state["running"] = False
+    async def _worker() -> None:
+        _state["running"] = True
+        try:
+            loop = asyncio.get_event_loop()
+            data, raw_json = await loop.run_in_executor(
+                None,
+                lambda: scrape_eassets_json(
+                    email=EASSETS_EMAIL,
+                    password=EASSETS_PASSWORD,
+                    headless=EASSETS_HEADLESS,
+                    timeout_ms=EASSETS_TIMEOUT_MS,
+                ),
+            )
+            snap_id = await ingest_snapshot(data, raw_json, pool, RUST_CORE_URL)
+            _state["last_ok"] = datetime.now(timezone.utc).isoformat()
+            _state["last_error"] = None
+            logger.info(
+                "Manual eAssets scrape OK - snap_id={} symbols={}",
+                snap_id,
+                data.get("symbols"),
+            )
+        except Exception as exc:
+            _state["last_error"] = str(exc)
+            logger.exception("Manual eAssets scrape failed.")
+        finally:
+            _state["running"] = False
+
+    _manual_scrape_task = asyncio.create_task(_worker(), name="manual_eassets_scrape")
+    return {"accepted": True}
 
 
 # ---------------------------------------------------------------------------

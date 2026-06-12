@@ -5,7 +5,7 @@ import { Power, PowerOff, Loader2 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
+import { api, ApiError } from "@/lib/api"
 import type { BotStatus, BotConfig } from "@/lib/types"
 
 interface EngineStatusCardProps {
@@ -32,7 +32,7 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
   async function handleStart() {
     setLoading(true)
     try {
-      const defaultConfig: BotConfig = {
+      let config: BotConfig = {
         session_name: "default",
         capital: 1000,
         balance: 1000,
@@ -50,7 +50,25 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
         pcl_cooldown_minutes: 60,
         pcl_max_attempts: 3,
       }
-      await api.startBot(defaultConfig)
+
+      try {
+        config = await api.getLatestConfig()
+      } catch (err) {
+        if (!(err instanceof ApiError && err.status === 404)) {
+          throw err
+        }
+      }
+
+      try {
+        const bybitBalance = await api.getBybitBalance()
+        config = {
+          ...config,
+          capital: bybitBalance.capital,
+          balance: bybitBalance.balance,
+        }
+      } catch {}
+
+      await api.startBot(config)
       onAction()
     } catch {
     } finally {

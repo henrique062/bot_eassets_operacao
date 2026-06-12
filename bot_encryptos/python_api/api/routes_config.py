@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from database import get_pool
 from db import repositories as repo
+from services.bybit_account import get_wallet_balance
 
 router = APIRouter(prefix="/api/eassets/config", tags=["config"])
 
@@ -75,6 +76,29 @@ async def create_config(body: BotConfigPayload) -> dict[str, Any]:
     return _ok({"config_id": config_id})
 
 
+@router.get("/latest", summary="Read the latest bot configuration")
+async def get_latest_config() -> dict[str, Any]:
+    """Return the most recent bot configuration, preferring an active session."""
+    pool = get_pool()
+    config = await repo.get_latest_config(pool)
+    if config is None:
+        raise HTTPException(status_code=404, detail="No config found")
+    return _ok(config)
+
+
+@router.get("/bybit/balance", summary="Read current Bybit wallet balances")
+async def get_bybit_balance() -> dict[str, Any]:
+    """Return live capital/balance values derived from the configured Bybit account."""
+    try:
+        balance = await get_wallet_balance()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch Bybit balance: {exc}") from exc
+
+    return _ok(balance)
+
+
 @router.get("/{config_id}", summary="Read a bot configuration")
 async def get_config(config_id: int) -> dict[str, Any]:
     """Return a single eassets_bot_config row.
@@ -87,3 +111,13 @@ async def get_config(config_id: int) -> dict[str, Any]:
     if config is None:
         raise HTTPException(status_code=404, detail="Config not found")
     return _ok(config)
+
+
+@router.put("/{config_id}", summary="Update an existing bot configuration")
+async def update_config(config_id: int, body: BotConfigPayload) -> dict[str, Any]:
+    """Update a bot configuration row in-place."""
+    pool = get_pool()
+    updated = await repo.update_config(pool, config_id, body.model_dump())
+    if not updated:
+        raise HTTPException(status_code=404, detail="Config not found")
+    return _ok({"config_id": config_id})

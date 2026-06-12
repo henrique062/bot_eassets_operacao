@@ -106,6 +106,19 @@ async def get_config(pool: asyncpg.Pool, config_id: int) -> dict[str, Any] | Non
     return dict(row) if row else None
 
 
+async def get_latest_config(pool: asyncpg.Pool) -> dict[str, Any] | None:
+    """Return the most recent config, preferring an active session when present."""
+    row = await pool.fetchrow(
+        """
+        SELECT *
+        FROM eassets_bot_config
+        ORDER BY active DESC, updated_at DESC, created_at DESC, id DESC
+        LIMIT 1
+        """
+    )
+    return dict(row) if row else None
+
+
 async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
     """Insert a new bot config row and return its generated id."""
     row = await pool.fetchrow(
@@ -157,6 +170,79 @@ async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
         data.get("user_id"),
     )
     return row["id"]  # type: ignore[index]
+
+
+async def update_config(pool: asyncpg.Pool, config_id: int, data: dict[str, Any]) -> bool:
+    """Update an existing bot config row. Returns True when a row was updated."""
+    row = await pool.fetchrow(
+        """
+        UPDATE eassets_bot_config
+        SET
+            session_name = $2,
+            exchange = $3,
+            capital = $4,
+            balance = $5,
+            leverage = $6,
+            fee_type = $7,
+            fee_rate = $8,
+            min_tpm = $9,
+            min_oi_trend = $10,
+            max_lsr = $11,
+            min_rsi_btc = $12,
+            max_rsi_btc = $13,
+            min_exp_btc = $14,
+            max_positions = $15,
+            min_score = $16,
+            stop_loss_pct = $17,
+            stop_loss_usd = $18,
+            take_profit_pct = $19,
+            trailing_stop_pct = $20,
+            trailing_start_pct = $21,
+            break_even_at_pct = $22,
+            entry_seconds = $23,
+            exit_seconds = $24,
+            pcl_enabled = $25,
+            pcl_cooldown_minutes = $26,
+            pcl_max_attempts = $27,
+            pcl_min_struct_score = $28,
+            pcl_profit_target_usd = $29,
+            user_id = $30,
+            updated_at = NOW()
+        WHERE id = $1
+        RETURNING id
+        """,
+        config_id,
+        data.get("session_name"),
+        data.get("exchange", "bybit"),
+        data["capital"],
+        data["balance"],
+        data.get("leverage", 5),
+        data.get("fee_type", "maker"),
+        data.get("fee_rate", 0.0002),
+        data.get("min_tpm", 800),
+        data.get("min_oi_trend", 0),
+        data.get("max_lsr", 1.0),
+        data.get("min_rsi_btc"),
+        data.get("max_rsi_btc", 40.0),
+        data.get("min_exp_btc", 0),
+        data.get("max_positions", 5),
+        data.get("min_score", 65.0),
+        data.get("stop_loss_pct"),
+        data.get("stop_loss_usd"),
+        data.get("take_profit_pct"),
+        data.get("trailing_stop_pct"),
+        data.get("trailing_start_pct"),
+        data.get("break_even_at_pct"),
+        data.get("entry_seconds", 30),
+        data.get("exit_seconds", 30),
+        data.get("pcl_enabled", True),
+        data.get("pcl_cooldown_minutes", 30),
+        data.get("pcl_max_attempts", 3),
+        data.get("pcl_min_struct_score", 3),
+        data.get("pcl_profit_target_usd"),
+        data.get("user_id"),
+    )
+    return row is not None
 
 
 async def get_active_configs(pool: asyncpg.Pool) -> list[dict[str, Any]]:

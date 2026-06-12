@@ -24,7 +24,7 @@ def _ok(data: Any) -> dict[str, Any]:
 async def capture_now() -> dict[str, Any]:
     """Trigger an immediate eAssets panel scrape outside the regular interval.
 
-    Returns the new snap_id, symbol count and timestamp on success.
+    Returns an immediate acceptance payload; scrape result is reflected in /status.
 
     Raises:
         HTTPException 409: if a scrape is already running.

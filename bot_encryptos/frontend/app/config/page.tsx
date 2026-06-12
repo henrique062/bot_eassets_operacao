@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Save, Loader2, CheckCircle } from "lucide-react"
+import { useEffect, useState } from "react"
+import { CheckCircle, Loader2, RefreshCw, Save } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { api } from "@/lib/api"
-import type { BotConfig } from "@/lib/types"
+import { api, ApiError } from "@/lib/api"
+import type { BotConfig, BybitBalance } from "@/lib/types"
 
 const DEFAULT_CONFIG: BotConfig = {
   session_name: "default",
@@ -29,6 +29,16 @@ const DEFAULT_CONFIG: BotConfig = {
   pcl_max_attempts: 3,
 }
 
+function applyBybitBalance(config: BotConfig, bybitBalance: BybitBalance | null): BotConfig {
+  if (!bybitBalance) return config
+
+  return {
+    ...config,
+    capital: bybitBalance.capital,
+    balance: bybitBalance.balance,
+  }
+}
+
 function FormField({
   label,
   id,
@@ -37,6 +47,7 @@ function FormField({
   type = "number",
   step,
   placeholder,
+  readOnly = false,
 }: {
   label: string
   id: string
@@ -45,6 +56,7 @@ function FormField({
   type?: string
   step?: string
   placeholder?: string
+  readOnly?: boolean
 }) {
   return (
     <div className="space-y-1.5">
@@ -55,6 +67,7 @@ function FormField({
         step={step}
         placeholder={placeholder}
         value={value ?? ""}
+        readOnly={readOnly}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
@@ -65,15 +78,48 @@ export default function ConfigPage() {
   const [config, setConfig] = useState<BotConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
+  const [syncingBalance, setSyncingBalance] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [configId, setConfigId] = useState<number | undefined>(undefined)
+  const [bybitBalance, setBybitBalance] = useState<BybitBalance | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    api
-      .getConfig(1)
-      .then((c) => setConfig(c))
-      .catch(() => {})
-      .finally(() => setFetchLoading(false))
+    let cancelled = false
+
+    async function loadConfig() {
+      setFetchLoading(true)
+
+      const [configResult, bybitResult] = await Promise.allSettled([
+        api.getLatestConfig(),
+        api.getBybitBalance(),
+      ])
+
+      if (cancelled) return
+
+      let nextConfig = DEFAULT_CONFIG
+
+      if (configResult.status === "fulfilled") {
+        nextConfig = configResult.value
+        setConfigId(configResult.value.id)
+      } else if (!(configResult.reason instanceof ApiError && configResult.reason.status === 404)) {
+        setError("Erro ao carregar configuracao salva.")
+      }
+
+      if (bybitResult.status === "fulfilled") {
+        setBybitBalance(bybitResult.value)
+        nextConfig = applyBybitBalance(nextConfig, bybitResult.value)
+      }
+
+      setConfig(nextConfig)
+      setFetchLoading(false)
+    }
+
+    loadConfig()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   function setField<K extends keyof BotConfig>(key: K, raw: string) {
@@ -94,24 +140,50 @@ export default function ConfigPage() {
         "pcl_cooldown_minutes",
         "pcl_max_attempts",
       ]
+
       if (numFields.includes(key)) {
-        const v = raw === "" ? null : parseFloat(raw)
-        return { ...prev, [key]: v }
+        const value = raw === "" ? null : parseFloat(raw)
+        return { ...prev, [key]: value }
       }
+
       return { ...prev, [key]: raw }
     })
+  }
+
+  async function handleSyncBalance() {
+    setSyncingBalance(true)
+    setError(null)
+    try {
+      const freshBalance = await api.getBybitBalance()
+      setBybitBalance(freshBalance)
+      setConfig((prev) => applyBybitBalance(prev, freshBalance))
+    } catch {
+      setError("Erro ao consultar saldo da Bybit.")
+    } finally {
+      setSyncingBalance(false)
+    }
   }
 
   async function handleSave() {
     setLoading(true)
     setError(null)
     setSaved(false)
+
+    const payload = applyBybitBalance(config, bybitBalance)
+
     try {
-      await api.saveConfig(config)
+      if (configId) {
+        await api.updateConfig(configId, payload)
+      } else {
+        const created = (await api.saveConfig(payload)) as { config_id: number }
+        setConfigId(created.config_id)
+        setConfig((prev) => ({ ...prev, id: created.config_id }))
+      }
+
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch {
-      setError("Erro ao salvar configuração. Verifique a API.")
+      setError("Erro ao salvar configuracao. Verifique a API.")
     } finally {
       setLoading(false)
     }
@@ -121,14 +193,18 @@ export default function ConfigPage() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-48 w-full animate-pulse rounded-xl bg-[#1a1d27]" aria-hidden="true" />
+          <div
+            key={i}
+            className="h-48 w-full animate-pulse rounded-xl bg-[#1a1d27]"
+            aria-hidden="true"
+          />
         ))}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       {error && (
         <div
           role="alert"
@@ -141,20 +217,40 @@ export default function ConfigPage() {
       {saved && (
         <div
           role="status"
-          className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400 flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400"
         >
           <CheckCircle className="h-4 w-4" aria-hidden="true" />
-          Configuração salva com sucesso.
+          Configuracao salva com sucesso.
         </div>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Capital e Risco</CardTitle>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>Capital e Risco</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncBalance}
+              disabled={syncingBalance}
+            >
+              {syncingBalance ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Atualizando saldo...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  Sincronizar Bybit
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
-            label="Nome da Sessão"
+            label="Nome da Sessao"
             id="session_name"
             type="text"
             value={config.session_name}
@@ -165,13 +261,15 @@ export default function ConfigPage() {
             id="capital"
             step="0.01"
             value={config.capital}
+            readOnly={Boolean(bybitBalance)}
             onChange={(v) => setField("capital", v)}
           />
           <FormField
-            label="Balance Disponível (USD)"
+            label="Balance Disponivel (USD)"
             id="balance"
             step="0.01"
             value={config.balance}
+            readOnly={Boolean(bybitBalance)}
             onChange={(v) => setField("balance", v)}
           />
           <FormField
@@ -180,6 +278,12 @@ export default function ConfigPage() {
             value={config.leverage}
             onChange={(v) => setField("leverage", v)}
           />
+          {bybitBalance && (
+            <p className="sm:col-span-2 text-xs text-[#6b7280]">
+              Bybit sincronizada: capital {bybitBalance.capital.toFixed(2)} USD, disponivel{" "}
+              {bybitBalance.balance.toFixed(2)} USD.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -187,35 +291,35 @@ export default function ConfigPage() {
         <CardHeader>
           <CardTitle>Filtros de Entrada</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
-            label="TPM Mínimo"
+            label="TPM Minimo"
             id="min_tpm"
             value={config.min_tpm}
             onChange={(v) => setField("min_tpm", v)}
           />
           <FormField
-            label="LSR Máximo"
+            label="LSR Maximo"
             id="max_lsr"
             step="0.01"
             value={config.max_lsr}
             onChange={(v) => setField("max_lsr", v)}
           />
           <FormField
-            label="RSI BTC Máximo"
+            label="RSI BTC Maximo"
             id="max_rsi_btc"
             step="0.1"
             value={config.max_rsi_btc}
             onChange={(v) => setField("max_rsi_btc", v)}
           />
           <FormField
-            label="Score Mínimo"
+            label="Score Minimo"
             id="min_score"
             value={config.min_score}
             onChange={(v) => setField("min_score", v)}
           />
           <FormField
-            label="Máx. Posições"
+            label="Max. Posicoes"
             id="max_positions"
             value={config.max_positions}
             onChange={(v) => setField("max_positions", v)}
@@ -225,9 +329,9 @@ export default function ConfigPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Gestão de Risco</CardTitle>
+          <CardTitle>Gestao de Risco</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             label="Stop Loss (%)"
             id="stop_loss_pct"
@@ -274,7 +378,7 @@ export default function ConfigPage() {
               id="pcl_enabled"
               role="switch"
               aria-checked={config.pcl_enabled}
-              onClick={() => setConfig((p) => ({ ...p, pcl_enabled: !p.pcl_enabled }))}
+              onClick={() => setConfig((prev) => ({ ...prev, pcl_enabled: !prev.pcl_enabled }))}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] ${
                 config.pcl_enabled ? "bg-[#6366f1]" : "bg-[#2a2d3a]"
               }`}
@@ -287,7 +391,7 @@ export default function ConfigPage() {
             </button>
           </div>
           <Separator />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               label="Cooldown PCL (minutos)"
               id="pcl_cooldown_minutes"
@@ -313,7 +417,7 @@ export default function ConfigPage() {
         ) : (
           <>
             <Save className="h-4 w-4" aria-hidden="true" />
-            Salvar Configuração
+            Salvar Configuracao
           </>
         )}
       </Button>

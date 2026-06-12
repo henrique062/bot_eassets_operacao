@@ -2,6 +2,7 @@ import type {
   ActiveBotSession,
   BtcStatus,
   BotConfig,
+  BybitBalance,
   Position,
   SessionStatus,
   Trade,
@@ -77,15 +78,24 @@ export const api = {
     return status
   },
 
-  getWatchlist: () => apiFetch<WatchlistEntry[]>("/api/eassets/watchlist"),
-  removeFromWatchlist: (symbol: string) =>
-    apiFetch(`/api/eassets/watchlist/${symbol}`, { method: "DELETE" }),
+  getWatchlist: (configId: number) =>
+    apiFetch<WatchlistEntry[]>(`/api/eassets/watchlist?config_id=${configId}`),
+  removeFromWatchlist: (configId: number, symbol: string) =>
+    apiFetch(`/api/eassets/watchlist/${configId}/${symbol}`, { method: "DELETE" }),
 
   getScraperStatus: () => apiFetch<ScraperStatus>("/api/eassets/scraper/status"),
   triggerScrape: () => apiFetch("/api/eassets/scraper/capture", { method: "POST" }),
 
+  getLatestConfig: () => apiFetch<BotConfig>("/api/eassets/config/latest"),
   getConfig: (configId: number) =>
     apiFetch<BotConfig>(`/api/eassets/config/${configId}`),
   saveConfig: (config: BotConfig) =>
     apiFetch("/api/eassets/config", { method: "POST", body: JSON.stringify(config) }),
+  updateConfig: (configId: number, config: BotConfig) =>
+    apiFetch(`/api/eassets/config/${configId}`, {
+      method: "PUT",
+      body: JSON.stringify(config),
+    }),
+  getBybitBalance: () =>
+    apiFetch<BybitBalance>("/api/eassets/config/bybit/balance"),
 }
