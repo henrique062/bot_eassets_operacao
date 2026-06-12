@@ -72,13 +72,11 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://python_api:8000}
 
   nginx:
-    image: nginx:alpine
+    build: ./nginx
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - python_api
       - frontend
