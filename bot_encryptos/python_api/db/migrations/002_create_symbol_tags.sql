@@ -1,0 +1,142 @@
+-- =============================================================================
+-- Migration 002: Symbol tags
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS eassets_symbol_tags (
+    symbol     TEXT NOT NULL,
+    tag        TEXT NOT NULL,
+    source     TEXT NOT NULL DEFAULT 'manual',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (symbol, tag)
+);
+
+CREATE INDEX IF NOT EXISTS idx_eassets_symbol_tags_tag ON eassets_symbol_tags(tag, symbol);
+
+CREATE TABLE IF NOT EXISTS eassets_app_flags (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO eassets_symbol_tags (symbol, tag, source)
+SELECT symbol, tag, source
+FROM (VALUES
+    ('TOSHIUSDT', 'alpha', 'seed'),
+    ('TAIKOUSDT', 'alpha', 'seed'),
+    ('SQDUSDT', 'alpha', 'seed'),
+    ('PROMPTUSDT', 'alpha', 'seed'),
+    ('ELSAUSDT', 'alpha', 'seed'),
+    ('CROSSUSDT', 'alpha', 'seed'),
+    ('STARUSDT', 'alpha', 'seed'),
+    ('ORDERUSDT', 'alpha', 'seed'),
+    ('FLOCKUSDT', 'alpha', 'seed'),
+    ('SAFEUSDT', 'alpha', 'seed'),
+    ('FLUIDUSDT', 'alpha', 'seed'),
+    ('ACUUSDT', 'alpha', 'seed'),
+    ('RECALLUSDT', 'alpha', 'seed'),
+    ('CLANKERUSDT', 'alpha', 'seed'),
+    ('TRUSTUSDT', 'alpha', 'seed'),
+    ('ICNTUSDT', 'alpha', 'seed'),
+    ('GOATUSDT', 'alpha', 'seed'),
+    ('MEWUSDT', 'alpha', 'seed'),
+    ('WETUSDT', 'alpha', 'seed'),
+    ('XANUSDT', 'alpha', 'seed'),
+    ('CARVUSDT', 'alpha', 'seed'),
+    ('AVAAIUSDT', 'alpha', 'seed'),
+    ('STBLUSDT', 'alpha', 'seed'),
+    ('SKRUSDT', 'alpha', 'seed'),
+    ('BIRBUSDT', 'alpha', 'seed'),
+    ('MERLUSDT', 'alpha', 'seed'),
+    ('DOODUSDT', 'alpha', 'seed'),
+    ('ZETAUSDT', 'alpha', 'seed'),
+    ('GRIFFAINUSDT', 'alpha', 'seed'),
+    ('PHAROSUSDT', 'alpha', 'seed'),
+    ('BTRUSDT', 'alpha', 'seed'),
+    ('ONUSDT', 'alpha', 'seed'),
+    ('IRYSUSDT', 'alpha', 'seed'),
+    ('CTRUSDT', 'alpha', 'seed'),
+    ('TAKEUSDT', 'alpha', 'seed'),
+    ('DRIFTUSDT', 'alpha', 'seed'),
+    ('KOMAUSDT', 'alpha', 'seed'),
+    ('MOODENGUSDT', 'alpha', 'seed'),
+    ('ZORAUSDT', 'alpha', 'seed'),
+    ('POPCATUSDT', 'alpha', 'seed'),
+    ('ARIAUSDT', 'alpha', 'seed'),
+    ('SPXUSDT', 'alpha', 'seed'),
+    ('PTBUSDT', 'alpha', 'seed'),
+    ('INXUSDT', 'alpha', 'seed'),
+    ('EVAAUSDT', 'alpha', 'seed'),
+    ('AKEUSDT', 'alpha', 'seed'),
+    ('TRADOORUSDT', 'alpha', 'seed'),
+    ('SWARMSUSDT', 'alpha', 'seed'),
+    ('4USDT', 'alpha', 'seed'),
+    ('FIGHTUSDT', 'alpha', 'seed'),
+    ('ZEREBROUSDT', 'alpha', 'seed'),
+    ('INUSDT', 'alpha', 'seed'),
+    ('LIGHTUSDT', 'alpha', 'seed'),
+    ('KGENUSDT', 'alpha', 'seed'),
+    ('PRLUSDT', 'alpha', 'seed'),
+    ('TACUSDT', 'alpha', 'seed'),
+    ('ZESTUSDT', 'alpha', 'seed'),
+    ('SLXUSDT', 'alpha', 'seed'),
+    ('BRUSDT', 'alpha', 'seed'),
+    ('AGTUSDT', 'alpha', 'seed'),
+    ('NAORISUSDT', 'alpha', 'seed'),
+    ('BLESSUSDT', 'alpha', 'seed'),
+    ('UAIUSDT', 'alpha', 'seed'),
+    ('SPACEUSDT', 'alpha', 'seed'),
+    ('HANAUSDT', 'alpha', 'seed'),
+    ('POWERUSDT', 'alpha', 'seed'),
+    ('XNYUSDT', 'alpha', 'seed'),
+    ('IDOLUSDT', 'alpha', 'seed'),
+    ('BASEDUSDT', 'alpha', 'seed'),
+    ('QUSDT', 'alpha', 'seed'),
+    ('AINUSDT', 'alpha', 'seed'),
+    ('EDGEUSDT', 'alpha', 'seed'),
+    ('SOONUSDT', 'alpha', 'seed'),
+    ('B2USDT', 'alpha', 'seed'),
+    ('BTWUSDT', 'alpha', 'seed'),
+    ('IPUSDT', 'alpha', 'seed'),
+    ('GRASSUSDT', 'alpha', 'seed'),
+    ('BLUAIUSDT', 'alpha', 'seed'),
+    ('LYNUSDT', 'alpha', 'seed'),
+    ('XPINUSDT', 'alpha', 'seed'),
+    ('USUSDT', 'alpha', 'seed'),
+    ('CLOUSDT', 'alpha', 'seed'),
+    ('STABLEUSDT', 'alpha', 'seed'),
+    ('USELESSUSDT', 'alpha', 'seed'),
+    ('UBUSDT', 'alpha', 'seed'),
+    ('BILLUSDT', 'alpha', 'seed'),
+    ('TAGUSDT', 'alpha', 'seed'),
+    ('AEROUSDT', 'alpha', 'seed'),
+    ('PLAYUSDT', 'alpha', 'seed'),
+    ('COLLECTUSDT', 'alpha', 'seed'),
+    ('TRIAUSDT', 'alpha', 'seed'),
+    ('AIOUSDT', 'alpha', 'seed'),
+    ('PIEVERSEUSDT', 'alpha', 'seed'),
+    ('MAGMAUSDT', 'alpha', 'seed'),
+    ('RIVERUSDT', 'alpha', 'seed'),
+    ('APRUSDT', 'alpha', 'seed'),
+    ('PUMPBTCUSDT', 'alpha', 'seed'),
+    ('TRUTHUSDT', 'alpha', 'seed'),
+    ('AIOTUSDT', 'alpha', 'seed'),
+    ('FHEUSDT', 'alpha', 'seed'),
+    ('COAIUSDT', 'alpha', 'seed'),
+    ('BULLAUSDT', 'alpha', 'seed'),
+    ('MYXUSDT', 'alpha', 'seed'),
+    ('JELLYJELLYUSDT', 'alpha', 'seed'),
+    ('AIAUSDT', 'alpha', 'seed'),
+    ('ALCHUSDT', 'alpha', 'seed'),
+    ('PIPPINUSDT', 'alpha', 'seed'),
+    ('RAVEUSDT', 'alpha', 'seed'),
+    ('SIRENUSDT', 'alpha', 'seed')
+) AS seed(symbol, tag, source)
+WHERE NOT EXISTS (
+    SELECT 1 FROM eassets_app_flags WHERE key = 'alpha_seed_v1'
+)
+ON CONFLICT (symbol, tag) DO NOTHING;
+
+INSERT INTO eassets_app_flags (key, value)
+VALUES ('alpha_seed_v1', 'done')
+ON CONFLICT (key) DO NOTHING;

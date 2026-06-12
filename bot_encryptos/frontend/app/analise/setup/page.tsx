@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 import type { SetupChecklist } from "@/lib/types"
 import { fmtNum, colorPN } from "@/lib/panel-format"
 import { MacroBanner } from "@/components/panel/macro-banner"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 const CRITERIA: { key: keyof SetupChecklist; label: string }[] = [
   { key: "exp_pos", label: "EXP" },
@@ -77,9 +78,12 @@ export default function SetupPage() {
                   <tr key={r.symbol} className="border-b border-[#23262f] hover:bg-[#20232d]">
                     <td className="px-3 py-2.5 text-left text-sm text-[#6b7280] tabular-nums">{i + 1}</td>
                     <td className="px-3 py-2.5 text-left">
-                      <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
-                        {r.asset}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
+                          {r.asset}
+                        </Link>
+                        <AlphaBadge isAlpha={r.is_alpha} />
+                      </div>
                       {r.trap && (
                         <span className="ml-2 rounded-md border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
                           Armadilha

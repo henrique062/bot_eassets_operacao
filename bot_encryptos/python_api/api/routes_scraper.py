@@ -99,7 +99,8 @@ async def get_watchlist(
 
     pool = get_pool()
     entries = await repo.get_watchlist(pool, resolved_config_id)
-    return _ok(entries)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
+    return _ok(repo.apply_alpha_flags(entries, alpha_symbols))
 
 
 @router.delete("/api/eassets/watchlist/{config_id}/{symbol}", summary="Remove symbol from watchlist")

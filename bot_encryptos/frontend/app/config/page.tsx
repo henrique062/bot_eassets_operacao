@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { InfoTooltip } from "@/components/ui/tooltip"
 import { api, ApiError } from "@/lib/api"
 import type { BotConfig, BybitBalance } from "@/lib/types"
 
+// Defaults alinhados à metodologia Encryptos (ver Manuais/):
+// Reset do BTC = RSI 30m/1h <= ~50 · TPM combustão >= 800 · LSR favorável < 1.0
 const DEFAULT_CONFIG: BotConfig = {
-  session_name: "default",
+  session_name: "Padrão Encryptos",
   capital: 1000,
   balance: 1000,
   leverage: 5,
-  min_tpm: 100,
-  max_lsr: 1.5,
-  max_rsi_btc: 70,
-  min_score: 60,
+  min_tpm: 800,
+  max_lsr: 1.0,
+  max_rsi_btc: 50,
+  min_score: 65,
   max_positions: 3,
   stop_loss_pct: 2,
   take_profit_pct: null,
@@ -41,12 +44,7 @@ function hasLiveBybitBalance(
 
 function applyBybitBalance(config: BotConfig, bybitBalance: BybitBalance | null): BotConfig {
   if (!hasLiveBybitBalance(bybitBalance)) return config
-
-  return {
-    ...config,
-    capital: bybitBalance.capital,
-    balance: bybitBalance.balance,
-  }
+  return { ...config, capital: bybitBalance.capital, balance: bybitBalance.balance }
 }
 
 function FormField({
@@ -54,6 +52,7 @@ function FormField({
   id,
   value,
   onChange,
+  tooltip,
   type = "number",
   step,
   placeholder,
@@ -63,6 +62,7 @@ function FormField({
   id: string
   value: string | number | null
   onChange: (v: string) => void
+  tooltip?: string
   type?: string
   step?: string
   placeholder?: string
@@ -70,7 +70,10 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor={id}>{label}</Label>
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </div>
       <Input
         id={id}
         type={type}
@@ -99,33 +102,30 @@ export default function ConfigPage() {
 
     async function loadConfig() {
       setFetchLoading(true)
-
       const [configResult, bybitResult] = await Promise.allSettled([
         api.getLatestConfig(),
         api.getBybitBalance(),
       ])
-
       if (cancelled) return
 
       let nextConfig = DEFAULT_CONFIG
-
       if (configResult.status === "fulfilled") {
         if (configResult.value) {
           nextConfig = configResult.value
           setConfigId(configResult.value.id)
         }
       } else {
-        setError("Erro ao carregar configuracao salva.")
+        setError("Erro ao carregar a configuração salva.")
       }
 
       if (bybitResult.status === "fulfilled") {
         setBybitBalance(bybitResult.value)
         nextConfig = applyBybitBalance(nextConfig, bybitResult.value)
         if (!bybitResult.value.connected) {
-          setError((prev) => prev ?? bybitResult.value.error ?? "Saldo Bybit indisponivel.")
+          setError((prev) => prev ?? bybitResult.value.error ?? "Saldo da Bybit indisponível.")
         }
       } else {
-        setError((prev) => prev ?? "Saldo Bybit indisponivel. Verifique API key/secret.")
+        setError((prev) => prev ?? "Saldo da Bybit indisponível. Verifique a chave/segredo da API.")
       }
 
       setConfig(nextConfig)
@@ -133,7 +133,6 @@ export default function ConfigPage() {
     }
 
     loadConfig()
-
     return () => {
       cancelled = true
     }
@@ -142,27 +141,14 @@ export default function ConfigPage() {
   function setField<K extends keyof BotConfig>(key: K, raw: string) {
     setConfig((prev) => {
       const numFields: (keyof BotConfig)[] = [
-        "capital",
-        "balance",
-        "leverage",
-        "min_tpm",
-        "max_lsr",
-        "max_rsi_btc",
-        "min_score",
-        "max_positions",
-        "stop_loss_pct",
-        "take_profit_pct",
-        "trailing_stop_pct",
-        "trailing_start_pct",
-        "pcl_cooldown_minutes",
-        "pcl_max_attempts",
+        "capital", "balance", "leverage", "min_tpm", "max_lsr", "max_rsi_btc",
+        "min_score", "max_positions", "stop_loss_pct", "take_profit_pct",
+        "trailing_stop_pct", "trailing_start_pct", "pcl_cooldown_minutes", "pcl_max_attempts",
       ]
-
       if (numFields.includes(key)) {
         const value = raw === "" ? null : parseFloat(raw)
         return { ...prev, [key]: value }
       }
-
       return { ...prev, [key]: raw }
     })
   }
@@ -176,14 +162,11 @@ export default function ConfigPage() {
       if (hasLiveBybitBalance(freshBalance)) {
         setConfig((prev) => applyBybitBalance(prev, freshBalance))
       } else {
-        setError(freshBalance.error ?? "Erro ao consultar saldo da Bybit.")
+        setError(freshBalance.error ?? "Erro ao consultar o saldo da Bybit.")
       }
     } catch (err) {
-      if (err instanceof ApiError && err.detail) {
-        setError(err.detail)
-      } else {
-        setError("Erro ao consultar saldo da Bybit.")
-      }
+      if (err instanceof ApiError && err.detail) setError(err.detail)
+      else setError("Erro ao consultar o saldo da Bybit.")
     } finally {
       setSyncingBalance(false)
     }
@@ -193,9 +176,7 @@ export default function ConfigPage() {
     setLoading(true)
     setError(null)
     setSaved(false)
-
     const payload = applyBybitBalance(config, bybitBalance)
-
     try {
       if (configId) {
         await api.updateConfig(configId, payload)
@@ -204,11 +185,10 @@ export default function ConfigPage() {
         setConfigId(created.config_id)
         setConfig((prev) => ({ ...prev, id: created.config_id }))
       }
-
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch {
-      setError("Erro ao salvar configuracao. Verifique a API.")
+      setError("Erro ao salvar a configuração. Verifique a API.")
     } finally {
       setLoading(false)
     }
@@ -218,11 +198,7 @@ export default function ConfigPage() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-48 w-full animate-pulse rounded-xl bg-[#1a1d27]"
-            aria-hidden="true"
-          />
+          <div key={i} className="h-48 w-full animate-pulse rounded-xl bg-[#1a1d27]" aria-hidden="true" />
         ))}
       </div>
     )
@@ -230,35 +206,32 @@ export default function ConfigPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      <div className="rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-5 py-4 text-sm leading-relaxed text-[#9ca3af]">
+        <span className="font-semibold text-[#f3f4f6]">Como o bot decide: </span>
+        ele só procura entrada quando o <b className="text-[#818cf8]">Bitcoin está em Reset</b> (sem alta vertical) e
+        escolhe as moedas direto do <b className="text-[#818cf8]">Painel de Moedas</b> que batem o Setup de Ouro.
+        Os campos abaixo controlam o rigor desses filtros e a gestão de risco.
+      </div>
+
       {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-        >
+        <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}
 
       {saved && (
-        <div
-          role="status"
-          className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400"
-        >
+        <div role="status" className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
           <CheckCircle className="h-4 w-4" aria-hidden="true" />
-          Configuracao salva com sucesso.
+          Configuração salva com sucesso.
         </div>
       )}
 
+      {/* Capital e Risco */}
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Capital e Risco</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSyncBalance}
-              disabled={syncingBalance}
-            >
+            <Button variant="outline" size="sm" onClick={handleSyncBalance} disabled={syncingBalance}>
               {syncingBalance ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -275,135 +248,162 @@ export default function ConfigPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
-            label="Nome da Sessao"
+            label="Nome da configuração"
             id="session_name"
             type="text"
             value={config.session_name}
             onChange={(v) => setField("session_name", v)}
+            tooltip="Apenas um rótulo para identificar este conjunto de parâmetros."
           />
           <FormField
-            label="Capital (USD)"
+            label="Valor por operação (USD)"
             id="capital"
             step="0.01"
             value={config.capital}
             readOnly={hasLiveBybitBalance(bybitBalance)}
             onChange={(v) => setField("capital", v)}
+            tooltip="Quanto de capital (margem) o bot usa em cada moeda. Quando a Bybit está conectada, vem do saldo real da conta."
           />
           <FormField
-            label="Balance Disponivel (USD)"
+            label="Saldo disponível (USD)"
             id="balance"
             step="0.01"
             value={config.balance}
             readOnly={hasLiveBybitBalance(bybitBalance)}
             onChange={(v) => setField("balance", v)}
+            tooltip="Saldo livre para abrir novas posições. Sincronizado da Bybit quando conectada."
           />
           <FormField
             label="Alavancagem (x)"
             id="leverage"
             value={config.leverage}
             onChange={(v) => setField("leverage", v)}
+            tooltip="Multiplicador da posição. A metodologia recomenda alavancagem moderada: moedas fortes sobem 'liquidando' (dão pavios pra baixo para tirar quem está muito alavancado). Sugerido: 5x."
           />
           {hasLiveBybitBalance(bybitBalance) && (
             <p className="sm:col-span-2 text-xs text-[#6b7280]">
-              Bybit sincronizada: capital {bybitBalance.capital.toFixed(2)} USD, disponivel{" "}
-              {bybitBalance.balance.toFixed(2)} USD.
+              Bybit conectada: capital {bybitBalance.capital.toFixed(2)} USD, disponível {bybitBalance.balance.toFixed(2)} USD.
             </p>
           )}
           {bybitBalance && !bybitBalance.connected && (
             <p className="sm:col-span-2 text-xs text-amber-300">
-              Bybit indisponivel: {bybitBalance.error ?? "falha ao consultar saldo."}
+              Bybit indisponível: {bybitBalance.error ?? "falha ao consultar o saldo."}
             </p>
           )}
         </CardContent>
       </Card>
 
+      {/* Filtro do Bitcoin */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de Entrada</CardTitle>
+          <CardTitle>Filtro do Bitcoin (Reset)</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
-            label="TPM Minimo"
-            id="min_tpm"
-            value={config.min_tpm}
-            onChange={(v) => setField("min_tpm", v)}
-          />
-          <FormField
-            label="LSR Maximo"
-            id="max_lsr"
-            step="0.01"
-            value={config.max_lsr}
-            onChange={(v) => setField("max_lsr", v)}
-          />
-          <FormField
-            label="RSI BTC Maximo"
+            label="RSI máximo do BTC"
             id="max_rsi_btc"
-            step="0.1"
+            step="1"
             value={config.max_rsi_btc}
             onChange={(v) => setField("max_rsi_btc", v)}
-          />
-          <FormField
-            label="Score Minimo"
-            id="min_score"
-            value={config.min_score}
-            onChange={(v) => setField("min_score", v)}
-          />
-          <FormField
-            label="Max. Posicoes"
-            id="max_positions"
-            value={config.max_positions}
-            onChange={(v) => setField("max_positions", v)}
+            tooltip="O bot só libera entradas quando o RSI do Bitcoin (30m ou 1h) está IGUAL OU ABAIXO deste valor — ou seja, em Reset (neutralidade/sobrevenda). Acima disso o mercado está 'quente' e operar é arriscado. Encryptos: ~50."
           />
         </CardContent>
       </Card>
 
+      {/* Filtros de Entrada */}
       <Card>
         <CardHeader>
-          <CardTitle>Gestao de Risco</CardTitle>
+          <CardTitle>Filtros de Entrada (Setup de Ouro)</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
-            label="Stop Loss (%)"
+            label="Trades por minuto mínimo"
+            id="min_tpm"
+            value={config.min_tpm}
+            onChange={(v) => setField("min_tpm", v)}
+            tooltip="Velocidade de negociação que indica 'robôs ligados' (combustão). É o gatilho de ignição que tira a moeda do acúmulo. Encryptos: a partir de 800–1000 trades/min."
+          />
+          <FormField
+            label="Proporção Long/Short máxima"
+            id="max_lsr"
+            step="0.01"
+            value={config.max_lsr}
+            onChange={(v) => setField("max_lsr", v)}
+            tooltip="LSR = quanto o varejo está comprado vs vendido. Abaixo de 1.0 significa mais gente vendida (short) — combustível para o preço subir liquidando esses shorts (short squeeze). Encryptos: 1.0."
+          />
+          <FormField
+            label="Pontuação mínima do painel"
+            id="min_score"
+            value={config.min_score}
+            onChange={(v) => setField("min_score", v)}
+            tooltip="Nota estrutural (0–100) calculada no Painel de Moedas (força no Exponencial BTC + atividade + OI + LSR). O bot só entra em moedas com nota igual ou acima deste valor. Sugerido: 65."
+          />
+          <FormField
+            label="Máximo de posições simultâneas"
+            id="max_positions"
+            value={config.max_positions}
+            onChange={(v) => setField("max_positions", v)}
+            tooltip="Quantas moedas o bot pode manter abertas ao mesmo tempo. Limita a exposição total. Sugerido: 3."
+          />
+        </CardContent>
+      </Card>
+
+      {/* Gestão de Saída */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Gestão de Saída</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField
+            label="Stop / perda máxima (%)"
             id="stop_loss_pct"
             step="0.01"
             placeholder="Ex: 2"
             value={config.stop_loss_pct}
             onChange={(v) => setField("stop_loss_pct", v)}
+            tooltip="Perda máxima aceita por operação antes de encerrar automaticamente. Protege o capital — o principal KPI da metodologia. Ex: 2%."
           />
           <FormField
-            label="Take Profit (%)"
+            label="Alvo de lucro (%)"
             id="take_profit_pct"
             step="0.01"
             placeholder="Opcional"
             value={config.take_profit_pct}
             onChange={(v) => setField("take_profit_pct", v)}
+            tooltip="Lucro alvo para encerrar a posição. Opcional — deixe vazio para deixar o lucro correr usando apenas o stop móvel."
           />
           <FormField
-            label="Trailing Stop (%)"
+            label="Stop móvel — distância (%)"
             id="trailing_stop_pct"
             step="0.01"
             placeholder="Ex: 1.5"
             value={config.trailing_stop_pct}
             onChange={(v) => setField("trailing_stop_pct", v)}
+            tooltip="Quando ativado, o stop 'segue' o preço a esta distância do topo, travando lucro conforme a moeda sobe. Ex: 1.5%."
           />
           <FormField
-            label="Trailing Start (%)"
+            label="Stop móvel — gatilho (%)"
             id="trailing_start_pct"
             step="0.01"
             placeholder="Ex: 1"
             value={config.trailing_start_pct}
             onChange={(v) => setField("trailing_start_pct", v)}
+            tooltip="Lucro mínimo que a posição precisa atingir para o stop móvel ligar. Antes disso, vale o stop fixo. Ex: 1%."
           />
         </CardContent>
       </Card>
 
+      {/* Reentrada após stop (PCL) */}
       <Card>
         <CardHeader>
-          <CardTitle>PCL (Position Cycle Limit)</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle>Reentrada após Stop</CardTitle>
+            <InfoTooltip text="Se uma moeda bate o stop mas a estrutura continua boa, o bot pode esperar um tempo e tentar entrar de novo (a tese pode continuar válida após a varredura de stops do varejo)." />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="pcl_enabled">Habilitar PCL</Label>
+            <Label htmlFor="pcl_enabled">Permitir reentrada</Label>
             <button
               id="pcl_enabled"
               role="switch"
@@ -423,16 +423,18 @@ export default function ConfigPage() {
           <Separator />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
-              label="Cooldown PCL (minutos)"
+              label="Tempo de espera (minutos)"
               id="pcl_cooldown_minutes"
               value={config.pcl_cooldown_minutes}
               onChange={(v) => setField("pcl_cooldown_minutes", v)}
+              tooltip="Quanto o bot espera após um stop antes de considerar reentrar na mesma moeda. Evita recomprar no susto. Ex: 60 min."
             />
             <FormField
-              label="Max. Tentativas PCL"
+              label="Máximo de tentativas"
               id="pcl_max_attempts"
               value={config.pcl_max_attempts}
               onChange={(v) => setField("pcl_max_attempts", v)}
+              tooltip="Quantas reentradas o bot tenta na mesma moeda antes de desistir dela. Evita insistir num ativo que perdeu a estrutura. Ex: 3."
             />
           </div>
         </CardContent>
@@ -447,7 +449,7 @@ export default function ConfigPage() {
         ) : (
           <>
             <Save className="h-4 w-4" aria-hidden="true" />
-            Salvar Configuracao
+            Salvar Configuração
           </>
         )}
       </Button>

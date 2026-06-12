@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, Trophy, Radar, Star } from "lucide-react"
+import { LayoutGrid, Trophy, Radar, Star, Tags } from "lucide-react"
 
 const tabs = [
   { href: "/analise", label: "Painel", icon: LayoutGrid },
   { href: "/analise/setup", label: "Setup de Ouro", icon: Trophy },
   { href: "/analise/radar", label: "Radar Acumulação", icon: Radar },
   { href: "/analise/topo", label: "Topo Recorrente", icon: Star },
+  { href: "/analise/alpha", label: "Alpha", icon: Tags },
 ]
 
 export function PanelTabs() {

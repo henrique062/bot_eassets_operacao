@@ -228,12 +228,14 @@ def _export_json(page, timeout_ms):
     js_click_attempted = False
     last_progress = None
     last_invalid = None
-    stall_timeout_s = max(timeout_ms / 1000, 30)
-    hard_timeout_s = max(stall_timeout_s * 3, 300)
+    stall_timeout_s = max(timeout_ms / 1000, 180)
+    hard_timeout_s = max(stall_timeout_s * 3, 600)
     deadline = time.monotonic() + hard_timeout_s
     last_progress_change = time.monotonic()
+    last_retry_click = click_started_at
 
     while time.monotonic() < deadline:
+        now = time.monotonic()
         for raw in reversed(_clipboard_texts(page)):
             if not raw:
                 continue
@@ -245,21 +247,35 @@ def _export_json(page, timeout_ms):
         current_progress = _export_progress(page)
         if current_progress and current_progress != last_progress:
             last_progress = current_progress
-            last_progress_change = time.monotonic()
+            last_progress_change = now
 
-        if not js_click_attempted and time.monotonic() - click_started_at > 3:
+        if not js_click_attempted and now - click_started_at > 3:
             copy_button.evaluate("el => el.click()")
             js_click_attempted = True
+            last_retry_click = now
 
-        if last_progress and time.monotonic() - last_progress_change > stall_timeout_s:
+        idle_for = now - last_progress_change
+        retry_interval_s = min(max(stall_timeout_s / 2, 45), 120)
+        if idle_for > 30 and now - last_retry_click > retry_interval_s:
+            try:
+                copy_button.evaluate("el => el.click()")
+                last_retry_click = now
+            except Exception:
+                pass
+
+        if last_progress and idle_for > stall_timeout_s:
             break
 
         page.wait_for_timeout(1_000)
 
     if last_invalid:
         raise last_invalid
-    detail = f" Ultimo progresso: {last_progress}." if last_progress else ""
-    raise EassetsScrapeError(f"Timeout aguardando exportacao JSON pelo painel eAssets.{detail}")
+    elapsed_s = int(time.monotonic() - click_started_at)
+    stalled_s = int(time.monotonic() - last_progress_change)
+    detail = f" Ultimo progresso: {last_progress}; parado ha {stalled_s}s." if last_progress else ""
+    raise EassetsScrapeError(
+        f"Timeout aguardando exportacao JSON pelo painel eAssets apos {elapsed_s}s.{detail}"
+    )
 
 
 def validate_eassets_payload(data):

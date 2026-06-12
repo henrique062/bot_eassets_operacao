@@ -7,6 +7,7 @@ dicts/lists so that the API layer can serialise them directly.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import asyncpg
@@ -17,6 +18,85 @@ from loguru import logger
 # Positions
 # ---------------------------------------------------------------------------
 
+def normalize_symbol(value: Any) -> str:
+    """Normalize Binance/TradingView symbols to the panel symbol shape."""
+    symbol = str(value or "").strip().upper()
+    if ":" in symbol:
+        symbol = symbol.rsplit(":", 1)[1]
+    if symbol.endswith(".P"):
+        symbol = symbol[:-2]
+    return re.sub(r"[^A-Z0-9]", "", symbol)
+
+
+async def get_tagged_symbols(pool: asyncpg.Pool, tag: str = "alpha") -> set[str]:
+    rows = await pool.fetch(
+        """
+        SELECT symbol
+        FROM eassets_symbol_tags
+        WHERE tag = $1
+        ORDER BY symbol
+        """,
+        tag.lower(),
+    )
+    return {str(r["symbol"]) for r in rows}
+
+
+async def list_symbol_tags(pool: asyncpg.Pool, tag: str = "alpha") -> list[dict[str, Any]]:
+    rows = await pool.fetch(
+        """
+        SELECT symbol, tag, source, created_at, updated_at
+        FROM eassets_symbol_tags
+        WHERE tag = $1
+        ORDER BY symbol
+        """,
+        tag.lower(),
+    )
+    return [dict(r) for r in rows]
+
+
+async def upsert_symbol_tags(
+    pool: asyncpg.Pool,
+    symbols: list[str],
+    tag: str = "alpha",
+    source: str = "manual",
+) -> list[str]:
+    normalized = sorted({normalize_symbol(symbol) for symbol in symbols if normalize_symbol(symbol)})
+    if not normalized:
+        return []
+
+    records = [(symbol, tag.lower(), source) for symbol in normalized]
+    await pool.executemany(
+        """
+        INSERT INTO eassets_symbol_tags (symbol, tag, source)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (symbol, tag) DO UPDATE SET
+            updated_at = NOW(),
+            source = EXCLUDED.source
+        """,
+        records,
+    )
+    return normalized
+
+
+async def delete_symbol_tag(pool: asyncpg.Pool, symbol: str, tag: str = "alpha") -> bool:
+    normalized = normalize_symbol(symbol)
+    if not normalized:
+        return False
+
+    result = await pool.execute(
+        "DELETE FROM eassets_symbol_tags WHERE symbol = $1 AND tag = $2",
+        normalized,
+        tag.lower(),
+    )
+    return result.endswith("1")
+
+
+def apply_alpha_flags(rows: list[dict[str, Any]], alpha_symbols: set[str]) -> list[dict[str, Any]]:
+    """Add is_alpha to rows that carry a symbol field."""
+    for row in rows:
+        row["is_alpha"] = normalize_symbol(row.get("symbol")) in alpha_symbols
+    return rows
+
 async def get_positions(pool: asyncpg.Pool, config_id: int) -> list[dict[str, Any]]:
     """Return all open positions for a config session."""
     rows = await pool.fetch(
@@ -24,6 +104,89 @@ async def get_positions(pool: asyncpg.Pool, config_id: int) -> list[dict[str, An
         config_id,
     )
     return [dict(r) for r in rows]
+
+
+async def _table_columns(pool: asyncpg.Pool, table_name: str) -> set[str]:
+    rows = await pool.fetch(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = $1
+        """,
+        table_name,
+    )
+    return {str(r["column_name"]) for r in rows}
+
+
+async def get_open_position_lookup(
+    pool: asyncpg.Pool,
+    config_id: int | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Return open bot positions keyed by symbol/direction for origin matching.
+
+    The deployed DB has had more than one position schema during development.
+    This query adapts to the available columns so the live Bybit reconciliation
+    does not break if the bot table still uses the older shape.
+    """
+    columns = await _table_columns(pool, "eassets_positions")
+    if not {"symbol", "config_id"}.issubset(columns):
+        return {}
+
+    if "direction" in columns:
+        direction_expr = "direction"
+    elif "side" in columns:
+        direction_expr = (
+            "CASE WHEN side = 'Buy' THEN 'LONG' WHEN side = 'Sell' THEN 'SHORT' "
+            "ELSE UPPER(side) END"
+        )
+    else:
+        direction_expr = "''"
+
+    select_parts = [
+        "id::text AS id",
+        "config_id",
+        "symbol",
+        f"{direction_expr} AS direction",
+    ]
+    if "entry_score" in columns:
+        select_parts.append("entry_score")
+    if "open_order_id" in columns:
+        select_parts.append("open_order_id AS order_id")
+    elif "order_id" in columns:
+        select_parts.append("order_id")
+
+    where_parts = []
+    args: list[Any] = []
+    if config_id is not None:
+        args.append(config_id)
+        where_parts.append(f"config_id = ${len(args)}")
+    if "status" in columns:
+        where_parts.append("LOWER(status) = 'open'")
+    if "closed_at" in columns:
+        where_parts.append("closed_at IS NULL")
+
+    where_sql = f"WHERE {' AND '.join(where_parts)}" if where_parts else ""
+    order_col = "created_at" if "created_at" in columns else "opened_at" if "opened_at" in columns else "id"
+    sql = f"""
+        SELECT {", ".join(select_parts)}
+        FROM eassets_positions
+        {where_sql}
+        ORDER BY {order_col} DESC
+    """
+    rows = await pool.fetch(sql, *args)
+
+    lookup: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        data = dict(row)
+        symbol = str(data.get("symbol") or "").upper()
+        direction = str(data.get("direction") or "").upper()
+        if not symbol:
+            continue
+        lookup.setdefault(symbol, data)
+        if direction:
+            lookup.setdefault(f"{symbol}:{direction}", data)
+    return lookup
 
 
 # ---------------------------------------------------------------------------
@@ -557,15 +720,30 @@ async def get_top_appearances(
 
 async def get_toi_persistence(
     pool: asyncpg.Pool,
+    snapshot_id: int | None = None,
     snapshot_limit: int = 30,
     top_n: int = 30,
 ) -> dict[str, int]:
     """Count, per symbol, in how many recent snapshots it ranked in the TOP-N by T/OI."""
-    rows = await pool.fetch(
+    if snapshot_id is None:
+        recent_sql = "SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT $1"
+        args: tuple[Any, ...] = (snapshot_limit, top_n)
+    else:
+        recent_sql = """
+            SELECT id
+            FROM eassets_snapshots
+            WHERE timestamp <= (
+                SELECT timestamp FROM eassets_snapshots WHERE id = $1
+            )
+            ORDER BY timestamp DESC
+            LIMIT $2
         """
+        args = (snapshot_id, snapshot_limit, top_n)
+
+    rows = await pool.fetch(
+        f"""
         WITH recent AS (
-            SELECT id FROM eassets_snapshots
-            ORDER BY timestamp DESC LIMIT $1
+            {recent_sql}
         ),
         ranked AS (
             SELECT m.symbol,
@@ -579,19 +757,45 @@ async def get_toi_persistence(
         )
         SELECT symbol, COUNT(*) AS days_top
         FROM ranked
-        WHERE toi_rank <= $2
+        WHERE toi_rank <= ${len(args)}
         GROUP BY symbol
         """,
-        snapshot_limit,
-        top_n,
+        *args,
     )
     return {r["symbol"]: int(r["days_top"]) for r in rows}
 
 
-async def count_snapshots(pool: asyncpg.Pool, limit: int = 30) -> int:
+async def count_snapshots(
+    pool: asyncpg.Pool,
+    limit: int = 30,
+    snapshot_id: int | None = None,
+) -> int:
     """Return the number of snapshots (capped at limit) for persistence ratios."""
+    if snapshot_id is None:
+        sql = """
+        SELECT COUNT(*) AS n
+        FROM (
+            SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT $1
+        ) t
+        """
+        args: tuple[Any, ...] = (limit,)
+    else:
+        sql = """
+        SELECT COUNT(*) AS n
+        FROM (
+            SELECT id
+            FROM eassets_snapshots
+            WHERE timestamp <= (
+                SELECT timestamp FROM eassets_snapshots WHERE id = $1
+            )
+            ORDER BY timestamp DESC
+            LIMIT $2
+        ) t
+        """
+        args = (snapshot_id, limit)
+
     row = await pool.fetchrow(
-        "SELECT COUNT(*) AS n FROM (SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT $1) t",
-        limit,
+        sql,
+        *args,
     )
     return int(row["n"]) if row else 0

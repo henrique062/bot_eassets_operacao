@@ -31,6 +31,7 @@ export interface Position {
   id: number
   config_id: number
   symbol: string
+  is_alpha: boolean
   direction: "LONG" | "SHORT"
   entry_price: number
   size: number
@@ -42,9 +43,40 @@ export interface Position {
   created_at: string
 }
 
+export interface LivePosition {
+  id: string
+  symbol: string
+  is_alpha: boolean
+  direction: "LONG" | "SHORT" | string
+  side: string
+  source: "BOT" | "MANUAL"
+  source_config_id: number | null
+  bot_position_id: string | null
+  entry_price: number
+  mark_price: number | null
+  liquidation_price: number | null
+  size: number
+  value: number
+  leverage: number | null
+  unrealised_pnl: number | null
+  pnl_pct: number | null
+  open_timestamp: number | null
+  updated_at: string | null
+}
+
+export interface LivePositionsResponse {
+  connected: boolean
+  error: string | null
+  fetched_at: string | null
+  bot_count: number
+  manual_count: number
+  positions: LivePosition[]
+}
+
 export interface Trade {
   id: number
   symbol: string
+  is_alpha: boolean
   direction: "LONG" | "SHORT"
   entry_price: number
   exit_price: number
@@ -60,6 +92,7 @@ export interface Trade {
 
 export interface SignalData {
   symbol: string
+  is_alpha: boolean
   score: number
   exp_btc_1h: number
   exp_btc_1d: number
@@ -74,6 +107,7 @@ export interface SignalData {
 export interface WatchlistEntry {
   id: number
   symbol: string
+  is_alpha: boolean
   state: "WATCHLIST" | "COOLDOWN" | "CANDIDATE" | "INVALIDATED" | "COMPLETED"
   attempt_count: number
   max_attempts: number
@@ -130,6 +164,20 @@ export interface ApiResponse<T> {
   error?: string
 }
 
+export interface AlphaSymbol {
+  symbol: string
+  asset: string
+  source: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface AlphaSymbolsResponse {
+  tag: "alpha"
+  count: number
+  symbols: AlphaSymbol[]
+}
+
 // ---------------------------------------------------------------------------
 // Painel de análise manual (metodologia Encryptos)
 // ---------------------------------------------------------------------------
@@ -166,6 +214,7 @@ export interface PanelMeta {
 export interface PanelRow {
   symbol: string
   asset: string
+  is_alpha: boolean
   rank: number | null
   score: number | null
   setup: string | null
@@ -207,6 +256,7 @@ export interface SetupChecklist {
 export interface SetupRow {
   symbol: string
   asset: string
+  is_alpha: boolean
   rank: number | null
   score: number | null
   setup_grade: string
@@ -228,6 +278,7 @@ export interface SetupData {
 export interface RadarRow {
   symbol: string
   asset: string
+  is_alpha: boolean
   toi: number | null
   oiusd: number | null
   trades1d: number | null
@@ -247,6 +298,7 @@ export interface RadarData {
 export interface TopoRow {
   symbol: string
   asset: string
+  is_alpha: boolean
   appearances: number
   best_rank: number | null
   avg_rank: number | null
@@ -277,5 +329,6 @@ export interface HistoryPoint {
 export interface SymbolHistory {
   symbol: string
   asset: string
+  is_alpha: boolean
   history: HistoryPoint[]
 }

@@ -16,6 +16,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from database import get_pool
 from db import repositories as repo
@@ -23,6 +24,10 @@ from db import repositories as repo
 import gerar_painel as core
 
 router = APIRouter(prefix="/api/eassets/panel", tags=["panel"])
+
+
+class SymbolTagsRequest(BaseModel):
+    symbols: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -44,11 +49,12 @@ def _f(v: Any) -> float | None:
     return None
 
 
-def _row_to_panel(m: dict[str, Any]) -> dict[str, Any]:
+def _row_to_panel(m: dict[str, Any], alpha_symbols: set[str]) -> dict[str, Any]:
     """Map an eassets_metrics row to the panel row shape used by the frontend."""
     return {
         "symbol": m["symbol"],
         "asset": m["symbol"].replace("USDT", ""),
+        "is_alpha": repo.normalize_symbol(m["symbol"]) in alpha_symbols,
         "rank": m.get("rank"),
         "score": m.get("score"),
         "setup": m.get("setup"),
@@ -128,6 +134,43 @@ async def list_snapshots(limit: int = Query(100, ge=1, le=500)) -> dict[str, Any
     return _ok(out)
 
 
+@router.get("/tags/alpha", summary="Lista moedas marcadas como Binance Alpha")
+async def list_alpha_symbols() -> dict[str, Any]:
+    pool = get_pool()
+    rows = await repo.list_symbol_tags(pool, tag="alpha")
+    return _ok({
+        "tag": "alpha",
+        "count": len(rows),
+        "symbols": [
+            {
+                "symbol": r["symbol"],
+                "asset": r["symbol"].replace("USDT", ""),
+                "source": r.get("source"),
+                "created_at": r.get("created_at"),
+                "updated_at": r.get("updated_at"),
+            }
+            for r in rows
+        ],
+    })
+
+
+@router.post("/tags/alpha", summary="Adiciona moedas na tag Binance Alpha")
+async def add_alpha_symbols(body: SymbolTagsRequest) -> dict[str, Any]:
+    pool = get_pool()
+    added = await repo.upsert_symbol_tags(pool, body.symbols, tag="alpha", source="manual")
+    rows = await repo.list_symbol_tags(pool, tag="alpha")
+    return _ok({"tag": "alpha", "added": added, "count": len(rows)})
+
+
+@router.delete("/tags/alpha/{symbol}", summary="Remove moeda da tag Binance Alpha")
+async def remove_alpha_symbol(symbol: str) -> dict[str, Any]:
+    pool = get_pool()
+    normalized = repo.normalize_symbol(symbol)
+    deleted = await repo.delete_symbol_tag(pool, symbol, tag="alpha")
+    rows = await repo.list_symbol_tags(pool, tag="alpha")
+    return _ok({"tag": "alpha", "symbol": normalized, "deleted": deleted, "count": len(rows)})
+
+
 @router.get("/latest", summary="Painel ranqueado do último snapshot")
 async def panel_latest() -> dict[str, Any]:
     sid = await _resolve_snapshot_id(None)
@@ -146,8 +189,9 @@ async def _build_panel(snapshot_id: int) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Snapshot não encontrado.")
 
     metrics = await repo.get_panel_metrics(pool, snapshot_id)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     macro = _btc_macro_from_metrics(metrics)
-    rows = [_row_to_panel(m) for m in metrics if m["symbol"] != "BTCUSDT"]
+    rows = [_row_to_panel(m, alpha_symbols) for m in metrics if m["symbol"] != "BTCUSDT"]
 
     return _ok({
         "meta": _meta_out(meta),
@@ -168,6 +212,7 @@ async def panel_setup(
         raise HTTPException(status_code=404, detail="Snapshot não encontrado.")
 
     metrics = await repo.get_panel_metrics(pool, sid)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     macro = _btc_macro_from_metrics(metrics)
     safe = bool(macro.get("safe"))
 
@@ -184,6 +229,7 @@ async def panel_setup(
         out.append({
             "symbol": m["symbol"],
             "asset": m["symbol"].replace("USDT", ""),
+            "is_alpha": repo.normalize_symbol(m["symbol"]) in alpha_symbols,
             "rank": m.get("rank"),
             "score": m.get("score"),
             "setup_grade": grade,
@@ -232,6 +278,7 @@ async def entry_candidates(
 
     meta = await repo.get_snapshot_meta(pool, sid)
     metrics = await repo.get_panel_metrics(pool, sid)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     macro = _btc_macro_from_metrics(metrics)
     safe = bool(macro.get("safe"))
 
@@ -258,6 +305,7 @@ async def entry_candidates(
             candidates.append({
                 "symbol": m["symbol"],
                 "asset": m["symbol"].replace("USDT", ""),
+                "is_alpha": repo.normalize_symbol(m["symbol"]) in alpha_symbols,
                 "score": m.get("score"),
                 "entry_score": escore,
                 "grade": grade,
@@ -293,8 +341,9 @@ async def panel_radar(
         raise HTTPException(status_code=404, detail="Snapshot não encontrado.")
 
     metrics = await repo.get_panel_metrics(pool, sid)
-    persistence = await repo.get_toi_persistence(pool, snapshot_limit=30, top_n=30)
-    total_snaps = await repo.count_snapshots(pool, limit=30)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
+    persistence = await repo.get_toi_persistence(pool, snapshot_id=sid, snapshot_limit=30, top_n=30)
+    total_snaps = await repo.count_snapshots(pool, limit=30, snapshot_id=sid)
 
     rows = [m for m in metrics if m["symbol"] != "BTCUSDT" and m.get("toi") is not None]
     rows.sort(key=lambda m: _f(m.get("toi")) or 0.0, reverse=True)
@@ -304,6 +353,7 @@ async def panel_radar(
         out.append({
             "symbol": m["symbol"],
             "asset": m["symbol"].replace("USDT", ""),
+            "is_alpha": repo.normalize_symbol(m["symbol"]) in alpha_symbols,
             "toi": _f(m.get("toi")),
             "oiusd": _f(m.get("oi_usd")),
             "trades1d": _f(m.get("trades_1d")),
@@ -324,11 +374,13 @@ async def panel_topo(
     snapshot_limit: int = Query(50, ge=1, le=500),
 ) -> dict[str, Any]:
     pool = get_pool()
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     rows = await repo.get_top_appearances(pool, top_n=top_n, snapshot_limit=snapshot_limit)
     out = [
         {
             "symbol": r["symbol"],
             "asset": r["symbol"].replace("USDT", ""),
+            "is_alpha": repo.normalize_symbol(r["symbol"]) in alpha_symbols,
             "appearances": int(r["appearances"]),
             "best_rank": int(r["best_rank"]) if r["best_rank"] is not None else None,
             "avg_rank": _f(r["avg_rank"]),
@@ -346,7 +398,9 @@ async def panel_historico(
     limit: int = Query(60, ge=1, le=300),
 ) -> dict[str, Any]:
     pool = get_pool()
-    rows = await repo.get_symbol_panel_history(pool, symbol.upper(), limit=limit)
+    normalized = repo.normalize_symbol(symbol)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
+    rows = await repo.get_symbol_panel_history(pool, normalized, limit=limit)
     if not rows:
         raise HTTPException(status_code=404, detail="Sem histórico para esse símbolo.")
 
@@ -373,7 +427,8 @@ async def panel_historico(
         for r in rows
     ]
     return _ok({
-        "symbol": symbol.upper(),
-        "asset": symbol.upper().replace("USDT", ""),
+        "symbol": normalized,
+        "asset": normalized.replace("USDT", ""),
+        "is_alpha": normalized in alpha_symbols,
         "history": out,
     })

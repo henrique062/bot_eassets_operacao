@@ -3,6 +3,8 @@ import type {
   BtcStatus,
   BotConfig,
   BybitBalance,
+  AlphaSymbolsResponse,
+  LivePositionsResponse,
   Position,
   SessionStatus,
   Trade,
@@ -64,6 +66,10 @@ export const api = {
 
   getPositions: (configId: number) =>
     apiFetch<Position[]>(`/api/eassets/positions?config_id=${configId}`),
+  getLivePositions: (configId?: number) =>
+    apiFetch<LivePositionsResponse>(
+      `/api/eassets/positions/live${configId ? `?config_id=${configId}` : ""}`
+    ),
   getTrades: (configId: number, skip = 0, limit = 50) =>
     apiFetch<Trade[]>(`/api/eassets/trades?config_id=${configId}&skip=${skip}&limit=${limit}`),
   getTradesBySymbol: (symbol: string) =>
@@ -84,8 +90,10 @@ export const api = {
     return status
   },
 
-  getWatchlist: (configId: number) =>
-    apiFetch<WatchlistEntry[]>(`/api/eassets/watchlist?config_id=${configId}`),
+  getWatchlist: (configId?: number) =>
+    apiFetch<WatchlistEntry[]>(
+      `/api/eassets/watchlist${configId ? `?config_id=${configId}` : ""}`
+    ),
   removeFromWatchlist: (configId: number, symbol: string) =>
     apiFetch(`/api/eassets/watchlist/${configId}/${symbol}`, { method: "DELETE" }),
 
@@ -106,6 +114,18 @@ export const api = {
     apiFetch<BybitBalance>("/api/eassets/config/bybit/balance"),
 
   // Painel de análise manual (metodologia Encryptos)
+  getAlphaSymbols: () =>
+    apiFetch<AlphaSymbolsResponse>("/api/eassets/panel/tags/alpha"),
+  addAlphaSymbols: (symbols: string[]) =>
+    apiFetch<{ tag: "alpha"; added: string[]; count: number }>("/api/eassets/panel/tags/alpha", {
+      method: "POST",
+      body: JSON.stringify({ symbols }),
+    }),
+  removeAlphaSymbol: (symbol: string) =>
+    apiFetch<{ tag: "alpha"; symbol: string; deleted: boolean; count: number }>(
+      `/api/eassets/panel/tags/alpha/${encodeURIComponent(symbol)}`,
+      { method: "DELETE" }
+    ),
   getPanelSnapshots: () =>
     apiFetch<PanelSnapshot[]>("/api/eassets/panel/snapshots"),
   getPanelLatest: () => apiFetch<PanelData>("/api/eassets/panel/latest"),

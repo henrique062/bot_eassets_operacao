@@ -9,6 +9,7 @@ import {
 import { ScoreBar } from "./score-bar"
 import type { SignalData } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 interface SignalsTableProps {
   signals: SignalData[] | undefined
@@ -49,7 +50,12 @@ export function SignalsTable({ signals }: SignalsTableProps) {
       <TableBody>
         {sorted.map((signal) => (
           <TableRow key={signal.symbol}>
-            <TableCell className="font-mono font-medium">{signal.symbol}</TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-medium">{signal.symbol}</span>
+                <AlphaBadge isAlpha={signal.is_alpha} />
+              </div>
+            </TableCell>
             <TableCell>
               <ScoreBar score={n(signal.score)} />
             </TableCell>

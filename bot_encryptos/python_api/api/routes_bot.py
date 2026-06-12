@@ -138,6 +138,8 @@ async def session_status(config_id: int) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Session not found")
 
     positions = await repo.get_positions(pool, config_id)
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
+    positions = repo.apply_alpha_flags(positions, alpha_symbols)
     total_pnl = sum(float(p.get("total_pnl") or 0) for p in positions)
 
     return _ok({
@@ -166,7 +168,8 @@ async def market_signals() -> dict[str, Any]:
         LIMIT 200
         """
     )
-    return _ok([dict(r) for r in rows])
+    alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
+    return _ok(repo.apply_alpha_flags([dict(r) for r in rows], alpha_symbols))
 
 
 @router.get("/market/btc-status", summary="Current BTC RSI state")

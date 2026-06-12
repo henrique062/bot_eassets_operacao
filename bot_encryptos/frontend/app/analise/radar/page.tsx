@@ -4,6 +4,7 @@ import useSWR from "swr"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { fmtNum, fmtUsd, fmtCompact, colorPN, colorToi } from "@/lib/panel-format"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 export default function RadarPage() {
   const { data, error, isLoading } = useSWR("panel-radar", () => api.getPanelRadar(), {
@@ -25,7 +26,7 @@ export default function RadarPage() {
         <span className="font-semibold text-[#f3f4f6]">Como ler: </span>
         <span style={{ color: "#c084fc" }} className="font-semibold">T/OI alto</span> = moeda com OI baixo recebendo
         trades demais → SM trabalhando o ativo de forma focada, algo sendo preparado.{" "}
-        <span className="font-semibold text-[#f3f4f6]">Dias no topo</span> = em quantos snapshots recentes a moeda ficou
+        <span className="font-semibold text-[#f3f4f6]">Snaps no topo</span> = em quantos snapshots recentes a moeda ficou
         entre as 30 maiores em T/OI. Persistência = acumulação em andamento.
       </div>
 
@@ -43,7 +44,7 @@ export default function RadarPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-[#2a2d3a]">
-                  {["#", "Ativo", "T/OI", "OI USD", "Trades 1D", "Dias no topo", "Rank", "Score", "Setup", "1D %"].map((h, i) => (
+                  {["#", "Ativo", "T/OI", "OI USD", "Trades 1D", "Snaps no topo", "Rank", "Score", "Setup", "1D %"].map((h, i) => (
                     <th
                       key={h}
                       className={`px-3 py-3 text-[10px] font-semibold uppercase tracking-wide text-[#6b7280] ${i < 2 || i === 8 ? "text-left" : "text-right"}`}
@@ -58,9 +59,12 @@ export default function RadarPage() {
                   <tr key={r.symbol} className="border-b border-[#23262f] hover:bg-[#20232d]">
                     <td className="px-3 py-2.5 text-left text-sm text-[#6b7280] tabular-nums">{i + 1}</td>
                     <td className="px-3 py-2.5 text-left">
-                      <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
-                        {r.asset}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
+                          {r.asset}
+                        </Link>
+                        <AlphaBadge isAlpha={r.is_alpha} />
+                      </div>
                     </td>
                     <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums" style={{ color: colorToi(r.toi) }}>
                       {fmtCompact(r.toi)}
@@ -70,7 +74,7 @@ export default function RadarPage() {
                     <td className="px-3 py-2.5 text-right">
                       {r.days_top > 1 ? (
                         <span className="rounded-md border border-[#a78bfa]/40 bg-[#a78bfa]/10 px-2 py-0.5 text-[10px] font-semibold text-[#c084fc]">
-                          {r.days_top}/{r.total_snaps} dias
+                          {r.days_top}/{r.total_snaps} snaps
                         </span>
                       ) : (
                         <span className="text-sm text-[#6b7280] tabular-nums">

@@ -13,6 +13,7 @@ import {
   setupBadgeStyle,
 } from "@/lib/panel-format"
 import { MacroBanner } from "@/components/panel/macro-banner"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 const VIEW_OPTIONS = [10, 25, 50, 0] as const
 
@@ -54,9 +55,9 @@ export function PanelView({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
         <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
-          <KpiCard label="Top Score" value={kpis?.byScore?.asset ?? "—"} sub={`score ${kpis?.byScore?.score ?? "—"}`} />
-          <KpiCard label="Maior EXP 1D" value={fmtNum(kpis?.byExp1d?.exp1d, 2, true)} sub={kpis?.byExp1d?.asset ?? "—"} positive />
-          <KpiCard label="Maior EXP 4H" value={fmtNum(kpis?.byExp4h?.exp4h, 2, true)} sub={kpis?.byExp4h?.asset ?? "—"} positive />
+          <KpiCard label="Top Score" value={kpis?.byScore?.asset ?? "—"} sub={`score ${kpis?.byScore?.score ?? "—"}`} valueIsAlpha={kpis?.byScore?.is_alpha} />
+          <KpiCard label="Maior EXP 1D" value={fmtNum(kpis?.byExp1d?.exp1d, 2, true)} sub={kpis?.byExp1d?.asset ?? "—"} positive subIsAlpha={kpis?.byExp1d?.is_alpha} />
+          <KpiCard label="Maior EXP 4H" value={fmtNum(kpis?.byExp4h?.exp4h, 2, true)} sub={kpis?.byExp4h?.asset ?? "—"} positive subIsAlpha={kpis?.byExp4h?.is_alpha} />
           <KpiCard label="Ativos" value={String(data?.meta?.symbols ?? rows.length)} sub={data?.meta?.exchange ?? "eassets"} />
         </div>
         {selector}
@@ -96,19 +97,29 @@ export function KpiCard({
   value,
   sub,
   positive,
+  valueIsAlpha,
+  subIsAlpha,
 }: {
   label: string
   value: string
   sub: string
   positive?: boolean
+  valueIsAlpha?: boolean
+  subIsAlpha?: boolean
 }) {
   return (
     <div className="rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-5 py-4">
       <p className="text-xs font-medium uppercase tracking-wide text-[#6b7280]">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums" style={{ color: positive ? "#4ade80" : "#f3f4f6" }}>
-        {value}
-      </p>
-      <p className="text-xs text-[#6b7280]">{sub}</p>
+      <div className="mt-1 flex items-center gap-2">
+        <p className="text-xl font-semibold tabular-nums" style={{ color: positive ? "#4ade80" : "#f3f4f6" }}>
+          {value}
+        </p>
+        <AlphaBadge isAlpha={valueIsAlpha} />
+      </div>
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-[#6b7280]">{sub}</p>
+        <AlphaBadge isAlpha={subIsAlpha} />
+      </div>
     </div>
   )
 }
@@ -174,9 +185,12 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
                 {String(r.rank ?? "").padStart(2, "0")}
               </td>
               <td className="px-3 py-2.5 text-left">
-                <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
-                  {r.asset}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
+                    {r.asset}
+                  </Link>
+                  <AlphaBadge isAlpha={r.is_alpha} />
+                </div>
               </td>
               <td className="px-3 py-2.5 text-right text-sm text-[#d1d5db] tabular-nums">{fmtPrice(r.price)}</td>
               <td className="px-3 py-2.5 text-right text-sm tabular-nums" style={{ color: colorPN(r.change) }}>

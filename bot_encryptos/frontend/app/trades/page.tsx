@@ -16,6 +16,7 @@ import { usePolling } from "@/hooks/use-polling"
 import { api } from "@/lib/api"
 import type { Trade } from "@/lib/types"
 import { cn, formatCurrency, formatPct, formatTimeBRT } from "@/lib/utils"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 function TradeStats({ trades }: { trades: Trade[] }) {
   if (trades.length === 0) return null
@@ -75,7 +76,12 @@ function TradesTable({ trades }: { trades: Trade[] }) {
       <TableBody>
         {trades.map((trade) => (
           <TableRow key={trade.id}>
-            <TableCell className="font-mono font-semibold">{trade.symbol}</TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-semibold">{trade.symbol}</span>
+                <AlphaBadge isAlpha={trade.is_alpha} />
+              </div>
+            </TableCell>
             <TableCell>
               <Badge variant={trade.direction === "LONG" ? "success" : "danger"}>
                 {trade.direction}

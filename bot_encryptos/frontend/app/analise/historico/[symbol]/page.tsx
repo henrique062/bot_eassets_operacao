@@ -8,6 +8,7 @@ import { api } from "@/lib/api"
 import type { HistoryPoint } from "@/lib/types"
 import { fmtPrice, fmtNum, fmtUsd, colorPN } from "@/lib/panel-format"
 import { ScoreChart } from "@/components/panel/score-chart"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 export default function HistoricoPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = use(params)
@@ -31,6 +32,7 @@ export default function HistoricoPage({ params }: { params: Promise<{ symbol: st
 
       <div className="flex items-baseline gap-3">
         <h2 className="text-xl font-semibold text-[#f3f4f6]">{data?.asset ?? symbol.replace("USDT", "")}</h2>
+        <AlphaBadge isAlpha={data?.is_alpha} />
         <span className="text-sm text-[#6b7280]">{symbol.toUpperCase()} · {history.length} registros</span>
       </div>
 

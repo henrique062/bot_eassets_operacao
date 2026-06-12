@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table"
 import { formatCurrency, minutesAgo } from "@/lib/utils"
 import type { Position } from "@/lib/types"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 interface OpenPositionsTableProps {
   positions: Position[] | undefined
@@ -44,7 +45,12 @@ export function OpenPositionsTable({ positions }: OpenPositionsTableProps) {
             <TableBody>
               {positions.map((pos) => (
                 <TableRow key={pos.id}>
-                  <TableCell className="font-mono font-medium">{pos.symbol}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-medium">{pos.symbol}</span>
+                      <AlphaBadge isAlpha={pos.is_alpha} />
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={pos.direction === "LONG" ? "success" : "danger"}>
                       {pos.direction}

@@ -178,6 +178,16 @@ CREATE INDEX idx_eassets_metrics_toi    ON eassets_metrics(snapshot_id, toi DESC
 CREATE INDEX idx_eassets_metrics_grade  ON eassets_metrics(setup_grade) WHERE setup_grade = 'SETUP DE OURO';
 ```
 
+**`eassets_symbol_tags`** — tags manuais por moeda (ex.: Binance Alpha)
+```sql
+CREATE TABLE eassets_symbol_tags (
+    symbol TEXT NOT NULL,
+    tag    TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'manual',
+    PRIMARY KEY (symbol, tag)
+);
+```
+
 **Fluxo de ingestão (espelho do `db.ingest()` do phoenix):**
 ```
 scrape_eassets_json()
@@ -241,7 +251,7 @@ EASSETS_PASSWORD=sua-senha
 EASSETS_INTERVAL_SECONDS=1800    # 30 minutos
 EASSETS_AUTO_ENABLED=1
 EASSETS_HEADLESS=1
-EASSETS_TIMEOUT_MS=120000
+EASSETS_TIMEOUT_MS=240000
 ```
 
 ### Arquivos no `python_api`
@@ -260,6 +270,9 @@ python_api/
 POST /api/eassets/scraper/capture      # dispara captura manual imediata
 GET  /api/eassets/scraper/status       # estado: running, last_ok, last_error, next_run_at
 GET  /api/eassets/raw-snapshots        # lista de capturas brutas com status
+GET  /api/eassets/panel/tags/alpha     # lista moedas Binance Alpha
+POST /api/eassets/panel/tags/alpha     # adiciona moedas Binance Alpha
+DELETE /api/eassets/panel/tags/alpha/{symbol} # remove moeda Binance Alpha
 ```
 
 ---
@@ -947,6 +960,7 @@ bot_encryptos/frontend/
 | `/watchlist` | PCL — estado de cada moeda, tentativas, cooldown restante |
 | `/scraper` | Status do loop eAssets, botão "Capturar agora", histórico de capturas |
 | `/config` | Formulário completo de `eassets_bot_config` (capital, leverage, thresholds) |
+| `/analise/alpha` | Cadastro/remoção de moedas Binance Alpha e badge Alpha no painel |
 
 - [ ] Criar `bot_encryptos/frontend/` com estrutura Next.js 15
 - [ ] Integrar com `python_api` via `NEXT_PUBLIC_API_URL`

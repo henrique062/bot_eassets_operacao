@@ -4,6 +4,7 @@ import useSWR from "swr"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { fmtNum } from "@/lib/panel-format"
+import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 export default function TopoPage() {
   const { data, error, isLoading } = useSWR("panel-topo", api.getPanelTopo, {
@@ -57,9 +58,12 @@ export default function TopoPage() {
                   <tr key={r.symbol} className="border-b border-[#23262f] hover:bg-[#20232d]">
                     <td className="px-3 py-2.5 text-left text-sm text-[#6b7280] tabular-nums">{i + 1}</td>
                     <td className="px-3 py-2.5 text-left">
-                      <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
-                        {r.asset}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/analise/historico/${r.symbol}`} className="text-sm font-semibold text-[#f3f4f6] hover:text-[#818cf8]">
+                          {r.asset}
+                        </Link>
+                        <AlphaBadge isAlpha={r.is_alpha} />
+                      </div>
                     </td>
                     <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#f3f4f6] tabular-nums">{r.appearances}</td>
                     <td className="px-3 py-2.5 text-right text-sm text-[#9ca3af] tabular-nums">{r.best_rank ?? "—"}</td>
