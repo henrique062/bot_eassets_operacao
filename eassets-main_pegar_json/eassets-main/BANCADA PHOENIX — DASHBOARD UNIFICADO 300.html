@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BANCADA PHOENIX — DASHBOARD UNIFICADO</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,'Segoe UI',sans-serif;background:#010409;color:#c9d1d9;min-height:100vh;}
+.header{background:#0d1117;border-bottom:1px solid #21262d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.header-title{font-size:18px;font-weight:800;color:#f0f6fc;}
+.header-meta{display:flex;gap:16px;align-items:center;font-size:13px;color:#8b949e;flex-wrap:wrap;}
+.btn-refresh{background:#238636;color:white;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-refresh:hover{background:#2ea043;}
+.container{max-width:1400px;margin:auto;padding:24px;}
+.macro-banner{border-radius:12px;padding:20px 28px;margin-bottom:36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+.macro-left{display:flex;align-items:center;gap:14px;}
+.macro-icon{font-size:36px;}
+.macro-status{font-size:22px;font-weight:800;}
+.macro-msg{font-size:13px;opacity:.9;margin-top:3px;}
+.macro-stats{display:flex;gap:22px;flex-wrap:wrap;}
+.macro-stat .val{font-size:20px;font-weight:800;}
+.macro-stat .lbl{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;}
+.section-header{display:flex;align-items:center;gap:14px;margin:36px 0 18px;}
+.section-title{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+.section-line{flex:1;height:1px;background:#21262d;}
+.veredito-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px;}
+.veredito-card{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;}
+.verdict-banner{padding:22px 20px;text-align:center;}
+.verdict-text{font-size:28px;font-weight:900;letter-spacing:-.3px;}
+.verdict-resumo{font-size:14px;color:#c9d1d9;margin-top:8px;font-weight:600;opacity:.95;}
+.alertas-list{display:flex;flex-direction:column;gap:8px;background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:13px 14px;margin-bottom:12px;}
+.alerta-item{font-size:13.5px;font-weight:600;line-height:1.45;}
+.alerta-num{font-size:11px;color:#8b949e;font-weight:500;font-family:monospace;margin-left:4px;}
+.op-line{font-size:13px;color:#c9d1d9;margin-bottom:7px;line-height:1.45;}
+.op-line:last-child{margin-bottom:0;}
+.op-line strong{color:#f0f6fc;font-family:monospace;}
+.card-body{padding:20px;}
+.coin-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+.coin-symbol{font-size:30px;font-weight:900;color:#f0f6fc;letter-spacing:-1px;}
+.coin-full{font-size:11px;color:#8b949e;margin-top:2px;}
+.coin-right{text-align:right;}
+.coin-price{font-size:16px;font-weight:700;color:#58a6ff;}
+.score-badge{font-size:12px;font-weight:700;color:#58a6ff;background:rgba(88,166,255,.1);padding:3px 10px;border-radius:20px;margin-top:5px;display:inline-block;}
+.operacao-box{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:14px;}
+.op-title{font-size:11px;font-weight:700;color:#8b949e;margin-bottom:10px;}
+.fase1-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+.fase1-card{background:#161b22;border:1px solid #a371f722;border-left:4px solid #a371f7;border-radius:10px;padding:14px;}
+.f1-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.f1-symbol{font-size:18px;font-weight:800;color:#f0f6fc;}
+.pre-setup-badge{background:rgba(163,113,247,.15);color:#a371f7;border:1px solid #a371f7;border-radius:6px;padding:5px 9px;font-size:10.5px;font-weight:700;margin-bottom:6px;line-height:1.3;}
+.fenix-banner{background:linear-gradient(135deg,rgba(255,155,77,.13),rgba(255,107,53,.07));border:1px solid #ff9b4d55;border-radius:12px;padding:14px 20px;margin-bottom:16px;font-size:13px;color:#ffd0a8;line-height:1.6;}
+.fenix-banner strong{color:#ff9b4d;}
+.fenix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:14px;margin-bottom:30px;}
+.fenix-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;border-left:4px solid #ff9b4d;}
+.fenix-card .fc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;}
+.fenix-card .fc-sym{font-size:22px;font-weight:900;color:#f0f6fc;letter-spacing:-.5px;}
+.fenix-card .fc-price{font-size:13px;color:#58a6ff;font-weight:700;text-align:right;}
+.fenix-card .fc-trades{font-size:10px;color:#8b949e;margin-top:3px;}
+.fenix-card .fc-score{font-size:11px;color:#ff9b4d;font-weight:700;text-align:right;margin-top:3px;}
+.fenix-verdict{padding:8px 12px;border-radius:8px;text-align:center;font-weight:800;font-size:14px;margin-bottom:12px;}
+.fenix-crit{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;}
+.fenix-c{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.fenix-c span.lbl{color:#c9d1d9;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fenix-c .ck{font-size:13px;flex-shrink:0;}
+.fenix-empty{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;text-align:center;color:#8b949e;font-size:14px;margin-bottom:30px;}
+@media(max-width:768px){
+    .veredito-grid{grid-template-columns:1fr;}
+    .fenix-grid{grid-template-columns:1fr;}
+    .macro-stats{gap:14px;}
+    .verdict-text{font-size:22px;}
+}
+</style>
+</head>
+<body>
+<div class="header">
+    <div class="header-title">🦅 BANCADA PHOENIX — DASHBOARD UNIFICADO</div>
+    <div class="header-meta">
+        <span>📅 2026-05-23T23:13:21.946Z</span>
+        <span>🪙 36 moedas</span>
+        <span>📡 binanceusdm</span>
+    </div>
+</div>
+<div class="container">
+
+<div class="macro-banner" style="background:rgba(210,153,34,0.08);border:1px solid rgba(210,153,34,0.25);">
+    <div class="macro-left">
+        <div class="macro-icon">🟡</div>
+        <div>
+            <div class="macro-status" style="color:#d29922;">MERCADO NEUTRO</div>
+            <div class="macro-msg">Mercado lateral. Operar com cautela e stops bem posicionados.</div>
+        </div>
+    </div>
+    <div class="macro-stats">
+        <div class="macro-stat"><div class="val" style="color:#d29922;">45.63</div><div class="lbl">BTC RSI 1D</div></div>
+        <div class="macro-stat"><div class="val">-0.0077%</div><div class="lbl">Avg Funding</div></div>
+        <div class="macro-stat"><div class="val">36</div><div class="lbl">Moedas scan</div></div>
+    </div>
+</div>
+
+<div class="section-header">
+    <div class="section-title" style="color:#ff9b4d;">⚡ MODO FÊNIX</div>
+    <div class="section-line"></div>
+    <span style="font-size:12px;color:#8b949e;white-space:nowrap;">Top 5 ao vivo · 4 critérios do método</span>
+</div>
+<div class="fenix-banner">
+    <strong>Critérios do professor:</strong>
+    EXP BTC 1m &gt; 3 · Trades 1m crescendo · RSI 1m entre 50–70 · Range Level ≥ 3
+    <br>
+    <span style="opacity:.75;font-size:11.5px;">
+        Filtro mínimo: trades_1d &gt; 30k ·
+        Veredito: <strong style="color:#3fb950;">4/4</strong> ENTRAR AGORA · <strong style="color:#3fb950;">3/4</strong> ENTRAR · <strong style="color:#d29922;">2/4</strong> AGUARDAR · <strong style="color:#f85149;">1/4</strong> NÃO ·
+        📌 Range usa <strong>15m</strong>
+    </span>
+</div>
+
+<div class="fenix-grid"><div class="fenix-card" >
+                <div class="fc-head">
+                    <div>
+                        <div class="fc-sym">NIL</div>
+                        <div class="fc-trades">NILUSDT</div>
+                    </div>
+                    <div>
+                        <div class="fc-price">0.062010</div>
+                        <div class="fc-score">3/4</div>
+                    </div>
+                </div>
+                <div class="fenix-verdict" style="background:rgba(63,185,80,.12);color:#3fb950;">🟢 ENTRAR</div>
+                <div class="fenix-crit">
+                    <div class="fenix-c"><span class="lbl">EXP 4.37</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Tr 676k</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">RSI 68.1</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Rng15m 0</span><span class="ck" style="color:#f85149;">❌</span></div>
+                </div>
+                <div style="font-size:10.5px;color:#8b949e;margin-top:8px;text-align:center;">522.5k trades/dia</div>
+                
+            </div><div class="fenix-card" >
+                <div class="fc-head">
+                    <div>
+                        <div class="fc-sym">NEAR</div>
+                        <div class="fc-trades">NEARUSDT</div>
+                    </div>
+                    <div>
+                        <div class="fc-price">2.4380</div>
+                        <div class="fc-score">3/4</div>
+                    </div>
+                </div>
+                <div class="fenix-verdict" style="background:rgba(63,185,80,.12);color:#3fb950;">🟢 ENTRAR</div>
+                <div class="fenix-crit">
+                    <div class="fenix-c"><span class="lbl">EXP 3.54</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Tr 1044k</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">RSI 65.4</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Rng15m 1</span><span class="ck" style="color:#f85149;">❌</span></div>
+                </div>
+                <div style="font-size:10.5px;color:#8b949e;margin-top:8px;text-align:center;">1666.6k trades/dia</div>
+                <div style="font-size:10.5px;color:#3fb950;margin-top:4px;text-align:center;font-weight:600;">🐊 Jacaré aberto</div>
+            </div><div class="fenix-card" >
+                <div class="fc-head">
+                    <div>
+                        <div class="fc-sym">ETH</div>
+                        <div class="fc-trades">ETHUSDT</div>
+                    </div>
+                    <div>
+                        <div class="fc-price">2,117.27</div>
+                        <div class="fc-score">2/4</div>
+                    </div>
+                </div>
+                <div class="fenix-verdict" style="background:rgba(248,81,73,.18);color:#f85149;">⚠️ AGUARDAR</div>
+                <div class="fenix-crit">
+                    <div class="fenix-c"><span class="lbl">EXP 0.04</span><span class="ck" style="color:#f85149;">❌</span></div>
+                    <div class="fenix-c"><span class="lbl">Tr 1231k</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">RSI 57.7</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Rng15m 0</span><span class="ck" style="color:#f85149;">❌</span></div>
+                </div>
+                <div style="font-size:10.5px;color:#8b949e;margin-top:8px;text-align:center;">4446.0k trades/dia</div>
+                
+            </div><div class="fenix-card" >
+                <div class="fc-head">
+                    <div>
+                        <div class="fc-sym">AGT</div>
+                        <div class="fc-trades">AGTUSDT</div>
+                    </div>
+                    <div>
+                        <div class="fc-price">0.015000</div>
+                        <div class="fc-score">2/4</div>
+                    </div>
+                </div>
+                <div class="fenix-verdict" style="background:rgba(248,81,73,.18);color:#f85149;">⚠️ AGUARDAR</div>
+                <div class="fenix-crit">
+                    <div class="fenix-c"><span class="lbl">EXP 29.30</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Tr 1152k</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">RSI 88.7</span><span class="ck" style="color:#f85149;">❌</span></div>
+                    <div class="fenix-c"><span class="lbl">Rng15m 0</span><span class="ck" style="color:#f85149;">❌</span></div>
+                </div>
+                <div style="font-size:10.5px;color:#8b949e;margin-top:8px;text-align:center;">168.9k trades/dia</div>
+                
+            </div><div class="fenix-card" >
+                <div class="fc-head">
+                    <div>
+                        <div class="fc-sym">DYM</div>
+                        <div class="fc-trades">DYMUSDT</div>
+                    </div>
+                    <div>
+                        <div class="fc-price">0.028270</div>
+                        <div class="fc-score">2/4</div>
+                    </div>
+                </div>
+                <div class="fenix-verdict" style="background:rgba(248,81,73,.18);color:#f85149;">⚠️ AGUARDAR</div>
+                <div class="fenix-crit">
+                    <div class="fenix-c"><span class="lbl">EXP 1.08</span><span class="ck" style="color:#f85149;">❌</span></div>
+                    <div class="fenix-c"><span class="lbl">Tr 139k</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">RSI 61.2</span><span class="ck" style="color:#3fb950;">✅</span></div>
+                    <div class="fenix-c"><span class="lbl">Rng15m 0</span><span class="ck" style="color:#f85149;">❌</span></div>
+                </div>
+                <div style="font-size:10.5px;color:#8b949e;margin-top:8px;text-align:center;">213.3k trades/dia</div>
+                
+            </div></div>
+
+<div class="section-header">
+    <div class="section-title" style="color:#3fb950;">🎯 VEREDITOS DE ENTRADA</div>
+    <div class="section-line"></div>
+</div>
+<div class="veredito-grid"><div class="veredito-card">
+            <div class="verdict-banner" style="background:rgba(210,153,34,0.2);border-bottom:2px solid #d29922;">
+                <div class="verdict-text" style="color:#d29922;">⏳ AGUARDAR CONFIRMAÇÃO</div>
+                <div class="verdict-resumo">⚠️ Aguardar sinal adicional</div>
+            </div>
+            <div class="card-body">
+                <div class="coin-header">
+                    <div>
+                        <div class="coin-symbol">ARKM</div>
+                        <div class="coin-full">ARKMUSDT &bull; CRESCENTE</div>
+                    </div>
+                    <div class="coin-right">
+                        <div class="coin-price">0.144100</div>
+                        <div class="score-badge">Score 28/40</div>
+                    </div>
+                </div>
+                <div style="margin:6px 0;padding:6px 10px;background:rgba(168,85,247,0.10);border-left:2px solid #a855f7;border-radius:4px;font-size:10.8px;color:#c4b5fd;line-height:1.4;">
+                    <strong style="color:#c084fc;">🎬 Tendência (+8 pts):</strong>
+                    <span style="color:#3fb950;">🟢 EXP diário acelerando | 🟢 OI crescendo +7.8% (baleias entrando) | 🐊 LSR caindo + OI subindo (squeeze acumulando) | 🟢 EXP 4H subindo (4H confirma o diário)</span>
+                </div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">🟢 ZONA PERFEITA pra entrar</div>
+<div class="alerta-item" style="color:#3fb950;">✅ Combustível ideal, espaço pra subir <span class='alerta-num'>(EXP 15m: 13.02)</span></div>
+<div class="alerta-item" style="color:#3fb950;">💎 Diário: ACUMULAÇÃO FORTE (1D = 4)</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Intra-day: fraco (30m=0, 15m=0, 1h=0, 4h=0)</div>
+<div class="alerta-item" style="color:#3fb950;">🟢 HORA CERTA - move tá começando</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 1H: EXP 24.13 | RSI 73 ↑ (score 1h: +2)</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 4H: EXP 35.04 | RSI 66 ↑ (score 4h: +2)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ FR neutro (FR 0.0100%) <span class='alerta-num'>(FR 0.0100%)</span></div></div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">✅ Os 3 tempos confirmam (curto, médio, longo)</div>
+<div class="alerta-item" style="color:#3fb950;">💪 Sobe sozinha, não depende do BTC</div>
+<div class="alerta-item" style="color:#8b949e;">🐊 Jacaré CONFIRMADO (OI +7.8% em 30m, +7.0% em 1h) | 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Histórico: sem dados</div></div>
+                <div style="margin:10px 0;padding:10px 12px;background:rgba(210,153,34,0.12);border:1px solid #d29922;border-radius:8px;font-size:11.5px;color:#d29922;">
+                    <strong>📋 ANTES DE ENTRAR — confirme no CoinGlass:</strong><br>
+                    ✓ OI no 4H subindo? &nbsp;✓ LSR caindo consistentemente? &nbsp;✓ FR normal (&lt; 0.03%)?
+                </div>
+                <div class="operacao-box">
+                    <div class="op-title">🛡️ SUGESTÃO DE OPERAÇÃO</div>
+                    <div class="op-line">🛑 SAIR SE CAIR PRA: <strong>0.139777</strong> <span style="color:#f85149;">(perde -3%)</span></div>
+                    <div class="op-line">💰 REALIZAR METADE EM: <strong>0.151305</strong> <span style="color:#3fb950;">(ganha +5%)</span></div>
+                    <div class="op-line">🏆 REALIZAR TUDO EM: <strong>0.158510</strong> <span style="color:#00ff88;">(ganha +10%)</span></div>
+                    <div class="op-line" style="color:#d29922;">🚨 OU SAIR SE FICAR SOBRECOMPRADA (RSI &gt; 80)</div>
+                </div>
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.2);border-radius:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin-bottom:10px;">🧠 ANÁLISE DOS AGENTES</div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🐊 CZ</span>
+                        <span style="color:#c9d1d9;">🐊 Jacaré CONFIRMADO (+7.8% em 30m, +7.0% em 1h) + LSR caindo. OI: $3.0M (🔴 baixa liquidez). Squeeze confiável. 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">⚡ FÊNIX</span>
+                        <span style="color:#c9d1d9;">⚪ EXP 1m 1.31, 1h 24.13, RSI 66. Momentum fraco.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:10px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🛡️ SAFE</span>
+                        <span style="color:#c9d1d9;">🟢 Força própria real — alt subiu 12.8% no dia, acima do BTC. EXP 15m: 13.02.</span>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;border:1px solid #3fb950;color:#3fb950;background:rgba(0,0,0,0.2);text-align:center;">
+                        🎯 MAIORIA POSITIVA — 2/3 aprovam sem veto. Entrar com stops ajustados.
+                    </div>
+                </div>
+            </div>
+        </div><div class="veredito-card">
+            <div class="verdict-banner" style="background:rgba(210,153,34,0.2);border-bottom:2px solid #d29922;">
+                <div class="verdict-text" style="color:#d29922;">⏳ AGUARDAR CONFIRMAÇÃO</div>
+                <div class="verdict-resumo">⚠️ Aguardar sinal adicional</div>
+            </div>
+            <div class="card-body">
+                <div class="coin-header">
+                    <div>
+                        <div class="coin-symbol">BICO</div>
+                        <div class="coin-full">BICOUSDT &bull; CRESCENTE</div>
+                    </div>
+                    <div class="coin-right">
+                        <div class="coin-price">0.029650</div>
+                        <div class="score-badge">Score 26/40</div>
+                    </div>
+                </div>
+                <div style="margin:6px 0;padding:6px 10px;background:rgba(168,85,247,0.10);border-left:2px solid #a855f7;border-radius:4px;font-size:10.8px;color:#c4b5fd;line-height:1.4;">
+                    <strong style="color:#c084fc;">🎬 Tendência (+8 pts):</strong>
+                    <span style="color:#3fb950;">🟢 EXP diário acelerando | 🟢 OI crescendo +23.4% (baleias entrando) | 🐊 LSR caindo + OI subindo (squeeze acumulando) | 🟢 EXP 4H subindo (4H confirma o diário)</span>
+                </div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">🟢 ZONA PERFEITA pra entrar</div>
+<div class="alerta-item" style="color:#8b949e;">🚀 Subindo mais que o BTC (força própria) <span class='alerta-num'>(EXP 15m: 17.15)</span></div>
+<div class="alerta-item" style="color:#3fb950;">💎 Diário: ACUMULAÇÃO FORTE (1D = 4)</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Intra-day: fraco (30m=0, 15m=0, 1h=0, 4h=4)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ Timing neutro</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 1H: EXP 28.64 | RSI 73 ↑ (score 1h: +2)</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 4H: EXP 41.56 | RSI 70 ↑ (score 4h: +2)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ FR neutro (FR 0.0100%) <span class='alerta-num'>(FR 0.0100%)</span></div></div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#8b949e;">⏳ Tempos não alinhados ainda</div>
+<div class="alerta-item" style="color:#3fb950;">💪 Sobe sozinha, não depende do BTC</div>
+<div class="alerta-item" style="color:#8b949e;">🐊 Jacaré CONFIRMADO (OI +23.4% em 30m, +21.0% em 1h) | 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Histórico: sem dados</div></div>
+                <div style="margin:10px 0;padding:10px 12px;background:rgba(210,153,34,0.12);border:1px solid #d29922;border-radius:8px;font-size:11.5px;color:#d29922;">
+                    <strong>📋 ANTES DE ENTRAR — confirme no CoinGlass:</strong><br>
+                    ✓ OI no 4H subindo? &nbsp;✓ LSR caindo consistentemente? &nbsp;✓ FR normal (&lt; 0.03%)?
+                </div>
+                <div class="operacao-box">
+                    <div class="op-title">🛡️ SUGESTÃO DE OPERAÇÃO</div>
+                    <div class="op-line">🛑 SAIR SE CAIR PRA: <strong>0.028760</strong> <span style="color:#f85149;">(perde -3%)</span></div>
+                    <div class="op-line">💰 REALIZAR METADE EM: <strong>0.031133</strong> <span style="color:#3fb950;">(ganha +5%)</span></div>
+                    <div class="op-line">🏆 REALIZAR TUDO EM: <strong>0.032615</strong> <span style="color:#00ff88;">(ganha +10%)</span></div>
+                    <div class="op-line" style="color:#d29922;">🚨 OU SAIR SE FICAR SOBRECOMPRADA (RSI &gt; 80)</div>
+                </div>
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.2);border-radius:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin-bottom:10px;">🧠 ANÁLISE DOS AGENTES</div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🐊 CZ</span>
+                        <span style="color:#c9d1d9;">🐊 Jacaré CONFIRMADO (+23.4% em 30m, +21.0% em 1h) + LSR caindo. OI: $1.4M (🔴 baixa liquidez). Squeeze confiável. 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">⚡ FÊNIX</span>
+                        <span style="color:#c9d1d9;">⚪ EXP 1m 0, 1h 28.64, RSI 69. Momentum fraco.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:10px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🛡️ SAFE</span>
+                        <span style="color:#c9d1d9;">🟢 Força própria real — alt subiu 13.8% no dia, acima do BTC. EXP 15m: 17.15.</span>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;border:1px solid #3fb950;color:#3fb950;background:rgba(0,0,0,0.2);text-align:center;">
+                        🎯 MAIORIA POSITIVA — 2/3 aprovam sem veto. Entrar com stops ajustados.
+                    </div>
+                </div>
+            </div>
+        </div><div class="veredito-card">
+            <div class="verdict-banner" style="background:rgba(210,153,34,0.2);border-bottom:2px solid #d29922;">
+                <div class="verdict-text" style="color:#d29922;">⏳ AGUARDAR CONFIRMAÇÃO</div>
+                <div class="verdict-resumo">⚠️ Aguardar sinal adicional</div>
+            </div>
+            <div class="card-body">
+                <div class="coin-header">
+                    <div>
+                        <div class="coin-symbol">NEAR</div>
+                        <div class="coin-full">NEARUSDT &bull; CRESCENTE</div>
+                    </div>
+                    <div class="coin-right">
+                        <div class="coin-price">2.4380</div>
+                        <div class="score-badge">Score 25/40</div>
+                    </div>
+                </div>
+                <div style="margin:6px 0;padding:6px 10px;background:rgba(168,85,247,0.10);border-left:2px solid #a855f7;border-radius:4px;font-size:10.8px;color:#c4b5fd;line-height:1.4;">
+                    <strong style="color:#c084fc;">🎬 Tendência (+9 pts):</strong>
+                    <span style="color:#3fb950;">🟢 EXP diário acelerando | 🟢 OI crescendo +9.0% (baleias entrando) | 🟢 Volume diário crescendo com EXP (confirmação) | 🐊 LSR caindo + OI subindo (squeeze acumulando) | 🟢 EXP 4H subindo (4H confirma o diário)</span>
+                </div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">🟢 ZONA PERFEITA pra entrar</div>
+<div class="alerta-item" style="color:#8b949e;">🚀 Subindo mais que o BTC (força própria) <span class='alerta-num'>(EXP 15m: 15.6)</span></div>
+<div class="alerta-item" style="color:#8b949e;">📊 Diário: Sem acumulação</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Intra-day: fraco (30m=0, 15m=1, 1h=0, 4h=0)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ Timing neutro</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 1H: EXP 43.13 | RSI 76 ↑ (score 1h: +2)</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 4H: EXP 98.56 | RSI 79 ↑ (score 4h: +2)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ FR neutro (FR 0.0052%) <span class='alerta-num'>(FR 0.0052%)</span></div></div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">✅ Os 3 tempos confirmam (curto, médio, longo)</div>
+<div class="alerta-item" style="color:#3fb950;">💪 Sobe sozinha, não depende do BTC</div>
+<div class="alerta-item" style="color:#8b949e;">🐊 Jacaré CONFIRMADO (OI +9.0% em 30m, +8.1% em 1h) | 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Histórico: sem dados</div></div>
+                <div style="margin:10px 0;padding:10px 12px;background:rgba(210,153,34,0.12);border:1px solid #d29922;border-radius:8px;font-size:11.5px;color:#d29922;">
+                    <strong>📋 ANTES DE ENTRAR — confirme no CoinGlass:</strong><br>
+                    ✓ OI no 4H subindo? &nbsp;✓ LSR caindo consistentemente? &nbsp;✓ FR normal (&lt; 0.03%)?
+                </div>
+                <div class="operacao-box">
+                    <div class="op-title">🛡️ SUGESTÃO DE OPERAÇÃO</div>
+                    <div class="op-line">🛑 SAIR SE CAIR PRA: <strong>2.3649</strong> <span style="color:#f85149;">(perde -3%)</span></div>
+                    <div class="op-line">💰 REALIZAR METADE EM: <strong>2.5599</strong> <span style="color:#3fb950;">(ganha +5%)</span></div>
+                    <div class="op-line">🏆 REALIZAR TUDO EM: <strong>2.6818</strong> <span style="color:#00ff88;">(ganha +10%)</span></div>
+                    <div class="op-line" style="color:#d29922;">🚨 OU SAIR SE FICAR SOBRECOMPRADA (RSI &gt; 80)</div>
+                </div>
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.2);border-radius:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin-bottom:10px;">🧠 ANÁLISE DOS AGENTES</div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🐊 CZ</span>
+                        <span style="color:#c9d1d9;">🐊 Jacaré CONFIRMADO (+9.0% em 30m, +8.1% em 1h) + LSR caindo. OI: $148.4M (🟢 alta liquidez). Squeeze confiável. 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">⚡ FÊNIX</span>
+                        <span style="color:#c9d1d9;">🟡 Momentum moderado — EXP 1m 3.54, 1h 43.13, 1044 trades/min.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:10px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🛡️ SAFE</span>
+                        <span style="color:#c9d1d9;">🟢 Força própria real — alt subiu 16.0% no dia, acima do BTC. EXP 15m: 15.6.</span>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;border:1px solid #3fb950;color:#3fb950;background:rgba(0,0,0,0.2);text-align:center;">
+                        🎯 MAIORIA POSITIVA — 2/3 aprovam sem veto. Entrar com stops ajustados.
+                    </div>
+                </div>
+            </div>
+        </div><div class="veredito-card">
+            <div class="verdict-banner" style="background:rgba(210,153,34,0.2);border-bottom:2px solid #d29922;">
+                <div class="verdict-text" style="color:#d29922;">⏳ AGUARDAR CONFIRMAÇÃO</div>
+                <div class="verdict-resumo">⚠️ Aguardar sinal adicional</div>
+            </div>
+            <div class="card-body">
+                <div class="coin-header">
+                    <div>
+                        <div class="coin-symbol">GRASS</div>
+                        <div class="coin-full">GRASSUSDT &bull; CRESCENTE</div>
+                    </div>
+                    <div class="coin-right">
+                        <div class="coin-price">0.534600</div>
+                        <div class="score-badge">Score 24/40</div>
+                    </div>
+                </div>
+                <div style="margin:6px 0;padding:6px 10px;background:rgba(168,85,247,0.10);border-left:2px solid #a855f7;border-radius:4px;font-size:10.8px;color:#c4b5fd;line-height:1.4;">
+                    <strong style="color:#c084fc;">🎬 Tendência (+9 pts):</strong>
+                    <span style="color:#3fb950;">🟢 EXP diário acelerando | 🟢 OI crescendo +46.9% (baleias entrando) | 🟢 Volume diário crescendo com EXP (confirmação) | 🐊 LSR caindo + OI subindo (squeeze acumulando) | 🟢 EXP 4H subindo (4H confirma o diário)</span>
+                </div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">🟢 ZONA PERFEITA pra entrar</div>
+<div class="alerta-item" style="color:#8b949e;">🚀 Subindo mais que o BTC (força própria) <span class='alerta-num'>(EXP 15m: 34.48)</span></div>
+<div class="alerta-item" style="color:#8b949e;">📊 Diário: Sem acumulação</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Intra-day: fraco (30m=0, 15m=0, 1h=0, 4h=0)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ Timing neutro</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 1H: EXP 70.87 | RSI 78 ↑ (score 1h: +2)</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 4H: EXP 120.33 | RSI 79 ↑ (score 4h: +2)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ FR neutro (FR 0.0050%) <span class='alerta-num'>(FR 0.0050%)</span></div></div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#8b949e;">⏳ Tempos não alinhados ainda</div>
+<div class="alerta-item" style="color:#3fb950;">💪 Sobe sozinha, não depende do BTC</div>
+<div class="alerta-item" style="color:#8b949e;">🐊 Jacaré CONFIRMADO (OI +46.9% em 30m, +42.2% em 1h) | 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Histórico: sem dados</div></div>
+                <div style="margin:10px 0;padding:10px 12px;background:rgba(210,153,34,0.12);border:1px solid #d29922;border-radius:8px;font-size:11.5px;color:#d29922;">
+                    <strong>📋 ANTES DE ENTRAR — confirme no CoinGlass:</strong><br>
+                    ✓ OI no 4H subindo? &nbsp;✓ LSR caindo consistentemente? &nbsp;✓ FR normal (&lt; 0.03%)?
+                </div>
+                <div class="operacao-box">
+                    <div class="op-title">🛡️ SUGESTÃO DE OPERAÇÃO</div>
+                    <div class="op-line">🛑 SAIR SE CAIR PRA: <strong>0.518562</strong> <span style="color:#f85149;">(perde -3%)</span></div>
+                    <div class="op-line">💰 REALIZAR METADE EM: <strong>0.561330</strong> <span style="color:#3fb950;">(ganha +5%)</span></div>
+                    <div class="op-line">🏆 REALIZAR TUDO EM: <strong>0.588060</strong> <span style="color:#00ff88;">(ganha +10%)</span></div>
+                    <div class="op-line" style="color:#d29922;">🚨 OU SAIR SE FICAR SOBRECOMPRADA (RSI &gt; 80)</div>
+                </div>
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.2);border-radius:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin-bottom:10px;">🧠 ANÁLISE DOS AGENTES</div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🐊 CZ</span>
+                        <span style="color:#c9d1d9;">🐊 Jacaré CONFIRMADO (+46.9% em 30m, +42.2% em 1h) + LSR caindo. OI: $10.1M (🟡 liquidez moderada). Squeeze confiável. 🐊 LSR tendência caindo + OI subindo — squeeze se formando.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">⚡ FÊNIX</span>
+                        <span style="color:#c9d1d9;">⚪ EXP 1m -0.55, 1h 70.87, RSI 67. Momentum fraco.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:10px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🛡️ SAFE</span>
+                        <span style="color:#c9d1d9;">🟢 Força própria real — alt subiu 30.5% no dia, acima do BTC. EXP 15m: 34.48.</span>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;border:1px solid #3fb950;color:#3fb950;background:rgba(0,0,0,0.2);text-align:center;">
+                        🎯 MAIORIA POSITIVA — 2/3 aprovam sem veto. Entrar com stops ajustados.
+                    </div>
+                </div>
+            </div>
+        </div><div class="veredito-card">
+            <div class="verdict-banner" style="background:rgba(210,153,34,0.2);border-bottom:2px solid #d29922;">
+                <div class="verdict-text" style="color:#d29922;">⏳ AGUARDAR CONFIRMAÇÃO</div>
+                <div class="verdict-resumo">⚠️ Aguardar sinal adicional</div>
+            </div>
+            <div class="card-body">
+                <div class="coin-header">
+                    <div>
+                        <div class="coin-symbol">HANA</div>
+                        <div class="coin-full">HANAUSDT &bull; CRESCENTE</div>
+                    </div>
+                    <div class="coin-right">
+                        <div class="coin-price">0.045700</div>
+                        <div class="score-badge">Score 24/40</div>
+                    </div>
+                </div>
+                <div style="margin:6px 0;padding:6px 10px;background:rgba(168,85,247,0.10);border-left:2px solid #a855f7;border-radius:4px;font-size:10.8px;color:#c4b5fd;line-height:1.4;">
+                    <strong style="color:#c084fc;">🎬 Tendência (+8 pts):</strong>
+                    <span style="color:#3fb950;">🟢 EXP diário acelerando | 🟢 OI crescendo +7.5% (baleias entrando) | 🟢 Volume diário crescendo com EXP (confirmação) | 🟡 LSR caindo levemente | 🟢 EXP 4H subindo (4H confirma o diário)</span>
+                </div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">🟢 ZONA PERFEITA pra entrar</div>
+<div class="alerta-item" style="color:#3fb950;">✅ Combustível ideal, espaço pra subir <span class='alerta-num'>(EXP 15m: 13.05)</span></div>
+<div class="alerta-item" style="color:#3fb950;">💎 Diário: ACUMULAÇÃO FORTE (1D = 5)</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Intra-day: fraco (30m=0, 15m=1, 1h=0, 4h=0)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ Timing neutro</div>
+<div class="alerta-item" style="color:#3fb950;">✅ 1H: EXP 51.42 | RSI 72 ↑ (score 1h: +2)</div>
+<div class="alerta-item" style="color:#3fb950;">🟢 4H: EXP 73.8 | RSI 84 ↑ (score 4h: +1)</div>
+<div class="alerta-item" style="color:#8b949e;">⚪ FR neutro (FR 0.0418%) <span class='alerta-num'>(FR 0.0418%)</span></div></div>
+                <div class="alertas-list"><div class="alerta-item" style="color:#3fb950;">✅ Os 3 tempos confirmam (curto, médio, longo)</div>
+<div class="alerta-item" style="color:#3fb950;">💪 Sobe sozinha, não depende do BTC</div>
+<div class="alerta-item" style="color:#d29922;">🐊 Jacaré PARCIAL — só 5m. OI 1h: 5.3%. OI: $6.9M (🟡 liquidez moderada). Verificar CoinGlass.</div>
+<div class="alerta-item" style="color:#8b949e;">📊 Histórico: sem dados</div></div>
+                <div style="margin:10px 0;padding:10px 12px;background:rgba(210,153,34,0.12);border:1px solid #d29922;border-radius:8px;font-size:11.5px;color:#d29922;">
+                    <strong>📋 ANTES DE ENTRAR — confirme no CoinGlass:</strong><br>
+                    ✓ OI no 4H subindo? &nbsp;✓ LSR caindo consistentemente? &nbsp;✓ FR normal (&lt; 0.03%)?
+                </div>
+                <div class="operacao-box">
+                    <div class="op-title">🛡️ SUGESTÃO DE OPERAÇÃO</div>
+                    <div class="op-line">🛑 SAIR SE CAIR PRA: <strong>0.044329</strong> <span style="color:#f85149;">(perde -3%)</span></div>
+                    <div class="op-line">💰 REALIZAR METADE EM: <strong>0.047985</strong> <span style="color:#3fb950;">(ganha +5%)</span></div>
+                    <div class="op-line">🏆 REALIZAR TUDO EM: <strong>0.050270</strong> <span style="color:#00ff88;">(ganha +10%)</span></div>
+                    <div class="op-line" style="color:#d29922;">🚨 OU SAIR SE FICAR SOBRECOMPRADA (RSI &gt; 80)</div>
+                </div>
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.2);border-radius:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin-bottom:10px;">🧠 ANÁLISE DOS AGENTES</div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🐊 CZ</span>
+                        <span style="color:#c9d1d9;">🟡 🐊 Jacaré PARCIAL (só 5m). OI 1h: 5.3%. OI: $6.9M (🟡 liquidez moderada). Verificar CoinGlass.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:7px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">⚡ FÊNIX</span>
+                        <span style="color:#c9d1d9;">⚪ EXP 1m 1.24, 1h 51.42, RSI 59. Momentum fraco.</span>
+                    </div>
+                    <div style="font-size:12px;margin-bottom:10px;line-height:1.5;">
+                        <span style="font-weight:700;color:#8b949e;min-width:72px;display:inline-block;">🛡️ SAFE</span>
+                        <span style="color:#c9d1d9;">🟢 Força própria real — alt subiu 26.2% no dia, acima do BTC. EXP 15m: 13.05.</span>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;border:1px solid #d29922;color:#d29922;background:rgba(0,0,0,0.2);text-align:center;">
+                        🎯 DIVIDIDO — Sem consenso claro. Aguardar confirmação adicional.
+                    </div>
+                </div>
+            </div>
+        </div></div>
+
+<div class="section-header">
+    <div class="section-title" style="color:#a371f7;">🚨 RADAR FASE 1 (PRÉ-EXPLOSÃO)</div>
+    <div class="section-line"></div>
+</div>
+<p style="color:#8b949e;font-size:13px;margin-bottom:14px;">Setup ANTES da explosão — vigiar para entrada antecipada</p>
+<div class="fase1-grid"><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">POWER</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">131</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">POWER</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.077940</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#3fb950;">🟢 ALTA PROBABILIDADE</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 49.1 &bull; EXP: 0.19</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">BICO</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">120</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">BICO</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.029650</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#3fb950;">🟢 ALTA PROBABILIDADE</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 48.0 &bull; EXP: 0</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">PIXEL</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">120</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">PIXEL</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.007126</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#3fb950;">🟢 ALTA PROBABILIDADE</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 40.8 &bull; EXP: -1.05</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">HANA</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">102</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">HANA</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.045700</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 52.8 &bull; EXP: 1.24</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">ETH</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">100</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">ETH</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">2,117.27</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 57.7 &bull; EXP: 0.04</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">BERA</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">100</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">BERA</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.393100</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 65.6 &bull; EXP: 1.51</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">PHA</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">100</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">PHA</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.035010</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 71.6 &bull; EXP: 1.44</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">CROSS</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">90</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">CROSS</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.099260</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 66.0 &bull; EXP: 0.43</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">ARKM</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">80</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">ARKM</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.144100</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 63.2 &bull; EXP: 1.31</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div><div class="fase1-card">
+            <div class="f1-header">
+                <span class="f1-symbol">MAV</span>
+                <span style="font-size:12px;font-weight:700;color:#a371f7;">80</span>
+            </div>
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px;">MAV</div>
+            <div style="font-size:14px;color:#58a6ff;margin-bottom:6px;">0.014130</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:#d29922;">🟡 MÉDIA</div>
+            
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">RSI: 58.3 &bull; EXP: 0.24</div>
+            <div style="font-size:10px;color:#a371f7;font-style:italic;">⚡ Setup PRÉ-EXPLOSÃO</div>
+        </div></div>
+
+</div>
+</body>
+</html>

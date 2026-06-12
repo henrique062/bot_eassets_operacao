@@ -1,0 +1,14 @@
+.env
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+server-*.log
+server-*.err
+.playwright-cli/
+.pytest_cache/
+node_modules/
+data/

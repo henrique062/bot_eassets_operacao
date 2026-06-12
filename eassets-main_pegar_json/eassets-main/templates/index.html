@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BANCADA PHOENIX — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#F9FAFB;color:#475467;min-height:100vh;font-size:14px;font-weight:400;}
+
+/* HEADER */
+.header{background:#FFFFFF;border-bottom:1px solid #EAECF0;box-shadow:0 1px 8px rgba(0,0,0,0.06);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;}
+.header-title{font-size:17px;font-weight:800;color:#1D2939;}
+.header-meta{display:flex;gap:12px;align-items:center;font-size:12px;color:#667085;flex-wrap:wrap;}
+.header-meta .snap-info{color:#1570EF;font-weight:600;}
+.btn{border:none;padding:7px 14px;height:40px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-import{background:#039855;color:#fff;}
+.btn-history{background:#FFFFFF;color:#475467;border:1px solid #D0D5DD;}
+.btn-danger{background:#D92D20;color:#fff;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+/* CONTAINER */
+.container{max-width:1400px;margin:auto;padding:24px;}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;text-align:center;}
+.empty-icon{font-size:64px;opacity:.4;}
+.empty-title{font-size:22px;font-weight:700;color:#344054;}
+.empty-sub{font-size:14px;color:#667085;max-width:400px;line-height:1.6;}
+
+/* IMPORT PANEL */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;justify-content:flex-end;}
+.panel-overlay.show{display:flex;}
+.panel{background:#FFFFFF;border-left:1px solid #EAECF0;width:min(560px,100vw);height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.panel-header{padding:20px 24px;border-bottom:1px solid #EAECF0;display:flex;justify-content:space-between;align-items:center;}
+.panel-title{font-size:16px;font-weight:700;color:#344054;}
+.panel-close{background:none;border:none;color:#667085;font-size:20px;cursor:pointer;line-height:1;}
+.panel-close:hover{color:#344054;}
+.panel-body{padding:24px;flex:1;display:flex;flex-direction:column;gap:20px;}
+
+/* TABS (import panel) */
+.tabs{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid #D0D5DD;}
+.tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:#F9FAFB;color:#667085;border:none;transition:all .15s;}
+.tab.active{background:#039855;color:#fff;}
+/* DASHBOARD TABS */
+.dash-nav{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid #EAECF0;padding-bottom:0;}
+.dash-tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 18px;font-size:13px;font-weight:600;color:#667085;cursor:pointer;transition:all .15s;margin-bottom:-1px;}
+.dash-tab.active{color:#344054;border-bottom-color:#1570EF;}
+.dash-tab:hover:not(.active){color:#475467;}
+
+/* TEXTAREA */
+.paste-area{width:100%;height:220px;background:#F2F4F7;border:1px solid #D0D5DD;border-radius:8px;padding:12px;color:#475467;font-family:monospace;font-size:11px;resize:vertical;outline:none;}
+.paste-area:focus{border-color:#1570EF;}
+.paste-area::placeholder{color:#98A2B3;}
+
+/* FILE UPLOAD */
+.upload-zone{border:2px dashed #D0D5DD;border-radius:10px;padding:36px;text-align:center;cursor:pointer;transition:border-color .15s;}
+.upload-zone:hover,.upload-zone.drag{border-color:#1570EF;background:rgba(21,112,239,.04);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:36px;margin-bottom:12px;}
+.upload-text{font-size:13px;color:#667085;}
+.upload-text strong{color:#1570EF;}
+.file-selected{font-size:12px;color:#039855;margin-top:8px;font-weight:600;}
+
+/* ALERT */
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;display:none;}
+.alert.show{display:block;}
+.alert-error{background:#FEE4E2;border:1px solid #D92D20;color:#D92D20;}
+.alert-ok{background:#D1FADF;border:1px solid #039855;color:#039855;}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:20px;color:#667085;font-size:13px;}
+.loading.show{display:block;}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #EAECF0;border-top-color:#1570EF;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* HISTORY PANEL */
+.history-panel{background:#FFFFFF;border-left:1px solid #EAECF0;width:min(420px,100vw);height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.snap-list{display:flex;flex-direction:column;gap:2px;padding:12px;}
+.snap-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;}
+.snap-item:hover{background:#F9FAFB;border-color:#D0D5DD;}
+.snap-item.active{background:#F9FAFB;border-color:#1570EF;}
+.snap-macro{font-size:14px;}
+.snap-info-block{flex:1;min-width:0;}
+.snap-ts{font-size:11px;color:#667085;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.snap-status{font-size:12px;font-weight:700;}
+.snap-coins{font-size:11px;color:#667085;margin-top:1px;}
+.snap-del{background:none;border:none;color:#98A2B3;cursor:pointer;font-size:14px;padding:4px;border-radius:4px;}
+.snap-del:hover{color:#D92D20;background:rgba(217,45,32,.1);}
+.snap-empty{padding:40px 20px;text-align:center;color:#98A2B3;font-size:13px;}
+
+/* DASHBOARD SECTIONS (imported from engine CSS) */
+.macro-banner{border-radius:16px;padding:20px 28px;margin-bottom:36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+.macro-left{display:flex;align-items:center;gap:14px;}
+.macro-icon{font-size:36px;}
+.macro-status{font-size:22px;font-weight:800;}
+.macro-msg{font-size:13px;opacity:.9;margin-top:3px;}
+.macro-stats{display:flex;gap:22px;flex-wrap:wrap;}
+.macro-stat .val{font-size:20px;font-weight:800;}
+.macro-stat .lbl{font-size:10px;color:#667085;margin-top:2px;}
+.section-header{display:flex;align-items:center;gap:14px;margin:36px 0 18px;}
+.section-title{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+.section-line{flex:1;height:1px;background:#EAECF0;}
+.veredito-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px;}
+.veredito-card{background:#FFFFFF;border:1px solid #D0D5DD;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.verdict-banner{padding:22px 20px;text-align:center;}
+.verdict-text{font-size:28px;font-weight:900;letter-spacing:-.3px;}
+.verdict-resumo{font-size:14px;color:#475467;margin-top:8px;font-weight:600;opacity:.95;}
+.alertas-list{display:flex;flex-direction:column;gap:8px;background:#F9FAFB;border:1px solid #EAECF0;border-radius:10px;padding:13px 14px;margin-bottom:12px;}
+.alerta-item{font-size:13.5px;font-weight:600;line-height:1.45;}
+.alerta-num{font-size:11px;color:#667085;font-weight:500;font-family:monospace;margin-left:4px;}
+.op-line{font-size:13px;color:#475467;margin-bottom:7px;line-height:1.45;}
+.op-line:last-child{margin-bottom:0;}
+.op-line strong{color:#1D2939;font-family:monospace;}
+.card-body{padding:20px;}
+.coin-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+.coin-symbol{font-size:30px;font-weight:900;color:#1D2939;letter-spacing:-1px;}
+.coin-full{font-size:11px;color:#667085;margin-top:2px;}
+.coin-right{text-align:right;}
+.coin-price{font-size:16px;font-weight:700;color:#1570EF;}
+.score-badge{font-size:12px;font-weight:700;color:#1570EF;background:#EFF8FF;padding:3px 10px;border-radius:20px;margin-top:5px;display:inline-block;}
+.operacao-box{background:#F9FAFB;border:1px solid #EAECF0;border-radius:10px;padding:14px;}
+.op-title{font-size:11px;font-weight:700;color:#667085;margin-bottom:10px;}
+.fase1-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+.fase1-card{background:#FFFFFF;border:1px solid #a371f722;border-left:4px solid #7F56D9;border-radius:10px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.f1-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.f1-symbol{font-size:18px;font-weight:800;color:#1D2939;}
+.pre-setup-badge{background:rgba(163,113,247,.15);color:#a371f7;border:1px solid #a371f7;border-radius:6px;padding:5px 9px;font-size:10.5px;font-weight:700;margin-bottom:6px;line-height:1.3;}
+.fenix-banner{background:linear-gradient(135deg,rgba(255,155,77,.13),rgba(255,107,53,.07));border:1px solid #ff9b4d55;border-radius:12px;padding:14px 20px;margin-bottom:16px;font-size:13px;color:#ffd0a8;line-height:1.6;}
+.fenix-banner strong{color:#ff9b4d;}
+.fenix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:14px;margin-bottom:30px;}
+.fenix-card{background:#FFFFFF;border:1px solid #D0D5DD;border-radius:16px;padding:16px;border-left:4px solid #DC6803;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.fenix-card .fc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;}
+.fenix-card .fc-sym{font-size:22px;font-weight:900;color:#1D2939;letter-spacing:-.5px;}
+.fenix-card .fc-price{font-size:13px;color:#1570EF;font-weight:700;text-align:right;}
+.fenix-card .fc-trades{font-size:10px;color:#667085;margin-top:3px;}
+.fenix-card .fc-score{font-size:11px;color:#DC6803;font-weight:700;text-align:right;margin-top:3px;}
+.fenix-verdict{padding:8px 12px;border-radius:8px;text-align:center;font-weight:800;font-size:14px;margin-bottom:12px;}
+.fenix-crit{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;}
+.fenix-c{background:#F9FAFB;border:1px solid #EAECF0;border-radius:6px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.fenix-c span.lbl{color:#475467;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fenix-c .ck{font-size:13px;flex-shrink:0;}
+.fenix-empty{background:#FFFFFF;border:1px solid #D0D5DD;border-radius:16px;padding:24px;text-align:center;color:#667085;font-size:14px;margin-bottom:30px;}
+/* PHOENIX V2 */
+.fv2-banner{background:linear-gradient(135deg,rgba(21,112,239,.08),rgba(0,86,179,.04));border:1px solid rgba(21,112,239,.3);border-radius:12px;padding:14px 20px;margin-bottom:16px;font-size:13px;color:#475467;line-height:1.6;}
+.fv2-banner strong{color:#1570EF;}
+.fv2-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:30px;}
+.fv2-card{background:#FFFFFF;border:1px solid #D0D5DD;border-radius:16px;padding:16px;border-left:4px solid #1570EF;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.fv2-card .fc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;}
+.fv2-card .fc-sym{font-size:22px;font-weight:900;color:#1D2939;letter-spacing:-.5px;}
+.fv2-card .fc-price{font-size:13px;color:#1570EF;font-weight:700;text-align:right;}
+.fv2-card .fc-trades{font-size:10px;color:#667085;margin-top:3px;}
+.fv2-score{font-size:11px;color:#1570EF;font-weight:700;text-align:right;margin-top:3px;}
+.fv2-badge{margin-top:6px;padding:4px 8px;border-radius:6px;font-size:10.5px;font-weight:700;text-align:center;background:rgba(3,152,85,.08);color:#039855;border:1px solid rgba(3,152,85,.25);}
+.fv2-empty{background:#FFFFFF;border:1px solid #D0D5DD;border-radius:16px;padding:24px;text-align:center;color:#667085;font-size:14px;margin-bottom:30px;}
+/* live bar */
+.live-bar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F0FDF4;border:1px solid #D1FADF;border-radius:6px;margin-bottom:10px;flex-wrap:wrap;}
+.lm-tag{background:#039855;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:900;letter-spacing:.5px;}
+.lm-item{font-size:11px;color:#667085;font-family:monospace;transition:color .3s;}
+.lm-sep{color:#D0D5DD;font-size:11px;}
+/* live dot */
+.live-dot{width:8px;height:8px;border-radius:50%;background:#98A2B3;display:inline-block;transition:background .5s;}
+.live-dot.on{background:#039855;animation:pulse-dot 2s ease-in-out infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+.live-label{font-size:11px;color:#667085;display:flex;align-items:center;gap:5px;}
+.live-label.on{color:#039855;}
+@media(max-width:768px){
+  .veredito-grid{grid-template-columns:1fr;}
+  .fenix-grid{grid-template-columns:1fr;}
+  .macro-stats{gap:14px;}
+  .verdict-text{font-size:22px;}
+  .panel,.history-panel{width:100vw;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">🦅 BANCADA PHOENIX</div>
+  <div class="header-meta">
+    <span id="hd-ts" class="snap-info"></span>
+    <span id="hd-coins"></span>
+    <span id="hd-exchange"></span>
+    <span class="live-label" id="live-status"><span class="live-dot" id="live-dot"></span>BINANCE</span>
+    <span id="eassets-status" style="font-size:11px;color:#667085;">eAssets IA</span>
+    <span id="recalc-label" style="font-size:11px;color:#98A2B3;display:none;">🔄 <span id="recalc-countdown">60</span>s</span>
+    <button class="btn btn-history" id="btn-eassets" onclick="runEassetsImport()">Capturar IA</button>
+    <button class="btn btn-history" onclick="openHistory()">🕐 Histórico</button>
+    <button class="btn btn-import" onclick="openImport()">📥 Importar</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+  <div id="empty-state" class="empty-state">
+    <div class="empty-icon">🦅</div>
+    <div class="empty-title">Nenhum dado importado ainda</div>
+    <div class="empty-sub">Cole o JSON exportado do painel Phoenix 2 ou faça upload do arquivo <code>dadosmoedas.txt</code> para gerar a análise.</div>
+    <button class="btn btn-import" style="font-size:14px;padding:10px 24px;" onclick="openImport()">📥 Importar dados</button>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <div id="macro-wrap"></div>
+
+    <!-- DASHBOARD TABS -->
+    <div class="dash-nav">
+      <button class="dash-tab active" id="dtab-fenix" onclick="switchDash('fenix')">⚡ Fênix Original</button>
+      <button class="dash-tab" id="dtab-v2" onclick="switchDash('v2')">🔥 Phoenix V2</button>
+      <button class="dash-tab" id="dtab-ai" onclick="switchDash('ai')">IA Encryptos</button>
+      <button class="dash-tab" id="dtab-verd" onclick="switchDash('verd')">🎯 Vereditos</button>
+      <button class="dash-tab" id="dtab-fase1" onclick="switchDash('fase1')">🚨 Radar Fase 1</button>
+    </div>
+
+    <!-- FÊNIX ORIGINAL -->
+    <div id="dsec-fenix">
+      <div class="section-header">
+        <div class="section-title" style="color:#ff9b4d;">⚡ MODO FÊNIX</div>
+        <div class="section-line"></div>
+        <span style="font-size:12px;color:#667085;white-space:nowrap;">Top 5 · 4 critérios do método</span>
+      </div>
+      <div class="fenix-banner">
+        <strong>Critérios:</strong>
+        EXP BTC 1m &gt; 3 · Trades 1m crescendo · RSI 1m entre 50–70 · Range Level ≥ 3
+        <br><span style="opacity:.75;font-size:11.5px;">
+          Filtro: trades_1d &gt; 30k ·
+          <strong style="color:#039855;">4/4</strong> ENTRAR · <strong style="color:#039855;">3/4</strong> ENTRAR · <strong style="color:#DC6803;">2/4</strong> AGUARDAR · 📌 Range usa 15m
+        </span>
+      </div>
+      <div id="fenix-wrap"></div>
+    </div>
+
+    <!-- PHOENIX V2 -->
+    <div id="dsec-v2" style="display:none;">
+      <div class="section-header">
+        <div class="section-title" style="color:#1570EF;">🔥 PHOENIX V2</div>
+        <div class="section-line"></div>
+        <span style="font-size:12px;color:#667085;white-space:nowrap;">Top 5 · filtros refinados Encryptos</span>
+      </div>
+      <div class="fv2-banner">
+        <strong>Critérios V2:</strong>
+        C1 EXP 15m ≥ 2 + EXP 1m ≥ 1 (⚡ bônus se EXP 5m ≥ 2) · C2 Trades 5m ≥ 150 · C3 RSI 15m ≥ 55 ou Alt &gt; BTC · C4 Range 30m+1h ≥ 3
+        <br><span style="opacity:.75;font-size:11.5px;">
+          Filtro: OI ≥ $5M · trades_1d ≥ 300k · score ≥ 3/4 ·
+          🐊 Jacaré V2: OI↑ ≥1% + LSR↓ ≤−1 · Squeeze Real: LSR ≤ 1.0 · ⚡ BTC Reset: RSI 1h &lt; 35
+        </span>
+      </div>
+      <div id="fenix-v2-wrap"></div>
+    </div>
+
+    <!-- IA ENCRYPTOS -->
+    <div id="dsec-ai" style="display:none;">
+      <div class="section-header">
+        <div class="section-title" style="color:#c9a7ff;">IA ENCRYPTOS/PHOENIX</div>
+        <div class="section-line"></div>
+        <span style="font-size:12px;color:#667085;white-space:nowrap;">Setups A-D + risco</span>
+      </div>
+      <div class="fv2-banner">
+        <strong>Metodo IA:</strong>
+        Filtro OI &gt;= $10M + trades 1D &gt;= 150k + blacklist. Setups: Reset, Pre-Ignicao, Caca a Liquidez e Pullback.
+      </div>
+      <div id="encryptos-wrap"></div>
+    </div>
+
+    <!-- VEREDITOS -->
+    <div id="dsec-verd" style="display:none;">
+      <div class="section-header">
+        <div class="section-title" style="color:#039855;">🎯 VEREDITOS DE ENTRADA</div>
+        <div class="section-line"></div>
+        <span id="top-label" style="font-size:12px;color:#667085;white-space:nowrap;"></span>
+      </div>
+      <div id="vereditos-wrap"></div>
+    </div>
+
+    <!-- RADAR FASE 1 -->
+    <div id="dsec-fase1" style="display:none;">
+      <div class="section-header">
+        <div class="section-title" style="color:#a371f7;">🚨 RADAR FASE 1 (PRÉ-EXPLOSÃO)</div>
+        <div class="section-line"></div>
+      </div>
+      <p style="color:#667085;font-size:13px;margin-bottom:14px;">Setup ANTES da explosão — vigiar para entrada antecipada</p>
+      <div id="fase1-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT PANEL -->
+<div id="import-overlay" class="panel-overlay" onclick="overlayClose(event,'import-overlay')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="panel-header">
+      <span class="panel-title">📥 Importar dados</span>
+      <button class="panel-close" onclick="closeImport()">×</button>
+    </div>
+    <div class="panel-body">
+      <div class="tabs">
+        <button class="tab active" id="tab-paste" onclick="switchTab('paste')">📋 Colar JSON</button>
+        <button class="tab" id="tab-file" onclick="switchTab('file')">📂 Upload arquivo</button>
+      </div>
+
+      <div id="pane-paste">
+        <textarea class="paste-area" id="json-input"
+          placeholder='Cole aqui o conteúdo do dadosmoedas.txt (JSON exportado do painel Phoenix 2)...'></textarea>
+      </div>
+
+      <div id="pane-file" style="display:none;">
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <input type="file" id="file-input" accept=".txt,.json" onchange="fileSelected(event)">
+          <div class="upload-icon">📂</div>
+          <div class="upload-text"><strong>Clique para selecionar</strong> ou arraste o arquivo aqui</div>
+          <div class="upload-text" style="margin-top:6px;font-size:11px;">dadosmoedas.txt · .json</div>
+          <div id="file-name" class="file-selected"></div>
+        </div>
+      </div>
+
+      <div id="import-alert-ok" class="alert alert-ok"></div>
+      <div id="import-alert-err" class="alert alert-error"></div>
+      <div class="loading" id="import-loading"><span class="spinner"></span>Processando análise...</div>
+
+      <button class="btn btn-import" style="width:100%;padding:12px;font-size:14px;" onclick="doImport()">
+        ⚡ Processar e atualizar dashboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div id="history-overlay" class="panel-overlay" onclick="overlayClose(event,'history-overlay')">
+  <div class="history-panel" onclick="event.stopPropagation()">
+    <div class="panel-header">
+      <span class="panel-title">🕐 Histórico de importações</span>
+      <button class="panel-close" onclick="closeHistory()">×</button>
+    </div>
+    <div id="snap-list" class="snap-list"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentSnapId = null;
+let currentTab    = 'paste';
+let selectedFile  = null;
+
+// ── BOOT ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', loadLatest);
+document.addEventListener('DOMContentLoaded', loadEassetsStatus);
+setInterval(loadEassetsStatus, 30000);
+
+async function loadLatest() {
+  try {
+    const res  = await fetch('/api/latest');
+    const data = await res.json();
+    if (data) renderDashboard(data);
+  } catch(e) { console.error(e); }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function renderDashboard(data) {
+  const h = data.html;
+
+  document.getElementById('hd-ts').textContent       = '📅 ' + (data.timestamp || '').slice(0,19).replace('T',' ');
+  document.getElementById('hd-coins').textContent    = '🪙 ' + data.coin_count + ' moedas';
+  document.getElementById('hd-exchange').textContent = '📡 ' + (data.exchange || '');
+  document.getElementById('top-label').textContent   = 'TOP ' + (data.top_coins || []).length + ' picks';
+
+  document.getElementById('macro-wrap').innerHTML     = h.macro_banner;
+  document.getElementById('fenix-wrap').innerHTML     = h.macro_hostile_block + '<div class="fenix-grid">' + h.fenix_cards + '</div>';
+  document.getElementById('fenix-v2-wrap').innerHTML  = h.macro_hostile_v2_block + '<div class="fv2-grid">' + h.fenix_v2_cards + '</div>';
+  document.getElementById('encryptos-wrap').innerHTML = (h.encryptos_macro || '') + '<div class="fv2-grid">' + (h.encryptos_cards || '<div class="fv2-empty">Reimporte os dados para gerar a analise IA Encryptos/Phoenix.</div>') + '</div>' + (h.encryptos_radar || '') + (h.encryptos_risk || '');
+  document.getElementById('vereditos-wrap').innerHTML = '<div class="veredito-grid">' + h.veredito_cards + '</div>';
+  document.getElementById('fase1-wrap').innerHTML     = '<div class="fase1-grid">' + h.fase1_cards + '</div>';
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'block';
+
+  if (data.snapshot_id) currentSnapId = data.snapshot_id;
+  startLivePoll();
+  startRecalcPoll();
+}
+
+// ── IMPORT ─────────────────────────────────────────────────────────────────
+function setEassetsUi(status, color, busy=false) {
+  const label = document.getElementById('eassets-status');
+  const btn = document.getElementById('btn-eassets');
+  if (label) {
+    label.textContent = status;
+    label.style.color = color || '#667085';
+  }
+  if (btn) {
+    btn.disabled = busy;
+    btn.style.opacity = busy ? '.55' : '1';
+    btn.textContent = busy ? 'Capturando...' : 'Capturar IA';
+  }
+}
+
+async function loadEassetsStatus() {
+  try {
+    const res = await fetch('/api/eassets/status');
+    const s = await res.json();
+    if (s.running) {
+      setEassetsUi('eAssets capturando...', '#1570EF', true);
+    } else if (!s.credentials_ready) {
+      setEassetsUi('eAssets sem credenciais', '#DC6803', false);
+    } else if (s.last_ok) {
+      setEassetsUi('eAssets ok #' + (s.last_snapshot_id || ''), '#039855', false);
+    } else if (s.latest_snapshot) {
+      setEassetsUi('eAssets DB #' + s.latest_snapshot.id, '#039855', false);
+    } else if (s.last_error) {
+      setEassetsUi('eAssets erro', '#D92D20', false);
+    } else {
+      setEassetsUi('eAssets pronto', '#667085', false);
+    }
+  } catch(e) {
+    setEassetsUi('eAssets indisponivel', '#D92D20', false);
+  }
+}
+
+async function runEassetsImport() {
+  setEassetsUi('eAssets capturando...', '#1570EF', true);
+  try {
+    const res = await fetch('/api/eassets/import', { method: 'POST' });
+    const body = await res.json();
+    if (!res.ok || !body.ok) {
+      setEassetsUi('eAssets erro', '#D92D20', false);
+      alert(body.error || 'Falha ao capturar JSON do eAssets.');
+      return;
+    }
+    renderDashboard(body.data);
+    setEassetsUi('eAssets ok #' + body.data.snapshot_id, '#039855', false);
+    await loadHistory();
+  } catch(e) {
+    setEassetsUi('eAssets erro', '#D92D20', false);
+    alert('Erro de rede na captura eAssets: ' + e.message);
+  }
+}
+
+function openImport() {
+  document.getElementById('import-overlay').classList.add('show');
+  clearAlerts();
+}
+function closeImport() {
+  document.getElementById('import-overlay').classList.remove('show');
+}
+
+function switchTab(t) {
+  currentTab = t;
+  document.getElementById('pane-paste').style.display = t === 'paste' ? 'block' : 'none';
+  document.getElementById('pane-file').style.display  = t === 'file'  ? 'block' : 'none';
+  document.getElementById('tab-paste').className = 'tab' + (t === 'paste' ? ' active' : '');
+  document.getElementById('tab-file').className  = 'tab' + (t === 'file'  ? ' active' : '');
+  clearAlerts();
+}
+
+function clearAlerts() {
+  ['import-alert-ok','import-alert-err'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = el.className.replace(' show','');
+  });
+}
+
+function showAlert(id, msg) {
+  clearAlerts();
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className += ' show';
+}
+
+async function doImport() {
+  clearAlerts();
+  const loading = document.getElementById('import-loading');
+  loading.className = 'loading show';
+
+  try {
+    let res;
+    if (currentTab === 'paste') {
+      const raw = document.getElementById('json-input').value.trim();
+      if (!raw) { loading.className = 'loading'; showAlert('import-alert-err','Cole o JSON antes de processar.'); return; }
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch(e) { loading.className = 'loading'; showAlert('import-alert-err','JSON inválido: ' + e.message); return; }
+      res = await fetch('/api/import', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(parsed) });
+    } else {
+      if (!selectedFile) { loading.className = 'loading'; showAlert('import-alert-err','Selecione um arquivo primeiro.'); return; }
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      res = await fetch('/api/import', { method:'POST', body: fd });
+    }
+
+    const json = await res.json();
+    loading.className = 'loading';
+
+    if (!res.ok || !json.ok) {
+      showAlert('import-alert-err', '❌ ' + (json.error || 'Erro desconhecido'));
+      return;
+    }
+
+    renderDashboard(json.data);
+    showAlert('import-alert-ok', '✅ Dashboard atualizado! Snapshot #' + json.data.snapshot_id + ' salvo.');
+    setTimeout(() => { closeImport(); loadHistory(); }, 1200);
+
+  } catch(e) {
+    loading.className = 'loading';
+    showAlert('import-alert-err', '❌ Erro de rede: ' + e.message);
+  }
+}
+
+// ── FILE UPLOAD ─────────────────────────────────────────────────────────────
+function fileSelected(e) {
+  selectedFile = e.target.files[0];
+  document.getElementById('file-name').textContent = selectedFile ? '✓ ' + selectedFile.name : '';
+}
+function dragOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag'); }
+function dragLeave(e) { document.getElementById('drop-zone').classList.remove('drag'); }
+function dropFile(e)  {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) { selectedFile = f; document.getElementById('file-name').textContent = '✓ ' + f.name; }
+}
+
+// ── HISTORY ─────────────────────────────────────────────────────────────────
+async function openHistory() {
+  document.getElementById('history-overlay').classList.add('show');
+  await loadHistory();
+}
+function closeHistory() {
+  document.getElementById('history-overlay').classList.remove('show');
+}
+
+async function loadHistory() {
+  try {
+    const res  = await fetch('/api/snapshots');
+    const list = await res.json();
+    const el   = document.getElementById('snap-list');
+
+    if (!list.length) {
+      el.innerHTML = '<div class="snap-empty">Nenhuma importação ainda.</div>';
+      return;
+    }
+
+    const macroIcon = (s) => {
+      if (!s) return '⚪';
+      if (s.includes('HOSTIL')) return '🔴';
+      if (s.includes('NEUTRO')) return '🟡';
+      return '🟢';
+    };
+    const macroColor = (s) => {
+      if (!s) return '#667085';
+      if (s.includes('HOSTIL')) return '#D92D20';
+      if (s.includes('NEUTRO')) return '#DC6803';
+      return '#039855';
+    };
+
+    el.innerHTML = list.map(s => `
+      <div class="snap-item ${s.id === currentSnapId ? 'active' : ''}" onclick="loadSnap(${s.id})">
+        <span class="snap-macro">${macroIcon(s.macro)}</span>
+        <div class="snap-info-block">
+          <div class="snap-ts">${(s.imported_at||'').slice(0,16)} — snapshot #${s.id}</div>
+          <div class="snap-status" style="color:${macroColor(s.macro)};">${s.macro || '—'}</div>
+          <div class="snap-coins">${s.coin_count || 0} moedas · ${s.exchange || ''}</div>
+        </div>
+        <button class="snap-del" title="Excluir" onclick="event.stopPropagation();deleteSnap(${s.id})">🗑</button>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadSnap(id) {
+  try {
+    const res  = await fetch('/api/snapshot/' + id);
+    const data = await res.json();
+    if (data.error) return;
+    data.snapshot_id = id;
+    renderDashboard(data);
+    currentSnapId = id;
+    closeHistory();
+  } catch(e) { console.error(e); }
+}
+
+async function deleteSnap(id) {
+  if (!confirm('Excluir snapshot #' + id + '?')) return;
+  await fetch('/api/snapshot/' + id, { method: 'DELETE' });
+  await loadHistory();
+  if (currentSnapId === id) {
+    currentSnapId = null;
+    await loadLatest();
+  }
+}
+
+function overlayClose(e, id) {
+  if (e.target === e.currentTarget) document.getElementById(id).classList.remove('show');
+}
+
+// ── AUTO RECALC POLL ────────────────────────────────────────────────────────
+let _lastAutoId   = null;
+let _recalcTimer  = null;
+let _countdown    = 60;
+
+function startRecalcPoll() {
+  if (_recalcTimer) return;
+  document.getElementById('recalc-label').style.display = 'flex';
+  _recalcTimer = setInterval(tickRecalc, 1000);
+}
+
+function tickRecalc() {
+  _countdown--;
+  const el = document.getElementById('recalc-countdown');
+  if (el) el.textContent = _countdown > 0 ? _countdown : '…';
+  if (_countdown <= 0) {
+    _countdown = 60;
+    checkAutoLatest();
+  }
+}
+
+async function checkAutoLatest() {
+  try {
+    const res  = await fetch('/api/latest');
+    const data = await res.json();
+    if (!data) return;
+    // Re-renderiza silenciosamente (sem mostrar empty-state)
+    renderDashboard(data);
+  } catch(e) {}
+}
+
+// ── LIVE FEED ───────────────────────────────────────────────────────────────
+let _liveTimer = null;
+
+function startLivePoll() {
+  if (_liveTimer) return;
+  _liveTimer = setInterval(pollLive, 2000);
+  pollLive();
+}
+
+async function pollLive() {
+  try {
+    const res  = await fetch('/api/live');
+    const body = await res.json();
+    if (body && body.data) updateLive(body.data, body.is_live);
+  } catch(e) {}
+}
+
+function updateLive(data, isLive) {
+  // Indicador de conexão
+  const dot    = document.getElementById('live-dot');
+  const label  = document.getElementById('live-status');
+  if (dot) {
+    dot.className   = 'live-dot' + (isLive ? ' on' : '');
+    label.className = 'live-label' + (isLive ? ' on' : '');
+  }
+
+  // Preço principal nos cards (fenix + veredito + fase1)
+  document.querySelectorAll('[data-live-price]').forEach(el => {
+    const d = data[el.dataset.livePrice];
+    if (d && d.price) el.textContent = fmtPrice(d.price);
+  });
+
+  // Preço menor na live-bar (data-live-price-sm)
+  document.querySelectorAll('[data-live-price-sm]').forEach(el => {
+    const d = data[el.dataset.livePriceSm];
+    if (d && d.price) el.textContent = fmtPrice(d.price);
+  });
+
+  // Funding Rate
+  document.querySelectorAll('[data-live-fr]').forEach(el => {
+    const d = data[el.dataset.liveFr];
+    if (d && d.fr !== undefined) {
+      const pct = d.fr * 100;
+      el.textContent = 'FR ' + (pct >= 0 ? '+' : '') + pct.toFixed(4) + '%';
+      el.style.color = Math.abs(pct) > 0.05 ? '#DC6803' : '#667085';
+    }
+  });
+
+  // Open Interest
+  document.querySelectorAll('[data-live-oi]').forEach(el => {
+    const d = data[el.dataset.liveOi];
+    if (d && d.oi_usd) {
+      const m = d.oi_usd / 1e6;
+      el.textContent = m >= 1000 ? 'OI $' + (m/1000).toFixed(1) + 'B' : 'OI $' + m.toFixed(1) + 'M';
+    }
+  });
+
+  // LSR
+  document.querySelectorAll('[data-live-lsr]').forEach(el => {
+    const d = data[el.dataset.liveLsr];
+    if (d && d.lsr) {
+      el.textContent = 'LSR ' + d.lsr.toFixed(2);
+      el.style.color = d.lsr < 1 ? '#039855' : (d.lsr > 1.5 ? '#D92D20' : '#667085');
+    }
+  });
+}
+
+// Formata preço igual ao Python fmt_price
+function fmtPrice(p) {
+  if (!p) return '—';
+  if (p >= 1000)  return p.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (p >= 100)   return p.toFixed(2);
+  if (p >= 1)     return p.toFixed(4);
+  if (p >= 0.001) return p.toFixed(6);
+  return p.toFixed(8);
+}
+
+// ── DASHBOARD TAB SWITCHER ──────────────────────────────────────────────────
+const _dashSections = ['fenix','v2','ai','verd','fase1'];
+function switchDash(tab) {
+  _dashSections.forEach(s => {
+    document.getElementById('dsec-' + s).style.display = s === tab ? 'block' : 'none';
+    const btn = document.getElementById('dtab-' + s);
+    if (btn) btn.className = 'dash-tab' + (s === tab ? ' active' : '');
+  });
+}
+</script>
+<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+<script>feather.replace();</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+services:
+  phoenix-dashboard:
+    build: .
+    container_name: phoenix-dashboard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "5050"
+      DATA_DIR: /app/data
+      DASHBOARD_DB: /app/data/dashboard.db
+      EASSETS_HEADLESS: "1"
+      TZ: America/Sao_Paulo
+      GUNICORN_WORKERS: "1"
+      GUNICORN_THREADS: "8"
+      GUNICORN_TIMEOUT: "180"
+    ports:
+      - "5050:5050"
+    volumes:
+      - phoenix_data:/app/data
+    shm_size: "1gb"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5050/api/health', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  phoenix_data:
