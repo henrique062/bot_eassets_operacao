@@ -37,8 +37,20 @@ async def _resume_active_sessions(pool: Any) -> None:
     O engine Rust começa Stopped após cada restart; aqui restauramos o estado.
     Best-effort: aguarda o Rust subir e ignora falhas (não bloqueia o startup).
     """
+    from decimal import Decimal
+
     from db import repositories as repo
     from services import rust_bridge
+
+    # Campos que o motor Rust lê em /internal/start (evita enviar datetime/etc).
+    keys = (
+        "session_name", "capital", "leverage", "max_positions", "min_score",
+        "min_tpm", "max_lsr", "max_rsi_btc", "stop_loss_pct", "take_profit_pct",
+        "trailing_stop_pct", "trailing_start_pct", "pcl_enabled",
+        "pcl_cooldown_minutes", "pcl_max_attempts", "pcl_min_struct_score",
+        "paper_trading", "require_btc_reset", "allow_partial_setup",
+        "require_funding_negative",
+    )
 
     await asyncio.sleep(5)  # dá tempo do rust_core subir
     try:
@@ -49,7 +61,10 @@ async def _resume_active_sessions(pool: Any) -> None:
 
     for s in sessions:
         config_id = s.get("id")
-        config_data = {k: (float(v) if hasattr(v, "is_finite") else v) for k, v in dict(s).items()}
+        config_data: dict[str, Any] = {}
+        for k in keys:
+            v = s.get(k)
+            config_data[k] = float(v) if isinstance(v, Decimal) else v
         for attempt in range(3):
             try:
                 await rust_bridge.start(config_id, config_data)
