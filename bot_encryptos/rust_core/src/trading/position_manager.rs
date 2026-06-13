@@ -34,6 +34,8 @@ pub struct Position {
     pub trailing_active: bool,
     /// Motivo de fechamento (None = ainda aberta)
     pub close_reason: Option<String>,
+    /// "paper" (simulado) ou "live" (real)
+    pub mode: String,
 }
 
 impl Position {
@@ -67,6 +69,7 @@ impl Position {
             peak_price: entry_price,
             trailing_active: false,
             close_reason: None,
+            mode: "live".to_string(),
         }
     }
 

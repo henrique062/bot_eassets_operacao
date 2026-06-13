@@ -156,6 +156,7 @@ export interface BotConfig {
   pcl_enabled: boolean
   pcl_cooldown_minutes: number
   pcl_max_attempts: number
+  paper_trading: boolean
 }
 
 export interface ApiResponse<T> {
@@ -331,4 +332,59 @@ export interface SymbolHistory {
   asset: string
   is_alpha: boolean
   history: HistoryPoint[]
+}
+
+// ---------------------------------------------------------------------------
+// Monitoração + Virada de Funding
+// ---------------------------------------------------------------------------
+
+export interface FundingFlip {
+  current_fr: number | null
+  current_sign: "neg" | "pos" | "zero" | null
+  flipped: boolean
+  snapshots_since_flip: number | null
+  last_flip_ts: string | null
+  direction: "to_negative" | "to_positive" | null
+}
+
+export interface MonitoredCoin {
+  id: number
+  symbol: string
+  asset: string
+  is_alpha: boolean
+  note: string | null
+  marked_at: string | null
+  marked_at_brt: string | null
+  mark_price: number | null
+  mark_score: number | null
+  mark_setup: string | null
+  cur_price: number | null
+  cur_score: number | null
+  cur_setup: string | null
+  cur_rank: number | null
+  delta_abs: number | null
+  delta_pct: number | null
+  change_1d: number | null
+  exp_1d: number | null
+  exp_4h: number | null
+  exp_1h: number | null
+  oi_trend: number | null
+  lsr: number | null
+  rsi_4h: number | null
+  toi: number | null
+  funding: FundingFlip
+  active: boolean
+}
+
+export interface FundingPoint {
+  ts: string
+  ts_brt: string
+  fr: number
+}
+
+export interface FundingData {
+  symbol: string
+  asset: string
+  flip: FundingFlip
+  series: FundingPoint[]
 }

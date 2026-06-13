@@ -2,7 +2,9 @@
 
 import { useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
+import { Target, Check, Loader2 } from "lucide-react"
 import type { PanelData, PanelRow } from "@/lib/types"
+import { api } from "@/lib/api"
 import {
   fmtPrice,
   fmtNum,
@@ -14,6 +16,38 @@ import {
 } from "@/lib/panel-format"
 import { MacroBanner } from "@/components/panel/macro-banner"
 import { AlphaBadge } from "@/components/ui/alpha-badge"
+
+// Botão de marcar a moeda para monitoração (usado em cada linha do painel).
+function MonitorButton({ symbol }: { symbol: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle")
+  async function mark() {
+    if (state !== "idle") return
+    setState("loading")
+    try {
+      await api.monitorSymbol(symbol)
+      setState("done")
+    } catch {
+      setState("idle")
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={mark}
+      title={state === "done" ? "Monitorando" : "Monitorar esta moeda"}
+      aria-label={`Monitorar ${symbol}`}
+      className="text-[#6b7280] transition-colors hover:text-[#818cf8]"
+    >
+      {state === "loading" ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : state === "done" ? (
+        <Check className="h-3.5 w-3.5 text-[#4ade80]" />
+      ) : (
+        <Target className="h-3.5 w-3.5" />
+      )}
+    </button>
+  )
+}
 
 const VIEW_OPTIONS = [10, 25, 50, 0] as const
 
@@ -190,6 +224,7 @@ export function PanelTable({ rows, loading }: { rows: PanelRow[]; loading: boole
                     {r.asset}
                   </Link>
                   <AlphaBadge isAlpha={r.is_alpha} />
+                  <MonitorButton symbol={r.symbol} />
                 </div>
               </td>
               <td className="px-3 py-2.5 text-right text-sm text-[#d1d5db] tabular-nums">{fmtPrice(r.price)}</td>

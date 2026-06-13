@@ -320,14 +320,26 @@ def scrape_eassets_json(
             "Playwright nao esta instalado. Rode: pip install -r requirements.txt e python -m playwright install chromium"
         ) from exc
 
+    # Contexto persistente: a sessão (cookies/login) é salva em disco e reutilizada
+    # entre execuções. Assim o scraper só faz login na 1ª vez (ou quando a sessão
+    # expira) — reduz drasticamente o risco de bloqueio por logins repetidos.
+    user_data_dir = os.getenv("EASSETS_USER_DATA_DIR", "/data/eassets_profile")
+    os.makedirs(user_data_dir, exist_ok=True)
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
-        context = browser.new_context(accept_downloads=True, viewport={"width": 1440, "height": 1000})
-        page = context.new_page()
+        context = p.chromium.launch_persistent_context(
+            user_data_dir,
+            headless=headless,
+            accept_downloads=True,
+            viewport={"width": 1440, "height": 1000},
+        )
+        page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(timeout_ms)
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
             page.wait_for_load_state("networkidle", timeout=timeout_ms)
+            # _login_if_needed só envia credenciais se a sessão salva não estiver
+            # mais válida (verifica _looks_logged_in primeiro).
             _login_if_needed(page, email, password)
             _open_ai_export_panel(page)
             data, raw = _export_json(page, timeout_ms)
@@ -335,7 +347,6 @@ def scrape_eassets_json(
             return data, raw
         finally:
             context.close()
-            browser.close()
 
 
 # ---------------------------------------------------------------------------

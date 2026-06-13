@@ -28,11 +28,11 @@ pub async fn insert_position(pool: &PgPool, pos: &Position) -> Result<()> {
         INSERT INTO eassets_positions (
             id, config_id, symbol, side, qty, entry_price, entry_score,
             stop_loss, take_profit, trailing_stop_pct, trailing_start_pct,
-            order_id, opened_at, status
+            order_id, opened_at, status, mode
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7,
             $8, $9, $10, $11,
-            $12, $13, 'open'
+            $12, $13, 'open', $14
         )
         ON CONFLICT (id) DO NOTHING
         "#,
@@ -50,6 +50,7 @@ pub async fn insert_position(pool: &PgPool, pos: &Position) -> Result<()> {
     .bind(pos.trailing_start_pct)
     .bind(&pos.order_id)
     .bind(pos.opened_at)
+    .bind(&pos.mode)
     .execute(pool)
     .await?;
 
@@ -104,13 +105,13 @@ pub async fn insert_trade(
             entry_price, close_price,
             pnl_usd, pnl_pct,
             entry_score, close_reason,
-            order_id, opened_at, closed_at
+            order_id, opened_at, closed_at, mode
         ) VALUES (
             $1, $2, $3, $4, $5,
             $6, $7,
             $8, $9,
             $10, $11,
-            $12, $13, NOW()
+            $12, $13, NOW(), $14
         )
         "#,
     )
@@ -127,6 +128,7 @@ pub async fn insert_trade(
     .bind(reason)
     .bind(&pos.order_id)
     .bind(pos.opened_at)
+    .bind(&pos.mode)
     .execute(pool)
     .await?;
 

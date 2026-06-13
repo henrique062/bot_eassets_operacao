@@ -158,20 +158,81 @@ fn build_router(
 // Handlers internos
 // ---------------------------------------------------------------------------
 
-/// POST /internal/start — inicia o engine de decisão
-async fn handle_start(State(s): State<RouterState>) -> impl IntoResponse {
-    let mut engine = s.app.engine.write().await;
-    if engine.status == EngineStatus::Running {
-        return (
-            StatusCode::CONFLICT,
-            Json(serde_json::json!({ "message": "Engine já está rodando" })),
-        );
+/// Payload de início — espelha a config salva no banco (python_api). Todos os
+/// campos são opcionais; aplicamos os presentes à config de runtime do engine.
+#[derive(Debug, Default, Deserialize)]
+struct StartPayload {
+    config_id: Option<i32>,
+    session_name: Option<String>,
+    capital: Option<f64>,
+    leverage: Option<i32>,
+    max_positions: Option<i32>,
+    min_score: Option<f64>,
+    min_tpm: Option<f64>,
+    max_lsr: Option<f64>,
+    max_rsi_btc: Option<f64>,
+    stop_loss_pct: Option<f64>,
+    take_profit_pct: Option<f64>,
+    trailing_stop_pct: Option<f64>,
+    trailing_start_pct: Option<f64>,
+    pcl_enabled: Option<bool>,
+    pcl_cooldown_minutes: Option<i32>,
+    pcl_max_attempts: Option<i32>,
+    pcl_min_struct_score: Option<i32>,
+    paper_trading: Option<bool>,
+}
+
+/// POST /internal/start — aplica a config recebida e inicia o engine de decisão
+async fn handle_start(
+    State(s): State<RouterState>,
+    body: Option<Json<StartPayload>>,
+) -> impl IntoResponse {
+    {
+        let engine = s.app.engine.read().await;
+        if engine.status == EngineStatus::Running {
+            return (
+                StatusCode::CONFLICT,
+                Json(serde_json::json!({ "message": "Engine já está rodando" })),
+            );
+        }
     }
+
+    // Aplica a config recebida (se houver) à config de runtime
+    let p = body.map(|Json(b)| b).unwrap_or_default();
+    {
+        let mut cfg = s.app.config.write().await;
+        if let Some(v) = p.config_id { cfg.config_id = v; }
+        if let Some(v) = p.session_name { cfg.config_name = v; }
+        if let Some(v) = p.leverage { cfg.leverage = v.max(1); }
+        if let Some(v) = p.max_positions { cfg.max_positions = v.max(1); }
+        // capital do banco é o total da conta — distribui entre as posições como
+        // margem por operação (exposição total ≈ capital, na alavancagem definida).
+        if let Some(cap) = p.capital {
+            let n = cfg.max_positions.max(1) as f64;
+            cfg.capital_per_trade = (cap / n).max(0.0);
+        }
+        if let Some(v) = p.min_score { cfg.min_score = v; }
+        if let Some(v) = p.min_tpm { cfg.min_tpm = v; }
+        if let Some(v) = p.max_lsr { cfg.max_lsr = v; }
+        if let Some(v) = p.max_rsi_btc { cfg.max_rsi_btc = v; }
+        if let Some(v) = p.stop_loss_pct { cfg.stop_loss_pct = v; }
+        if let Some(v) = p.take_profit_pct { cfg.take_profit_pct = v; }
+        if let Some(v) = p.trailing_stop_pct { cfg.trailing_stop_pct = v; }
+        if let Some(v) = p.trailing_start_pct { cfg.trailing_start_pct = v; }
+        if let Some(v) = p.pcl_enabled { cfg.pcl_enabled = v; }
+        if let Some(v) = p.pcl_cooldown_minutes { cfg.pcl_cooldown_minutes = v; }
+        if let Some(v) = p.pcl_max_attempts { cfg.pcl_max_attempts = v; }
+        if let Some(v) = p.pcl_min_struct_score { cfg.pcl_min_struct_score = v; }
+        if let Some(v) = p.paper_trading { cfg.paper_trading = v; }
+    }
+
+    let mut engine = s.app.engine.write().await;
     engine.status = EngineStatus::Running;
-    info!("Engine iniciado via /internal/start");
+    let mode = if s.app.config.read().await.paper_trading { "PAPER (simulado)" } else { "REAL" };
+    info!("Engine iniciado via /internal/start — modo {}", mode);
     (
         StatusCode::OK,
-        Json(serde_json::json!({ "message": "Engine iniciado" })),
+        Json(serde_json::json!({ "message": format!("Engine iniciado ({})", mode) })),
     )
 }
 

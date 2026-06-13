@@ -54,6 +54,7 @@ class BotConfigPayload(BaseModel):
     pcl_min_struct_score: int = Field(3, ge=0)
     pcl_profit_target_usd: float | None = None
     user_id: int | None = None
+    paper_trading: bool = True
 
 
 def _ok(data: Any) -> dict[str, Any]:

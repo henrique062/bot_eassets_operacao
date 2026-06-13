@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle, Loader2, RefreshCw, Save } from "lucide-react"
+import { CheckCircle, Loader2, RefreshCw, Save, Play, Square, FlaskConical, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,7 @@ const DEFAULT_CONFIG: BotConfig = {
   pcl_enabled: true,
   pcl_cooldown_minutes: 60,
   pcl_max_attempts: 3,
+  paper_trading: true,
 }
 
 function hasLiveBybitBalance(
@@ -96,6 +97,50 @@ export default function ConfigPage() {
   const [configId, setConfigId] = useState<number | undefined>(undefined)
   const [bybitBalance, setBybitBalance] = useState<BybitBalance | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<number | undefined>(undefined)
+  const [botBusy, setBotBusy] = useState(false)
+  const [botMsg, setBotMsg] = useState<string | null>(null)
+
+  async function refreshActive() {
+    try {
+      const sessions = await api.listActiveSessions()
+      setActiveId(sessions?.[0]?.id)
+    } catch {
+      setActiveId(undefined)
+    }
+  }
+
+  async function handleStartBot() {
+    setBotBusy(true)
+    setBotMsg(null)
+    setError(null)
+    try {
+      const payload = applyBybitBalance(config, bybitBalance)
+      await api.startBot(payload)
+      await refreshActive()
+      setBotMsg(config.paper_trading ? "Bot iniciado em modo PAPER (simulado)." : "Bot iniciado em modo REAL.")
+    } catch (err) {
+      if (err instanceof ApiError && err.detail) setError(err.detail)
+      else setError("Falha ao iniciar o bot.")
+    } finally {
+      setBotBusy(false)
+    }
+  }
+
+  async function handleStopBot() {
+    if (!activeId) return
+    setBotBusy(true)
+    setBotMsg(null)
+    try {
+      await api.stopBot(activeId)
+      await refreshActive()
+      setBotMsg("Bot parado.")
+    } catch {
+      setError("Falha ao parar o bot.")
+    } finally {
+      setBotBusy(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -130,6 +175,7 @@ export default function ConfigPage() {
 
       setConfig(nextConfig)
       setFetchLoading(false)
+      refreshActive()
     }
 
     loadConfig()
@@ -225,6 +271,74 @@ export default function ConfigPage() {
           Configuração salva com sucesso.
         </div>
       )}
+
+      {/* Controle do Bot */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-1.5">
+            <CardTitle>Controle do Bot</CardTitle>
+            <InfoTooltip text="Inicie o bot em modo de teste (paper) para validar a qualidade das entradas com preços reais, sem arriscar dinheiro. No modo real, o bot envia ordens de verdade para a Bybit." />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Toggle paper/real */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4 text-[#818cf8]" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-medium text-white">Modo de teste (Paper Trading)</p>
+                <p className="text-xs text-[#6b7280]">
+                  Simula as operações com preços reais. Recomendado até validar o bot.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-label="Alternar modo de teste (paper trading)"
+              aria-checked={config.paper_trading}
+              onClick={() => setConfig((prev) => ({ ...prev, paper_trading: !prev.paper_trading }))}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${config.paper_trading ? "bg-[#6366f1]" : "bg-[#2a2d3a]"}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.paper_trading ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+
+          {!config.paper_trading && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Modo REAL: o bot vai abrir ordens com dinheiro de verdade na Bybit. Comece com alavancagem baixa e poucas posições.</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm">
+              Status:{" "}
+              <span className={activeId ? "font-semibold text-green-400" : "font-semibold text-[#6b7280]"}>
+                {activeId ? "Rodando" : "Parado"}
+              </span>
+              {activeId && (
+                <span className="ml-1 text-xs text-[#6b7280]">
+                  ({config.paper_trading ? "paper" : "real"})
+                </span>
+              )}
+            </span>
+            {activeId ? (
+              <Button variant="outline" onClick={handleStopBot} disabled={botBusy}>
+                {botBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+                Parar Bot
+              </Button>
+            ) : (
+              <Button onClick={handleStartBot} disabled={botBusy}>
+                {botBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                Iniciar Bot
+              </Button>
+            )}
+          </div>
+
+          {botMsg && <p className="text-xs text-[#9ca3af]">{botMsg}</p>}
+        </CardContent>
+      </Card>
 
       {/* Capital e Risco */}
       <Card>

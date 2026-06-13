@@ -31,6 +31,10 @@ pub struct BotConfig {
     pub pcl_max_attempts: i32,
     pub pcl_min_struct_score: i32,
 
+    // Paper trading: quando true, simula ordens (não envia nada para a Bybit).
+    // Padrão SEGURO = true.
+    pub paper_trading: bool,
+
     // Universo de símbolos (preenchido via env var BYBIT_SYMBOLS)
     pub symbols: Vec<String>,
 }
@@ -67,6 +71,7 @@ impl BotConfig {
             pcl_cooldown_minutes: parse_env("PCL_COOLDOWN_MINUTES", 30),
             pcl_max_attempts: parse_env("PCL_MAX_ATTEMPTS", 3),
             pcl_min_struct_score: parse_env("PCL_MIN_STRUCT_SCORE", 3),
+            paper_trading: parse_env("PAPER_TRADING", true),
             symbols,
         })
     }

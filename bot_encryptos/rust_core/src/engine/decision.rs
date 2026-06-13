@@ -177,22 +177,16 @@ async fn open_long(
         return;
     }
 
+    let mode = if cfg.paper_trading { "paper" } else { "live" };
     info!(
-        "Entrada {} (grau={} score={:.0}) — abrindo LONG qty={:.4} @ {:.6}",
+        "Entrada {} (grau={} score={:.0}) [{}] — LONG qty={:.4} @ {:.6}",
         cand.symbol,
         cand.grade.as_deref().unwrap_or("—"),
         cand.score.unwrap_or(0.0),
+        mode,
         qty,
         price
     );
-
-    let order = match executor.open_position(&cand.symbol, "Buy", qty, cfg).await {
-        Ok(o) => o,
-        Err(e) => {
-            warn!("Falha ao abrir posição em {}: {:#}", cand.symbol, e);
-            return;
-        }
-    };
 
     // Stop loss / take profit a partir do preço de referência
     let stop_loss = if cfg.stop_loss_pct > 0.0 {
@@ -206,7 +200,21 @@ async fn open_long(
         0.0
     };
 
-    let position = Position::new(
+    // No modo paper, simulamos o fill (sem tocar na Bybit). No modo real,
+    // enviamos a ordem de mercado e o TP/SL para a exchange.
+    let order_id = if cfg.paper_trading {
+        format!("PAPER-{}", uuid::Uuid::new_v4())
+    } else {
+        match executor.open_position(&cand.symbol, "Buy", qty, cfg).await {
+            Ok(o) => o.order_id,
+            Err(e) => {
+                warn!("Falha ao abrir posição em {}: {:#}", cand.symbol, e);
+                return;
+            }
+        }
+    };
+
+    let mut position = Position::new(
         cfg.config_id,
         &cand.symbol,
         "Buy",
@@ -217,15 +225,16 @@ async fn open_long(
         take_profit,
         cfg.trailing_stop_pct,
         cfg.trailing_start_pct,
-        &order.order_id,
+        &order_id,
     );
+    position.mode = mode.to_string();
 
     if let Err(e) = pos_manager.add(position.clone()).await {
         warn!("Falha ao persistir posição {}: {:#}", cand.symbol, e);
     }
 
-    // Define TP/SL na exchange (quando configurados)
-    if stop_loss > 0.0 || take_profit > 0.0 {
+    // Define TP/SL na exchange apenas no modo real
+    if !cfg.paper_trading && (stop_loss > 0.0 || take_profit > 0.0) {
         if let Err(e) = executor
             .set_tp_sl(&cand.symbol, take_profit, stop_loss, 0)
             .await

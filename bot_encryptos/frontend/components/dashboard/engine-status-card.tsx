@@ -57,6 +57,7 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
         pcl_enabled: true,
         pcl_cooldown_minutes: 60,
         pcl_max_attempts: 3,
+        paper_trading: true,
       }
 
       try {

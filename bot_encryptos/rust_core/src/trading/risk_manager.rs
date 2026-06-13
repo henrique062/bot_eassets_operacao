@@ -161,9 +161,11 @@ async fn close_and_handle(
     watchlist_manager: &Arc<WatchlistManager>,
     app_state: &Arc<AppState>,
 ) {
-    // Fecha na exchange
-    if let Err(e) = executor.close_position(&pos.symbol, close_side, pos.qty).await {
-        warn!("Falha ao fechar posição {} na exchange: {:#}", pos.symbol, e);
+    // Fecha na exchange apenas no modo real (paper é simulado)
+    if pos.mode != "paper" {
+        if let Err(e) = executor.close_position(&pos.symbol, close_side, pos.qty).await {
+            warn!("Falha ao fechar posição {} na exchange: {:#}", pos.symbol, e);
+        }
     }
 
     // Persiste fechamento e remove da memória

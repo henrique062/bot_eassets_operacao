@@ -17,6 +17,8 @@ import type {
   RadarData,
   TopoRow,
   SymbolHistory,
+  MonitoredCoin,
+  FundingData,
 } from "./types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? ""
@@ -142,4 +144,16 @@ export const api = {
   getPanelTopo: () => apiFetch<TopoRow[]>("/api/eassets/panel/topo"),
   getPanelHistory: (symbol: string) =>
     apiFetch<SymbolHistory>(`/api/eassets/panel/historico/${symbol}`),
+
+  // Monitoração de moedas
+  getMonitored: () => apiFetch<MonitoredCoin[]>("/api/eassets/panel/monitored"),
+  monitorSymbol: (symbol: string, note?: string) =>
+    apiFetch("/api/eassets/panel/monitor", {
+      method: "POST",
+      body: JSON.stringify({ symbol, note: note ?? null }),
+    }),
+  unmonitorSymbol: (symbol: string) =>
+    apiFetch(`/api/eassets/panel/monitor/${symbol}`, { method: "DELETE" }),
+  getFunding: (symbol: string) =>
+    apiFetch<FundingData>(`/api/eassets/panel/funding/${symbol}`),
 }

@@ -432,3 +432,177 @@ async def panel_historico(
         "is_alpha": normalized in alpha_symbols,
         "history": out,
     })
+
+
+# ===========================================================================
+# Monitoração de moedas + Virada de Funding
+# ===========================================================================
+
+class MonitorRequest(BaseModel):
+    symbol: str
+    note: str | None = None
+
+
+def _parse_fr(raw: Any) -> float | None:
+    """Extrai o funding rate ('fr') de um raw_json de moeda."""
+    try:
+        e = json.loads(raw) if isinstance(raw, str) else (raw or {})
+    except (json.JSONDecodeError, TypeError):
+        return None
+    fr = e.get("fr")
+    if fr is None:
+        return None
+    try:
+        return float(fr)
+    except (TypeError, ValueError):
+        return None
+
+
+def _funding_series(raw_history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Constrói a série temporal de funding (cronológica: antigo -> novo)."""
+    series = []
+    for h in reversed(raw_history):  # raw_history vem novo->antigo
+        fr = _parse_fr(h.get("raw_json"))
+        if fr is None:
+            continue
+        series.append({"ts": h["timestamp"], "fr": fr})
+    return series
+
+
+def _detect_funding_flip(series: list[dict[str, Any]]) -> dict[str, Any]:
+    """Detecta a última virada de sinal do funding na série cronológica.
+
+    'Virada' = mudança de sinal (positivo<->negativo). Funding negativo =
+    shorts pagando longs = munição para short squeeze (alta). Cada moeda tem seu
+    intervalo de funding, então medimos em nº de snapshots desde a virada.
+    """
+    out = {
+        "current_fr": None,
+        "current_sign": None,
+        "flipped": False,
+        "snapshots_since_flip": None,
+        "last_flip_ts": None,
+        "direction": None,  # "to_negative" (bullish) | "to_positive" (bearish)
+    }
+    pts = [p for p in series if p["fr"] is not None]
+    if not pts:
+        return out
+
+    cur = pts[-1]["fr"]
+    out["current_fr"] = cur
+    out["current_sign"] = "neg" if cur < 0 else ("pos" if cur > 0 else "zero")
+
+    def sign(v: float) -> int:
+        return -1 if v < 0 else (1 if v > 0 else 0)
+
+    # Procura a última troca de sinal (ignorando zeros) varrendo de trás pra frente
+    last_sign = sign(cur)
+    flip_index = None
+    for i in range(len(pts) - 2, -1, -1):
+        s = sign(pts[i]["fr"])
+        if s == 0:
+            continue
+        if s != last_sign and last_sign != 0:
+            flip_index = i + 1  # ponto onde já virou
+            break
+        last_sign = s
+
+    if flip_index is not None:
+        out["flipped"] = True
+        out["snapshots_since_flip"] = len(pts) - 1 - flip_index
+        out["last_flip_ts"] = pts[flip_index]["ts"]
+        out["direction"] = "to_negative" if sign(cur) < 0 else "to_positive"
+    return out
+
+
+@router.post("/monitor", summary="Marcar moeda para monitoração")
+async def monitor_symbol(req: MonitorRequest) -> dict[str, Any]:
+    pool = get_pool()
+    symbol = req.symbol.upper()
+    sid = await repo.get_latest_snapshot_id(pool)
+    mark_price = mark_score = mark_setup = None
+    if sid is not None:
+        metrics = await repo.get_panel_metrics(pool, sid)
+        m = next((x for x in metrics if x["symbol"] == symbol), None)
+        if m:
+            mark_price = _f(m.get("price"))
+            mark_score = m.get("score")
+            mark_setup = m.get("setup")
+    row = await repo.add_monitored(pool, symbol, req.note, mark_price, mark_score, mark_setup, sid)
+    return _ok({"id": row["id"], "symbol": symbol})
+
+
+@router.delete("/monitor/{symbol}", summary="Desmarcar moeda da monitoração")
+async def unmonitor_symbol(symbol: str) -> dict[str, Any]:
+    pool = get_pool()
+    ok = await repo.unmark_monitored(pool, symbol.upper())
+    if not ok:
+        raise HTTPException(status_code=404, detail="Moeda não estava sendo monitorada.")
+    return _ok({"unmarked": True})
+
+
+@router.get("/monitored", summary="Lista de moedas monitoradas com variação desde a marcação")
+async def list_monitored(active_only: bool = Query(True)) -> dict[str, Any]:
+    pool = get_pool()
+    rows = await repo.list_monitored(pool, active_only=active_only)
+    try:
+        alpha = await repo.get_tagged_symbols(pool, "alpha")
+    except Exception:
+        alpha = set()
+
+    out = []
+    for r in rows:
+        mark_price = _f(r.get("mark_price"))
+        cur_price = _f(r.get("cur_price"))
+        delta_abs = delta_pct = None
+        if mark_price and cur_price and mark_price > 0:
+            delta_abs = cur_price - mark_price
+            delta_pct = (cur_price / mark_price - 1.0) * 100.0
+
+        # Virada de funding da moeda monitorada
+        raw_hist = await repo.get_symbol_raw_history(pool, r["symbol"], limit=40)
+        funding = _detect_funding_flip(_funding_series(raw_hist))
+
+        out.append({
+            "id": r["id"],
+            "symbol": r["symbol"],
+            "asset": r["symbol"].replace("USDT", ""),
+            "is_alpha": repo.normalize_symbol(r["symbol"]) in alpha,
+            "note": r.get("note"),
+            "marked_at": r.get("marked_at").isoformat() if r.get("marked_at") else None,
+            "marked_at_brt": core.to_brt(r.get("marked_at").isoformat(), "%d/%m %H:%M") if r.get("marked_at") else None,
+            "mark_price": mark_price,
+            "mark_score": r.get("mark_score"),
+            "mark_setup": r.get("mark_setup"),
+            "cur_price": cur_price,
+            "cur_score": r.get("cur_score"),
+            "cur_setup": r.get("cur_setup"),
+            "cur_rank": r.get("cur_rank"),
+            "delta_abs": delta_abs,
+            "delta_pct": delta_pct,
+            "change_1d": _f(r.get("price_change_1d")),
+            "exp_1d": _f(r.get("exp_1d")),
+            "exp_4h": _f(r.get("exp_4h")),
+            "exp_1h": _f(r.get("exp_1h")),
+            "oi_trend": _f(r.get("oi_trend")),
+            "lsr": _f(r.get("lsr")),
+            "rsi_4h": _f(r.get("rsi_4h")),
+            "toi": _f(r.get("toi")),
+            "funding": funding,
+            "active": r.get("active"),
+        })
+    return _ok(out)
+
+
+@router.get("/funding/{symbol}", summary="Série e virada do funding de uma moeda")
+async def funding_turn(symbol: str, limit: int = Query(60, ge=2, le=300)) -> dict[str, Any]:
+    pool = get_pool()
+    raw_hist = await repo.get_symbol_raw_history(pool, symbol.upper(), limit=limit)
+    series = _funding_series(raw_hist)
+    flip = _detect_funding_flip(series)
+    series_out = [
+        {"ts": s["ts"], "ts_brt": core.to_brt(s["ts"], "%d/%m %H:%M"), "fr": s["fr"]}
+        for s in series
+    ]
+    return _ok({"symbol": symbol.upper(), "asset": symbol.upper().replace("USDT", ""),
+                "flip": flip, "series": series_out})

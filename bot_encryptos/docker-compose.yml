@@ -44,6 +44,9 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - PYTHON_API_PORT=${PYTHON_API_PORT:-8000}
+      - EASSETS_USER_DATA_DIR=/data/eassets_profile
+    volumes:
+      - eassets_profile:/data/eassets_profile
 
   frontend:
     build:
@@ -66,3 +69,6 @@ services:
     depends_on:
       - python_api
       - frontend
+
+volumes:
+  eassets_profile:

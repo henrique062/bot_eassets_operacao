@@ -12,12 +12,14 @@ import {
   RefreshCw,
   Settings,
   BarChart3,
+  Target,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analise", label: "Painel Moedas", icon: BarChart3 },
+  { href: "/monitoracao", label: "Monitoração", icon: Target },
   { href: "/positions", label: "Posições", icon: TrendingUp },
   { href: "/trades", label: "Trades", icon: History },
   { href: "/signals", label: "Sinais", icon: Zap },

@@ -294,11 +294,11 @@ async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
             trailing_stop_pct, trailing_start_pct, break_even_at_pct,
             entry_seconds, exit_seconds,
             pcl_enabled, pcl_cooldown_minutes, pcl_max_attempts,
-            pcl_min_struct_score, pcl_profit_target_usd, user_id
+            pcl_min_struct_score, pcl_profit_target_usd, user_id, paper_trading
         ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
             $11,$12,$13,$14,$15,$16,$17,$18,
-            $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+            $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
         )
         RETURNING id
         """,
@@ -331,6 +331,7 @@ async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
         data.get("pcl_min_struct_score", 3),
         data.get("pcl_profit_target_usd"),
         data.get("user_id"),
+        data.get("paper_trading", True),
     )
     return row["id"]  # type: ignore[index]
 
@@ -370,6 +371,7 @@ async def update_config(pool: asyncpg.Pool, config_id: int, data: dict[str, Any]
             pcl_min_struct_score = $28,
             pcl_profit_target_usd = $29,
             user_id = $30,
+            paper_trading = $31,
             updated_at = NOW()
         WHERE id = $1
         RETURNING id
@@ -404,6 +406,7 @@ async def update_config(pool: asyncpg.Pool, config_id: int, data: dict[str, Any]
         data.get("pcl_min_struct_score", 3),
         data.get("pcl_profit_target_usd"),
         data.get("user_id"),
+        data.get("paper_trading", True),
     )
     return row is not None
 
@@ -799,3 +802,108 @@ async def count_snapshots(
         *args,
     )
     return int(row["n"]) if row else 0
+
+
+# ---------------------------------------------------------------------------
+# Monitoração de moedas (marcadas manualmente a partir do Painel)
+# ---------------------------------------------------------------------------
+
+async def add_monitored(
+    pool: asyncpg.Pool,
+    symbol: str,
+    note: str | None,
+    mark_price: float | None,
+    mark_score: int | None,
+    mark_setup: str | None,
+    mark_snapshot_id: int | None,
+) -> dict[str, Any]:
+    """Marca uma moeda para monitoração. Reativa/atualiza se já houver marcação ativa."""
+    row = await pool.fetchrow(
+        """
+        INSERT INTO eassets_monitored
+            (symbol, note, mark_price, mark_score, mark_setup, mark_snapshot_id, active, marked_at)
+        VALUES ($1,$2,$3,$4,$5,$6,TRUE,NOW())
+        ON CONFLICT (symbol) WHERE active DO UPDATE SET
+            note = EXCLUDED.note,
+            mark_price = EXCLUDED.mark_price,
+            mark_score = EXCLUDED.mark_score,
+            mark_setup = EXCLUDED.mark_setup,
+            mark_snapshot_id = EXCLUDED.mark_snapshot_id,
+            marked_at = NOW()
+        RETURNING *
+        """,
+        symbol, note, mark_price, mark_score, mark_setup, mark_snapshot_id,
+    )
+    return dict(row)
+
+
+async def unmark_monitored(pool: asyncpg.Pool, symbol: str) -> bool:
+    """Desmarca (arquiva) a moeda monitorada ativa. Retorna True se algo mudou."""
+    result = await pool.execute(
+        "UPDATE eassets_monitored SET active = FALSE, unmarked_at = NOW() WHERE symbol = $1 AND active",
+        symbol,
+    )
+    return result.endswith("1")
+
+
+async def list_monitored(pool: asyncpg.Pool, active_only: bool = True) -> list[dict[str, Any]]:
+    """Lista moedas monitoradas (ativas por padrão), com métricas atuais do último snapshot."""
+    where = "WHERE m.active" if active_only else ""
+    rows = await pool.fetch(
+        f"""
+        WITH latest AS (
+            SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT 1
+        )
+        SELECT
+            m.id, m.symbol, m.note, m.marked_at, m.mark_price, m.mark_score,
+            m.mark_setup, m.active, m.unmarked_at,
+            me.price AS cur_price, me.score AS cur_score, me.setup AS cur_setup,
+            me.rank AS cur_rank, me.price_change_1d, me.exp_1d, me.exp_4h, me.exp_1h,
+            me.oi_trend, me.lsr, me.rsi_4h, me.toi, me.oi_usd
+        FROM eassets_monitored m
+        LEFT JOIN latest l ON TRUE
+        LEFT JOIN eassets_metrics me ON me.snapshot_id = l.id AND me.symbol = m.symbol
+        {where}
+        ORDER BY m.marked_at DESC
+        """,
+    )
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Histórico de funding (extraído do raw_json de cada snapshot)
+# ---------------------------------------------------------------------------
+
+async def get_symbol_raw_history(
+    pool: asyncpg.Pool,
+    symbol: str,
+    limit: int = 60,
+) -> list[dict[str, Any]]:
+    """Retorna (timestamp, raw_json) de um símbolo nos snapshots recentes (novo->antigo)."""
+    rows = await pool.fetch(
+        """
+        SELECT s.timestamp, m.raw_json
+        FROM eassets_metrics m
+        JOIN eassets_snapshots s ON s.id = m.snapshot_id
+        WHERE m.symbol = $1
+        ORDER BY s.timestamp DESC
+        LIMIT $2
+        """,
+        symbol,
+        limit,
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_latest_metrics_funding(pool: asyncpg.Pool, limit: int = 600) -> list[dict[str, Any]]:
+    """Retorna symbol + raw_json de todas as moedas do último snapshot (para varrer funding)."""
+    rows = await pool.fetch(
+        """
+        WITH latest AS (SELECT id FROM eassets_snapshots ORDER BY timestamp DESC LIMIT 1)
+        SELECT m.symbol, m.raw_json, m.price_change_1d
+        FROM eassets_metrics m JOIN latest l ON m.snapshot_id = l.id
+        LIMIT $1
+        """,
+        limit,
+    )
+    return [dict(r) for r in rows]
