@@ -19,6 +19,7 @@ import type {
   SymbolHistory,
   MonitoredCoin,
   FundingData,
+  TradeTarget,
 } from "./types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? ""
@@ -146,6 +147,16 @@ export const api = {
     apiFetch<SymbolHistory>(`/api/eassets/panel/historico/${symbol}`),
 
   // Monitoração de moedas
+  activatePaperTradeTarget: (symbol: string, note?: string) =>
+    apiFetch<TradeTarget>("/api/eassets/panel/trade-targets/paper", {
+      method: "POST",
+      body: JSON.stringify({ symbol, note: note ?? null }),
+    }),
+  deactivatePaperTradeTarget: (symbol: string) =>
+    apiFetch<TradeTarget>(
+      `/api/eassets/panel/trade-targets/paper/${encodeURIComponent(symbol)}`,
+      { method: "DELETE" }
+    ),
   getMonitored: () => apiFetch<MonitoredCoin[]>("/api/eassets/panel/monitored"),
   monitorSymbol: (symbol: string, note?: string) =>
     apiFetch("/api/eassets/panel/monitor", {

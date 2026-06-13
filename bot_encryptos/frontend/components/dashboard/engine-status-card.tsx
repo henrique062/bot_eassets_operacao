@@ -69,19 +69,21 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
         throw err
       }
 
-      const bybitBalance = await api.getBybitBalance()
-      if (
-        !bybitBalance.connected ||
-        typeof bybitBalance.capital !== "number" ||
-        typeof bybitBalance.balance !== "number"
-      ) {
-        throw new Error(bybitBalance.error ?? "Saldo Bybit indisponivel.")
-      }
+      if (!config.paper_trading) {
+        const bybitBalance = await api.getBybitBalance()
+        if (
+          !bybitBalance.connected ||
+          typeof bybitBalance.capital !== "number" ||
+          typeof bybitBalance.balance !== "number"
+        ) {
+          throw new Error(bybitBalance.error ?? "Saldo Bybit indisponivel.")
+        }
 
-      config = {
-        ...config,
-        capital: bybitBalance.capital,
-        balance: bybitBalance.balance,
+        config = {
+          ...config,
+          capital: bybitBalance.capital,
+          balance: bybitBalance.balance,
+        }
       }
 
       await api.startBot(config)

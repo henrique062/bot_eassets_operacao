@@ -77,7 +77,7 @@ async def start_bot(body: StartBotRequest) -> dict[str, Any]:
     pool = get_pool()
     config_data = body.model_dump()
 
-    if config_data.get("exchange", "bybit").lower() == "bybit":
+    if config_data.get("exchange", "bybit").lower() == "bybit" and not body.paper_trading:
         bybit_balance = await get_wallet_balance()
         if not bybit_balance.get("connected"):
             raise HTTPException(

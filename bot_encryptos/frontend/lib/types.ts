@@ -327,10 +327,24 @@ export interface HistoryPoint {
   toi: number | null
 }
 
+export interface TradeTarget {
+  id: number
+  symbol: string
+  asset: string
+  mode: string
+  note: string | null
+  source: string | null
+  active: boolean
+  activated_at: string | null
+  deactivated_at: string | null
+  updated_at: string | null
+}
+
 export interface SymbolHistory {
   symbol: string
   asset: string
   is_alpha: boolean
+  paper_target: TradeTarget | null
   history: HistoryPoint[]
 }
 

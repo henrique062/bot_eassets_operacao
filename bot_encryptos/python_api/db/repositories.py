@@ -701,6 +701,104 @@ async def get_symbol_panel_history(
     return [dict(r) for r in rows]
 
 
+async def get_trade_target(
+    pool: asyncpg.Pool,
+    symbol: str,
+    mode: str = "paper",
+) -> dict[str, Any] | None:
+    """Return one manual trade target by symbol/mode."""
+    normalized = normalize_symbol(symbol)
+    row = await pool.fetchrow(
+        """
+        SELECT *
+        FROM eassets_trade_targets
+        WHERE symbol = $1 AND mode = $2
+        LIMIT 1
+        """,
+        normalized,
+        mode.lower(),
+    )
+    return dict(row) if row else None
+
+
+async def list_trade_targets(
+    pool: asyncpg.Pool,
+    active_only: bool = True,
+    mode: str | None = None,
+) -> list[dict[str, Any]]:
+    """List manual trade targets ordered by latest activation/update."""
+    where: list[str] = []
+    args: list[Any] = []
+
+    if active_only:
+        where.append("active = TRUE")
+    if mode is not None:
+        args.append(mode.lower())
+        where.append(f"mode = ${len(args)}")
+
+    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+    rows = await pool.fetch(
+        f"""
+        SELECT *
+        FROM eassets_trade_targets
+        {where_sql}
+        ORDER BY active DESC, updated_at DESC, activated_at DESC, id DESC
+        """,
+        *args,
+    )
+    return [dict(r) for r in rows]
+
+
+async def upsert_trade_target(
+    pool: asyncpg.Pool,
+    symbol: str,
+    mode: str = "paper",
+    note: str | None = None,
+    source: str = "panel",
+) -> dict[str, Any]:
+    """Activate or refresh a manual trade target."""
+    normalized = normalize_symbol(symbol)
+    row = await pool.fetchrow(
+        """
+        INSERT INTO eassets_trade_targets
+            (symbol, mode, note, source, active, activated_at, deactivated_at, updated_at)
+        VALUES ($1, $2, $3, $4, TRUE, NOW(), NULL, NOW())
+        ON CONFLICT (symbol, mode) DO UPDATE SET
+            note = EXCLUDED.note,
+            source = EXCLUDED.source,
+            active = TRUE,
+            activated_at = NOW(),
+            deactivated_at = NULL,
+            updated_at = NOW()
+        RETURNING *
+        """,
+        normalized,
+        mode.lower(),
+        note,
+        source,
+    )
+    return dict(row)
+
+
+async def deactivate_trade_target(
+    pool: asyncpg.Pool,
+    symbol: str,
+    mode: str = "paper",
+) -> bool:
+    """Deactivate a manual trade target."""
+    normalized = normalize_symbol(symbol)
+    result = await pool.execute(
+        """
+        UPDATE eassets_trade_targets
+        SET active = FALSE, deactivated_at = NOW(), updated_at = NOW()
+        WHERE symbol = $1 AND mode = $2 AND active = TRUE
+        """,
+        normalized,
+        mode.lower(),
+    )
+    return result.endswith("1")
+
+
 async def get_top_appearances(
     pool: asyncpg.Pool,
     top_n: int = 10,

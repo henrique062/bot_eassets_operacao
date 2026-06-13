@@ -282,6 +282,10 @@ async def entry_candidates(
     allow_partial = include_partial or bool(cfg.get("allow_partial_setup", False))
     require_funding_neg = bool(cfg.get("require_funding_negative", False))
     eff_min_score = min_score if min_score > 0 else float(cfg.get("min_score") or 0)
+    manual_targets = await repo.list_trade_targets(pool, active_only=True, mode="paper")
+    manual_symbols = {str(row["symbol"]) for row in manual_targets}
+    manual_mode_active = bool(manual_symbols)
+    paper_mode_enabled = bool(cfg.get("paper_trading", True))
 
     meta = await repo.get_snapshot_meta(pool, sid)
     metrics = await repo.get_panel_metrics(pool, sid)
@@ -295,9 +299,11 @@ async def entry_candidates(
     gate_open = safe or not require_btc_reset
 
     candidates: list[dict[str, Any]] = []
-    if gate_open:
+    if gate_open and (not manual_mode_active or paper_mode_enabled):
         for m in metrics:
             if m["symbol"] == "BTCUSDT":
+                continue
+            if manual_symbols and m["symbol"] not in manual_symbols:
                 continue
             if (m.get("score") or 0) < eff_min_score:
                 continue
@@ -341,6 +347,10 @@ async def entry_candidates(
         "snapshot_id": sid,
         "snapshot_ts": meta.get("timestamp") if meta else None,
         "candidates": candidates,
+        "manual_target_mode": "paper" if manual_mode_active else None,
+        "manual_target_symbols": sorted(manual_symbols),
+        "paper_mode_required": manual_mode_active,
+        "paper_mode_enabled": paper_mode_enabled,
     })
 
 
@@ -416,6 +426,7 @@ async def panel_historico(
     normalized = repo.normalize_symbol(symbol)
     alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     rows = await repo.get_symbol_panel_history(pool, normalized, limit=limit)
+    trade_target = await repo.get_trade_target(pool, normalized, mode="paper")
     if not rows:
         raise HTTPException(status_code=404, detail="Sem histórico para esse símbolo.")
 
@@ -445,6 +456,7 @@ async def panel_historico(
         "symbol": normalized,
         "asset": normalized.replace("USDT", ""),
         "is_alpha": normalized in alpha_symbols,
+        "paper_target": _trade_target_out(trade_target),
         "history": out,
     })
 
@@ -454,6 +466,11 @@ async def panel_historico(
 # ===========================================================================
 
 class MonitorRequest(BaseModel):
+    symbol: str
+    note: str | None = None
+
+
+class TradeTargetRequest(BaseModel):
     symbol: str
     note: str | None = None
 
@@ -471,6 +488,23 @@ def _parse_fr(raw: Any) -> float | None:
         return float(fr)
     except (TypeError, ValueError):
         return None
+
+
+def _trade_target_out(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "symbol": row["symbol"],
+        "asset": row["symbol"].replace("USDT", ""),
+        "mode": row.get("mode"),
+        "note": row.get("note"),
+        "source": row.get("source"),
+        "active": bool(row.get("active")),
+        "activated_at": row.get("activated_at").isoformat() if row.get("activated_at") else None,
+        "deactivated_at": row.get("deactivated_at").isoformat() if row.get("deactivated_at") else None,
+        "updated_at": row.get("updated_at").isoformat() if row.get("updated_at") else None,
+    }
 
 
 def _funding_series(raw_history: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -545,6 +579,39 @@ async def monitor_symbol(req: MonitorRequest) -> dict[str, Any]:
             mark_setup = m.get("setup")
     row = await repo.add_monitored(pool, symbol, req.note, mark_price, mark_score, mark_setup, sid)
     return _ok({"id": row["id"], "symbol": symbol})
+
+
+@router.get("/trade-targets", summary="Lista alvos manuais do robô")
+async def list_trade_targets(active_only: bool = Query(True), mode: str = Query("paper")) -> dict[str, Any]:
+    pool = get_pool()
+    rows = await repo.list_trade_targets(pool, active_only=active_only, mode=mode)
+    return _ok({
+        "count": len(rows),
+        "targets": [_trade_target_out(row) for row in rows],
+    })
+
+
+@router.post("/trade-targets/paper", summary="Ativa moeda manualmente para o robô em modo paper")
+async def activate_paper_trade_target(req: TradeTargetRequest) -> dict[str, Any]:
+    pool = get_pool()
+    row = await repo.upsert_trade_target(
+        pool,
+        req.symbol,
+        mode="paper",
+        note=req.note,
+        source="panel-history",
+    )
+    return _ok(_trade_target_out(row))
+
+
+@router.delete("/trade-targets/paper/{symbol}", summary="Desativa alvo manual paper do robô")
+async def deactivate_paper_trade_target(symbol: str) -> dict[str, Any]:
+    pool = get_pool()
+    ok = await repo.deactivate_trade_target(pool, symbol, mode="paper")
+    if not ok:
+        raise HTTPException(status_code=404, detail="Moeda nao estava ativa no robo em modo paper.")
+    row = await repo.get_trade_target(pool, symbol, mode="paper")
+    return _ok(_trade_target_out(row))
 
 
 @router.delete("/monitor/{symbol}", summary="Desmarcar moeda da monitoração")
