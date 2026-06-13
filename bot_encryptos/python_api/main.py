@@ -31,6 +31,37 @@ from database import close_db, get_pool, init_db
 # Lifespan
 # ---------------------------------------------------------------------------
 
+async def _resume_active_sessions(pool: Any) -> None:
+    """Reinstrui o motor Rust a retomar as sessões marcadas como ativas no banco.
+
+    O engine Rust começa Stopped após cada restart; aqui restauramos o estado.
+    Best-effort: aguarda o Rust subir e ignora falhas (não bloqueia o startup).
+    """
+    from db import repositories as repo
+    from services import rust_bridge
+
+    await asyncio.sleep(5)  # dá tempo do rust_core subir
+    try:
+        sessions = await repo.get_active_configs(pool)
+    except Exception as exc:
+        logger.warning("auto-resume: falha ao ler sessões ativas: {}", exc)
+        return
+
+    for s in sessions:
+        config_id = s.get("id")
+        config_data = {k: (float(v) if hasattr(v, "is_finite") else v) for k, v in dict(s).items()}
+        for attempt in range(3):
+            try:
+                await rust_bridge.start(config_id, config_data)
+                logger.info("auto-resume: sessão {} retomada no motor (paper={})",
+                            config_id, s.get("paper_trading"))
+                break
+            except Exception as exc:
+                logger.warning("auto-resume: tentativa {} falhou p/ sessão {}: {}",
+                               attempt + 1, config_id, exc)
+                await asyncio.sleep(5)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage startup and shutdown of shared resources."""
@@ -45,7 +76,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     scraper_task = asyncio.create_task(run_loop(pool), name="eassets_loop")
     logger.info("eAssets scraper loop task created.")
 
+    # Auto-resume: religa no motor Rust as sessões que estavam ativas no banco
+    # (o engine Rust perde o estado em memória a cada restart/redeploy).
+    resume_task = asyncio.create_task(_resume_active_sessions(pool), name="resume_sessions")
+
     yield
+
+    resume_task.cancel()
+    try:
+        await resume_task
+    except asyncio.CancelledError:
+        pass
 
     # --- Shutdown ---
     logger.info("Shutting down...")
