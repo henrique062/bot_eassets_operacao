@@ -294,11 +294,13 @@ async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
             trailing_stop_pct, trailing_start_pct, break_even_at_pct,
             entry_seconds, exit_seconds,
             pcl_enabled, pcl_cooldown_minutes, pcl_max_attempts,
-            pcl_min_struct_score, pcl_profit_target_usd, user_id, paper_trading
+            pcl_min_struct_score, pcl_profit_target_usd, user_id, paper_trading,
+            require_btc_reset, allow_partial_setup, require_funding_negative
         ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
             $11,$12,$13,$14,$15,$16,$17,$18,
-            $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
+            $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,
+            $31,$32,$33
         )
         RETURNING id
         """,
@@ -332,6 +334,9 @@ async def save_config(pool: asyncpg.Pool, data: dict[str, Any]) -> int:
         data.get("pcl_profit_target_usd"),
         data.get("user_id"),
         data.get("paper_trading", True),
+        data.get("require_btc_reset", True),
+        data.get("allow_partial_setup", False),
+        data.get("require_funding_negative", False),
     )
     return row["id"]  # type: ignore[index]
 
@@ -372,6 +377,9 @@ async def update_config(pool: asyncpg.Pool, config_id: int, data: dict[str, Any]
             pcl_profit_target_usd = $29,
             user_id = $30,
             paper_trading = $31,
+            require_btc_reset = $32,
+            allow_partial_setup = $33,
+            require_funding_negative = $34,
             updated_at = NOW()
         WHERE id = $1
         RETURNING id
@@ -407,6 +415,9 @@ async def update_config(pool: asyncpg.Pool, config_id: int, data: dict[str, Any]
         data.get("pcl_profit_target_usd"),
         data.get("user_id"),
         data.get("paper_trading", True),
+        data.get("require_btc_reset", True),
+        data.get("allow_partial_setup", False),
+        data.get("require_funding_negative", False),
     )
     return row is not None
 

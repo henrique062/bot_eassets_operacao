@@ -274,7 +274,14 @@ async def entry_candidates(
     sid = await repo.get_latest_snapshot_id(pool)
     if sid is None:
         return _ok({"btc_safe": False, "btc_state": "—", "snapshot_id": None,
-                    "snapshot_ts": None, "candidates": []})
+                    "snapshot_ts": None, "candidates": [], "flags": {}})
+
+    # Flags de estratégia da config ativa (o motor não precisa passá-los).
+    cfg = await repo.get_latest_config(pool) or {}
+    require_btc_reset = bool(cfg.get("require_btc_reset", True))
+    allow_partial = include_partial or bool(cfg.get("allow_partial_setup", False))
+    require_funding_neg = bool(cfg.get("require_funding_negative", False))
+    eff_min_score = min_score if min_score > 0 else float(cfg.get("min_score") or 0)
 
     meta = await repo.get_snapshot_meta(pool, sid)
     metrics = await repo.get_panel_metrics(pool, sid)
@@ -282,26 +289,34 @@ async def entry_candidates(
     macro = _btc_macro_from_metrics(metrics)
     safe = bool(macro.get("safe"))
 
-    allowed = {"SETUP DE OURO"} | ({"PARCIAL"} if include_partial else set())
+    allowed = {"SETUP DE OURO"} | ({"PARCIAL"} if allow_partial else set())
+
+    # Gate do BTC: por padrão só há candidatos no Reset; o flag pode desligar isso.
+    gate_open = safe or not require_btc_reset
 
     candidates: list[dict[str, Any]] = []
-    # Só há candidatos quando a janela macro do BTC está aberta (Reset).
-    if safe:
+    if gate_open:
         for m in metrics:
             if m["symbol"] == "BTCUSDT":
                 continue
-            if (m.get("score") or 0) < min_score:
+            if (m.get("score") or 0) < eff_min_score:
                 continue
             try:
                 e = json.loads(m.get("raw_json") or "{}")
             except (json.JSONDecodeError, TypeError):
                 e = {}
+            # setup_grade usa o gate macro real; mas se require_btc_reset=False,
+            # avaliamos o setup como se a janela estivesse aberta.
             chk = core.entry_checklist(e)
-            grade, _cls, escore = core.setup_grade(chk, safe)
+            grade, _cls, escore = core.setup_grade(chk, safe or not require_btc_reset)
             if grade not in allowed:
                 continue
             if core.is_trap(e):
                 continue
+            if require_funding_neg:
+                fr = _parse_fr(m.get("raw_json"))
+                if fr is None or fr >= 0:
+                    continue
             candidates.append({
                 "symbol": m["symbol"],
                 "asset": m["symbol"].replace("USDT", ""),

@@ -55,6 +55,9 @@ class StartBotRequest(BaseModel):
     pcl_profit_target_usd: float | None = None
     user_id: int | None = None
     paper_trading: bool = True
+    require_btc_reset: bool = True
+    allow_partial_setup: bool = False
+    require_funding_negative: bool = False
 
 
 def _ok(data: Any) -> dict[str, Any]:

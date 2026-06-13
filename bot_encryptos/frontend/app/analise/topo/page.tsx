@@ -4,6 +4,7 @@ import useSWR from "swr"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { fmtNum } from "@/lib/panel-format"
+import { MonitorButton } from "@/components/panel/monitor-button"
 import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 export default function TopoPage() {
@@ -63,6 +64,7 @@ export default function TopoPage() {
                           {r.asset}
                         </Link>
                         <AlphaBadge isAlpha={r.is_alpha} />
+                        <MonitorButton symbol={r.symbol} />
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#f3f4f6] tabular-nums">{r.appearances}</td>

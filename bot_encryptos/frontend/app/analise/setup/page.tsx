@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 import type { SetupChecklist } from "@/lib/types"
 import { fmtNum, colorPN } from "@/lib/panel-format"
 import { MacroBanner } from "@/components/panel/macro-banner"
+import { MonitorButton } from "@/components/panel/monitor-button"
 import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 const CRITERIA: { key: keyof SetupChecklist; label: string }[] = [
@@ -83,6 +84,7 @@ export default function SetupPage() {
                           {r.asset}
                         </Link>
                         <AlphaBadge isAlpha={r.is_alpha} />
+                        <MonitorButton symbol={r.symbol} />
                       </div>
                       {r.trap && (
                         <span className="ml-2 rounded-md border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
