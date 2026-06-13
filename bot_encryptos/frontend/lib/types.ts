@@ -348,7 +348,50 @@ export interface SymbolHistory {
   asset: string
   is_alpha: boolean
   paper_target: TradeTarget | null
+  real_target: TradeTarget | null
   history: HistoryPoint[]
+}
+
+export interface BotOpenPosition {
+  symbol: string
+  asset: string
+  side: string
+  qty: number | null
+  entry_price: number | null
+  cur_price: number | null
+  stop_loss: number | null
+  take_profit: number | null
+  entry_score: number | null
+  opened_at: string | null
+  opened_at_brt: string | null
+  pnl_usd: number | null
+  pnl_pct: number | null
+}
+
+export interface BotClosedTrade {
+  symbol: string
+  asset: string
+  side: string
+  entry_price: number | null
+  close_price: number | null
+  pnl_usd: number | null
+  pnl_pct: number | null
+  close_reason: string | null
+  closed_at: string | null
+  closed_at_brt: string | null
+}
+
+export interface BotResults {
+  mode: string
+  summary: {
+    open_count: number
+    unrealised_pnl: number
+    realised_pnl: number
+    closed_count: number
+    win_rate: number | null
+  }
+  open_positions: BotOpenPosition[]
+  closed_trades: BotClosedTrade[]
 }
 
 // ---------------------------------------------------------------------------

@@ -12,7 +12,6 @@ import { AlphaBadge } from "@/components/ui/alpha-badge"
 
 export default function HistoricoPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = use(params)
-  const [targetBusy, setTargetBusy] = useState(false)
   const [targetMsg, setTargetMsg] = useState<string | null>(null)
   const [targetError, setTargetError] = useState<string | null>(null)
 
@@ -32,37 +31,35 @@ export default function HistoricoPage({ params }: { params: Promise<{ symbol: st
   // serie cronologica (antigo -> novo); o backend devolve do mais novo ao mais antigo
   const chrono = [...history].reverse()
   const paperTarget = data?.paper_target
+  const realTarget = data?.real_target
   const paperModeEnabled = latestConfig?.paper_trading !== false
   const botRunning = Boolean(activeSessions?.length)
+  const [busyMode, setBusyMode] = useState<"paper" | "real" | null>(null)
 
-  async function handleTradeTargetToggle() {
-    if (targetBusy) return
-    if (!paperTarget?.active && !paperModeEnabled) {
-      setTargetError("Coloque o bot em modo paper na aba Config antes de ativar um alvo manual.")
-      setTargetMsg(null)
-      return
-    }
-
-    setTargetBusy(true)
+  async function toggleTarget(mode: "paper" | "real") {
+    if (busyMode) return
+    const active = mode === "paper" ? paperTarget?.active : realTarget?.active
+    setBusyMode(mode)
     setTargetError(null)
     setTargetMsg(null)
     try {
-      if (paperTarget?.active) {
-        await api.deactivatePaperTradeTarget(symbol)
-        setTargetMsg("Moeda removida do robo manual em paper.")
+      if (active) {
+        await api.deactivateTradeTarget(mode, symbol)
+        setTargetMsg(`Moeda desarmada (${mode}).`)
       } else {
-        await api.activatePaperTradeTarget(symbol)
-        setTargetMsg("Moeda ativada no robo manual em paper.")
+        await api.activateTradeTarget(mode, symbol)
+        setTargetMsg(
+          mode === "paper"
+            ? "Moeda armada no robô (paper). Ela será forçada na próxima janela."
+            : "Moeda armada na CONTA REAL. Só opera quando o bot estiver em modo real."
+        )
       }
       await mutate()
     } catch (err) {
-      if (err instanceof ApiError && err.detail) {
-        setTargetError(err.detail)
-      } else {
-        setTargetError("Falha ao atualizar o alvo manual do robo.")
-      }
+      if (err instanceof ApiError && err.detail) setTargetError(err.detail)
+      else setTargetError("Falha ao atualizar o alvo do robô.")
     } finally {
-      setTargetBusy(false)
+      setBusyMode(null)
     }
   }
 
@@ -86,54 +83,64 @@ export default function HistoricoPage({ params }: { params: Promise<{ symbol: st
       )}
 
       <div className="rounded-xl border border-[#2a2d3a] bg-[#1a1d27] px-5 py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-[#f3f4f6]">
-                Robo de recompra automatica
-              </h3>
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
-                  paperTarget?.active
-                    ? "border-green-500/30 bg-green-500/10 text-green-300"
-                    : "border-[#2a2d3a] bg-[#15171f] text-[#9ca3af]"
-                }`}
-              >
-                {paperTarget?.active ? "Paper ativo" : "Paper inativo"}
-              </span>
-            </div>
-            <p className="text-sm text-[#9ca3af]">
-              Ative esta moeda como alvo manual. Enquanto existir alvo manual paper ativo, o motor considera apenas essas moedas.
-            </p>
-            <p className="text-xs text-[#6b7280]">
-              Bot: {botRunning ? "rodando" : "parado"} · Configuracao: {paperModeEnabled ? "paper" : "real"}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleTradeTargetToggle}
-            disabled={targetBusy}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-              paperTarget?.active
-                ? "border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/15"
-                : "border-[#6366f1] bg-[#6366f1] text-white hover:bg-[#5855eb]"
-            } disabled:cursor-not-allowed disabled:opacity-60`}
-          >
-            {targetBusy ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : paperTarget?.active ? (
-              <ShieldOff className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            )}
-            {paperTarget?.active ? "Desativar no robo paper" : "Ativar no robo paper"}
-          </button>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-[#f3f4f6]">
+            Armar moeda no robô
+          </h3>
+          <p className="text-sm text-[#9ca3af]">
+            Armar <b className="text-[#f3f4f6]">força a entrada</b> nesta moeda assim que houver sinal mínimo
+            (força relativa positiva), sem precisar do Setup de Ouro completo. O robô <b className="text-[#f3f4f6]">continua
+            operando as outras moedas</b> normalmente, respeitando o limite de posições.
+          </p>
+          <p className="text-xs text-[#6b7280]">
+            Bot: {botRunning ? "rodando" : "parado"} · Config atual: {paperModeEnabled ? "paper" : "real"} ·
+            Cada conta tem sua lista de moedas armadas.
+          </p>
         </div>
 
-        {!paperModeEnabled && !paperTarget?.active ? (
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
-            O modo real esta bloqueando novas ativacoes manuais. Troque para paper na aba Config.
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Paper */}
+          <div className="flex items-center justify-between rounded-lg border border-[#2a2d3a] bg-[#15171f] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white">Robô paper</span>
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${paperTarget?.active ? "border-green-500/30 bg-green-500/10 text-green-300" : "border-[#2a2d3a] text-[#6b7280]"}`}>
+                {paperTarget?.active ? "Armada" : "Inativa"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => toggleTarget("paper")}
+              disabled={busyMode !== null}
+              className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${paperTarget?.active ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-[#6366f1] bg-[#6366f1] text-white hover:bg-[#5855eb]"}`}
+            >
+              {busyMode === "paper" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : paperTarget?.active ? <ShieldOff className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              {paperTarget?.active ? "Desarmar" : "Armar paper"}
+            </button>
+          </div>
+
+          {/* Real */}
+          <div className="flex items-center justify-between rounded-lg border border-[#2a2d3a] bg-[#15171f] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white">Conta real</span>
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${realTarget?.active ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-[#2a2d3a] text-[#6b7280]"}`}>
+                {realTarget?.active ? "Armada" : "Inativa"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => toggleTarget("real")}
+              disabled={busyMode !== null}
+              className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${realTarget?.active ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15"}`}
+            >
+              {busyMode === "real" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : realTarget?.active ? <ShieldOff className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              {realTarget?.active ? "Desarmar" : "Armar real"}
+            </button>
+          </div>
+        </div>
+
+        {realTarget?.active && paperModeEnabled ? (
+          <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-300">
+            Armada na conta real, mas o bot está em modo paper. Ela só será operada quando você trocar o bot para real (aba Config).
           </div>
         ) : null}
 

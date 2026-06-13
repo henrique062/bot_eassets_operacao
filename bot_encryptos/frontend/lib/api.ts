@@ -20,6 +20,7 @@ import type {
   MonitoredCoin,
   FundingData,
   TradeTarget,
+  BotResults,
 } from "./types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? ""
@@ -157,6 +158,20 @@ export const api = {
       `/api/eassets/panel/trade-targets/paper/${encodeURIComponent(symbol)}`,
       { method: "DELETE" }
     ),
+  // Armar/desarmar moeda no robô em conta específica (paper | real)
+  activateTradeTarget: (mode: "paper" | "real", symbol: string, note?: string) =>
+    apiFetch<TradeTarget>(`/api/eassets/panel/trade-targets/${mode}`, {
+      method: "POST",
+      body: JSON.stringify({ symbol, note: note ?? null }),
+    }),
+  deactivateTradeTarget: (mode: "paper" | "real", symbol: string) =>
+    apiFetch<TradeTarget>(
+      `/api/eassets/panel/trade-targets/${mode}/${encodeURIComponent(symbol)}`,
+      { method: "DELETE" }
+    ),
+  // Resultados do robô por conta (posições abertas + P&L + fechados)
+  getBotResults: (mode: "paper" | "real") =>
+    apiFetch<BotResults>(`/api/eassets/panel/results/${mode}`),
   getMonitored: () => apiFetch<MonitoredCoin[]>("/api/eassets/panel/monitored"),
   monitorSymbol: (symbol: string, note?: string) =>
     apiFetch("/api/eassets/panel/monitor", {

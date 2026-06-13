@@ -1016,3 +1016,52 @@ async def get_latest_metrics_funding(pool: asyncpg.Pool, limit: int = 600) -> li
         limit,
     )
     return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Posições/trades por modo (paper x real) — tela de resultados
+# ---------------------------------------------------------------------------
+
+async def get_positions_by_mode(
+    pool: asyncpg.Pool,
+    mode: str = "paper",
+    status: str = "open",
+) -> list[dict[str, Any]]:
+    """Posições do bot filtradas por modo (paper/live) e status."""
+    cols = await _table_columns(pool, "eassets_positions")
+    if "mode" not in cols:
+        return []
+    order_col = "opened_at" if "opened_at" in cols else ("created_at" if "created_at" in cols else "id")
+    rows = await pool.fetch(
+        f"""
+        SELECT * FROM eassets_positions
+        WHERE mode = $1 AND LOWER(status) = $2
+        ORDER BY {order_col} DESC
+        """,
+        mode,
+        status.lower(),
+    )
+    return [dict(r) for r in rows]
+
+
+async def get_trades_by_mode(
+    pool: asyncpg.Pool,
+    mode: str = "paper",
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    """Trades fechados do bot por modo (paper/live)."""
+    cols = await _table_columns(pool, "eassets_trades")
+    if "mode" not in cols:
+        return []
+    order_col = "closed_at" if "closed_at" in cols else ("trade_timestamp" if "trade_timestamp" in cols else "id")
+    rows = await pool.fetch(
+        f"""
+        SELECT * FROM eassets_trades
+        WHERE mode = $1
+        ORDER BY {order_col} DESC NULLS LAST
+        LIMIT $2
+        """,
+        mode,
+        limit,
+    )
+    return [dict(r) for r in rows]

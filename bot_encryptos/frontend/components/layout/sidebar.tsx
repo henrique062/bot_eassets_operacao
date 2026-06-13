@@ -13,6 +13,7 @@ import {
   Settings,
   BarChart3,
   Target,
+  FlaskConical,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analise", label: "Painel Moedas", icon: BarChart3 },
   { href: "/monitoracao", label: "Monitoração", icon: Target },
+  { href: "/paper", label: "Resultados Paper", icon: FlaskConical },
   { href: "/positions", label: "Posições", icon: TrendingUp },
   { href: "/trades", label: "Trades", icon: History },
   { href: "/signals", label: "Sinais", icon: Zap },

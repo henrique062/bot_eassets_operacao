@@ -274,7 +274,7 @@ async def entry_candidates(
     sid = await repo.get_latest_snapshot_id(pool)
     if sid is None:
         return _ok({"btc_safe": False, "btc_state": "—", "snapshot_id": None,
-                    "snapshot_ts": None, "candidates": [], "flags": {}})
+                    "snapshot_ts": None, "candidates": [], "forced_symbols": []})
 
     # Flags de estratégia da config ativa (o motor não precisa passá-los).
     cfg = await repo.get_latest_config(pool) or {}
@@ -282,10 +282,12 @@ async def entry_candidates(
     allow_partial = include_partial or bool(cfg.get("allow_partial_setup", False))
     require_funding_neg = bool(cfg.get("require_funding_negative", False))
     eff_min_score = min_score if min_score > 0 else float(cfg.get("min_score") or 0)
-    manual_targets = await repo.list_trade_targets(pool, active_only=True, mode="paper")
-    manual_symbols = {str(row["symbol"]) for row in manual_targets}
-    manual_mode_active = bool(manual_symbols)
     paper_mode_enabled = bool(cfg.get("paper_trading", True))
+
+    # Conta atual do bot define quais alvos manuais valem (paper x real).
+    target_mode = "paper" if paper_mode_enabled else "real"
+    forced_targets = await repo.list_trade_targets(pool, active_only=True, mode=target_mode)
+    forced_symbols = {str(row["symbol"]) for row in forced_targets}
 
     meta = await repo.get_snapshot_meta(pool, sid)
     metrics = await repo.get_panel_metrics(pool, sid)
@@ -294,52 +296,75 @@ async def entry_candidates(
     safe = bool(macro.get("safe"))
 
     allowed = {"SETUP DE OURO"} | ({"PARCIAL"} if allow_partial else set())
-
-    # Gate do BTC: por padrão só há candidatos no Reset; o flag pode desligar isso.
+    # Gate do BTC: por padrão só há candidatos automáticos no Reset.
     gate_open = safe or not require_btc_reset
 
     candidates: list[dict[str, Any]] = []
-    if gate_open and (not manual_mode_active or paper_mode_enabled):
-        for m in metrics:
-            if m["symbol"] == "BTCUSDT":
+    seen: set[str] = set()
+
+    for m in metrics:
+        sym = m["symbol"]
+        if sym == "BTCUSDT":
+            continue
+        try:
+            e = json.loads(m.get("raw_json") or "{}")
+        except (json.JSONDecodeError, TypeError):
+            e = {}
+
+        is_forced = sym in forced_symbols
+        chk = core.entry_checklist(e)
+        grade, _cls, escore = core.setup_grade(chk, safe or not require_btc_reset)
+        trap = core.is_trap(e)
+
+        if is_forced:
+            # FORÇA entrada: a moeda armada entra com sinal mínimo (força relativa
+            # positiva), sem exigir Setup de Ouro completo nem score mínimo, e
+            # mesmo fora do Reset. Único piso: não ser armadilha clara.
+            exp_pos = any((_f(m.get(k)) or 0) > 0 for k in ("exp_1h", "exp_4h", "exp_1d"))
+            if trap or not exp_pos:
                 continue
-            if manual_symbols and m["symbol"] not in manual_symbols:
+        else:
+            # Automático: varre TODAS as moedas exigindo Setup de Ouro completo.
+            if not gate_open:
                 continue
             if (m.get("score") or 0) < eff_min_score:
                 continue
-            try:
-                e = json.loads(m.get("raw_json") or "{}")
-            except (json.JSONDecodeError, TypeError):
-                e = {}
-            # setup_grade usa o gate macro real; mas se require_btc_reset=False,
-            # avaliamos o setup como se a janela estivesse aberta.
-            chk = core.entry_checklist(e)
-            grade, _cls, escore = core.setup_grade(chk, safe or not require_btc_reset)
             if grade not in allowed:
                 continue
-            if core.is_trap(e):
+            if trap:
                 continue
             if require_funding_neg:
                 fr = _parse_fr(m.get("raw_json"))
                 if fr is None or fr >= 0:
                     continue
-            candidates.append({
-                "symbol": m["symbol"],
-                "asset": m["symbol"].replace("USDT", ""),
-                "is_alpha": repo.normalize_symbol(m["symbol"]) in alpha_symbols,
-                "score": m.get("score"),
-                "entry_score": escore,
-                "grade": grade,
-                "price": _f(m.get("price")),
-                "exp_1d": _f(m.get("exp_1d")),
-                "exp_4h": _f(m.get("exp_4h")),
-                "exp_1h": _f(m.get("exp_1h")),
-                "lsr": _f(m.get("lsr")),
-                "oi_trend": _f(m.get("oi_trend")),
-            })
 
-        order = {"SETUP DE OURO": 0, "PARCIAL": 1}
-        candidates.sort(key=lambda c: (order.get(c["grade"], 2), -c["entry_score"], -(c["score"] or 0)))
+        if sym in seen:
+            continue
+        seen.add(sym)
+        candidates.append({
+            "symbol": sym,
+            "asset": sym.replace("USDT", ""),
+            "is_alpha": repo.normalize_symbol(sym) in alpha_symbols,
+            "forced": is_forced,
+            "score": m.get("score"),
+            "entry_score": escore,
+            "grade": grade if not is_forced else (grade or "FORÇADA"),
+            "price": _f(m.get("price")),
+            "exp_1d": _f(m.get("exp_1d")),
+            "exp_4h": _f(m.get("exp_4h")),
+            "exp_1h": _f(m.get("exp_1h")),
+            "lsr": _f(m.get("lsr")),
+            "oi_trend": _f(m.get("oi_trend")),
+        })
+
+    # Forçadas primeiro (prioridade), depois Setup de Ouro, depois Parcial, por score.
+    order = {"SETUP DE OURO": 0, "PARCIAL": 1}
+    candidates.sort(key=lambda c: (
+        0 if c["forced"] else 1,
+        order.get(c["grade"], 2),
+        -(c["entry_score"] or 0),
+        -(c["score"] or 0),
+    ))
 
     return _ok({
         "btc_safe": safe,
@@ -347,9 +372,8 @@ async def entry_candidates(
         "snapshot_id": sid,
         "snapshot_ts": meta.get("timestamp") if meta else None,
         "candidates": candidates,
-        "manual_target_mode": "paper" if manual_mode_active else None,
-        "manual_target_symbols": sorted(manual_symbols),
-        "paper_mode_required": manual_mode_active,
+        "account_mode": target_mode,
+        "forced_symbols": sorted(forced_symbols),
         "paper_mode_enabled": paper_mode_enabled,
     })
 
@@ -427,6 +451,7 @@ async def panel_historico(
     alpha_symbols = await repo.get_tagged_symbols(pool, tag="alpha")
     rows = await repo.get_symbol_panel_history(pool, normalized, limit=limit)
     trade_target = await repo.get_trade_target(pool, normalized, mode="paper")
+    real_target = await repo.get_trade_target(pool, normalized, mode="real")
     if not rows:
         raise HTTPException(status_code=404, detail="Sem histórico para esse símbolo.")
 
@@ -457,6 +482,7 @@ async def panel_historico(
         "asset": normalized.replace("USDT", ""),
         "is_alpha": normalized in alpha_symbols,
         "paper_target": _trade_target_out(trade_target),
+        "real_target": _trade_target_out(real_target),
         "history": out,
     })
 
@@ -614,6 +640,32 @@ async def deactivate_paper_trade_target(symbol: str) -> dict[str, Any]:
     return _ok(_trade_target_out(row))
 
 
+def _valid_mode(mode: str) -> str:
+    m = (mode or "").lower()
+    if m not in ("paper", "real"):
+        raise HTTPException(status_code=400, detail="Conta inválida (use 'paper' ou 'real').")
+    return m
+
+
+@router.post("/trade-targets/{mode}", summary="Ativa moeda manualmente para o robô (paper ou real)")
+async def activate_trade_target(mode: str, req: TradeTargetRequest) -> dict[str, Any]:
+    m = _valid_mode(mode)
+    pool = get_pool()
+    row = await repo.upsert_trade_target(pool, req.symbol, mode=m, note=req.note, source="panel-history")
+    return _ok(_trade_target_out(row))
+
+
+@router.delete("/trade-targets/{mode}/{symbol}", summary="Desativa alvo manual do robô (paper ou real)")
+async def deactivate_trade_target(mode: str, symbol: str) -> dict[str, Any]:
+    m = _valid_mode(mode)
+    pool = get_pool()
+    ok = await repo.deactivate_trade_target(pool, symbol, mode=m)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Moeda nao estava ativa no robo em modo {m}.")
+    row = await repo.get_trade_target(pool, symbol, mode=m)
+    return _ok(_trade_target_out(row))
+
+
 @router.delete("/monitor/{symbol}", summary="Desmarcar moeda da monitoração")
 async def unmonitor_symbol(symbol: str) -> dict[str, Any]:
     pool = get_pool()
@@ -688,3 +740,119 @@ async def funding_turn(symbol: str, limit: int = Query(60, ge=2, le=300)) -> dic
     ]
     return _ok({"symbol": symbol.upper(), "asset": symbol.upper().replace("USDT", ""),
                 "flip": flip, "series": series_out})
+
+
+# ===========================================================================
+# Resultados do robô por conta (paper / real)
+# ===========================================================================
+
+async def _live_prices(symbols: set[str]) -> dict[str, float]:
+    """Preço atual dos símbolos na Bybit (venue de execução do bot).
+
+    Usamos a Bybit (e não a Binance) porque é onde as ordens REAIS executam —
+    assim o P&L do paper espelha exatamente o que o real faria.
+    """
+    if not symbols:
+        return {}
+    import httpx
+    out: dict[str, float] = {}
+    url = "https://api.bybit.com/v5/market/tickers?category=linear"
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(8.0)) as client:
+            resp = await client.get(url)
+            data = resp.json()
+        for t in data.get("result", {}).get("list", []):
+            sym = t.get("symbol")
+            if sym in symbols:
+                try:
+                    out[sym] = float(t.get("lastPrice"))
+                except (TypeError, ValueError):
+                    pass
+    except Exception:
+        pass
+    return out
+
+
+def _pos_pnl(side: str, entry: float | None, cur: float | None, qty: float | None) -> tuple[float | None, float | None]:
+    if not entry or not cur or not qty:
+        return None, None
+    direction = 1.0 if str(side).lower() in ("buy", "long") else -1.0
+    pnl_usd = (cur - entry) * qty * direction
+    pnl_pct = (cur / entry - 1.0) * 100.0 * direction
+    return pnl_usd, pnl_pct
+
+
+@router.get("/results/{mode}", summary="Resultados do robô (paper ou real): posições abertas + P&L + fechados")
+async def bot_results(mode: str, limit: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
+    m = _valid_mode(mode)
+    db_mode = "live" if m == "real" else "paper"  # posições reais ficam como 'live' no banco
+    pool = get_pool()
+
+    open_pos = await repo.get_positions_by_mode(pool, mode=db_mode, status="open")
+    closed = await repo.get_trades_by_mode(pool, mode=db_mode, limit=limit)
+
+    symbols = {str(p.get("symbol")) for p in open_pos if p.get("symbol")}
+    prices = await _live_prices(symbols)
+
+    open_out = []
+    total_unreal = 0.0
+    for p in open_pos:
+        sym = str(p.get("symbol"))
+        entry = _f(p.get("entry_price"))
+        qty = _f(p.get("qty"))
+        cur = prices.get(sym)
+        pnl_usd, pnl_pct = _pos_pnl(p.get("side", "Buy"), entry, cur, qty)
+        if pnl_usd is not None:
+            total_unreal += pnl_usd
+        open_out.append({
+            "symbol": sym,
+            "asset": sym.replace("USDT", ""),
+            "side": p.get("side"),
+            "qty": qty,
+            "entry_price": entry,
+            "cur_price": cur,
+            "stop_loss": _f(p.get("stop_loss")),
+            "take_profit": _f(p.get("take_profit")),
+            "entry_score": _f(p.get("entry_score")),
+            "opened_at": p.get("opened_at").isoformat() if p.get("opened_at") else None,
+            "opened_at_brt": core.to_brt(p["opened_at"].isoformat(), "%d/%m %H:%M") if p.get("opened_at") else None,
+            "pnl_usd": pnl_usd,
+            "pnl_pct": pnl_pct,
+        })
+
+    closed_out = []
+    total_real = 0.0
+    wins = 0
+    for t in closed:
+        pnl = _f(t.get("pnl_usd"))
+        if pnl is not None:
+            total_real += pnl
+            if pnl > 0:
+                wins += 1
+        sym = str(t.get("symbol"))
+        closed_out.append({
+            "symbol": sym,
+            "asset": sym.replace("USDT", ""),
+            "side": t.get("side"),
+            "entry_price": _f(t.get("entry_price")),
+            "close_price": _f(t.get("close_price")),
+            "pnl_usd": pnl,
+            "pnl_pct": _f(t.get("pnl_pct")),
+            "close_reason": t.get("close_reason"),
+            "closed_at": t.get("closed_at").isoformat() if t.get("closed_at") else None,
+            "closed_at_brt": core.to_brt(t["closed_at"].isoformat(), "%d/%m %H:%M") if t.get("closed_at") else None,
+        })
+
+    n_closed = len(closed_out)
+    return _ok({
+        "mode": m,
+        "summary": {
+            "open_count": len(open_out),
+            "unrealised_pnl": total_unreal,
+            "realised_pnl": total_real,
+            "closed_count": n_closed,
+            "win_rate": (wins / n_closed * 100.0) if n_closed else None,
+        },
+        "open_positions": open_out,
+        "closed_trades": closed_out,
+    })
