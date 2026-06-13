@@ -31,6 +31,9 @@ const DEFAULT_CONFIG: BotConfig = {
   pcl_cooldown_minutes: 60,
   pcl_max_attempts: 3,
   paper_trading: true,
+  require_btc_reset: true,
+  allow_partial_setup: false,
+  require_funding_negative: false,
 }
 
 function hasLiveBybitBalance(
@@ -84,6 +87,37 @@ function FormField({
         readOnly={readOnly}
         onChange={(e) => onChange(e.target.value)}
       />
+    </div>
+  )
+}
+
+function FlagRow({
+  label,
+  tooltip,
+  checked,
+  onToggle,
+}: {
+  label: string
+  tooltip: string
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-medium text-white">{label}</span>
+        <InfoTooltip text={tooltip} />
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-label={label}
+        aria-checked={checked}
+        onClick={onToggle}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? "bg-[#6366f1]" : "bg-[#2a2d3a]"}`}
+      >
+        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`} />
+      </button>
     </div>
   )
 }
@@ -458,6 +492,38 @@ export default function ConfigPage() {
             value={config.max_positions}
             onChange={(v) => setField("max_positions", v)}
             tooltip="Quantas moedas o bot pode manter abertas ao mesmo tempo. Limita a exposição total. Sugerido: 3."
+          />
+        </CardContent>
+      </Card>
+
+      {/* Estratégia de Entrada (regras/flags) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-1.5">
+            <CardTitle>Estratégia de Entrada</CardTitle>
+            <InfoTooltip text="Regras que controlam QUANDO o bot pode entrar. Por padrão segue a metodologia Encryptos ao pé da letra (só no Reset do BTC e só Setup de Ouro)." />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <FlagRow
+            label="Só entrar no Reset do Bitcoin"
+            tooltip="Nunca comprar em alta vertical. Só libera entradas quando o BTC está em Reset (RSI 30m/1h <= o limite acima). É a regra de ouro da metodologia. Desligar é arriscado."
+            checked={config.require_btc_reset}
+            onToggle={() => setConfig((p) => ({ ...p, require_btc_reset: !p.require_btc_reset }))}
+          />
+          <Separator />
+          <FlagRow
+            label="Aceitar setup Parcial (além do Setup de Ouro)"
+            tooltip="Por padrão o bot só entra em Setup de Ouro (confluência completa). Ligando, ele também entra em setups Parciais (>= 4/7 critérios) — mais entradas, menos seletivo."
+            checked={config.allow_partial_setup}
+            onToggle={() => setConfig((p) => ({ ...p, allow_partial_setup: !p.allow_partial_setup }))}
+          />
+          <Separator />
+          <FlagRow
+            label="Exigir funding negativo na entrada"
+            tooltip="Só entra quando o funding está negativo (shorts pagando longs = munição para short squeeze). Filtro extra de qualidade; reduz o número de entradas."
+            checked={config.require_funding_negative}
+            onToggle={() => setConfig((p) => ({ ...p, require_funding_negative: !p.require_funding_negative }))}
           />
         </CardContent>
       </Card>

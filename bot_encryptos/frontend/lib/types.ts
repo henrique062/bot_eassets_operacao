@@ -157,6 +157,9 @@ export interface BotConfig {
   pcl_cooldown_minutes: number
   pcl_max_attempts: number
   paper_trading: boolean
+  require_btc_reset: boolean
+  allow_partial_setup: boolean
+  require_funding_negative: boolean
 }
 
 export interface ApiResponse<T> {

@@ -58,6 +58,9 @@ export function EngineStatusCard({ status, activeConfigId, onAction }: EngineSta
         pcl_cooldown_minutes: 60,
         pcl_max_attempts: 3,
         paper_trading: true,
+        require_btc_reset: true,
+        allow_partial_setup: false,
+        require_funding_negative: false,
       }
 
       try {
