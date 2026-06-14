@@ -1031,16 +1031,31 @@ async def get_positions_by_mode(
     cols = await _table_columns(pool, "eassets_positions")
     if "mode" not in cols:
         return []
-    order_col = "opened_at" if "opened_at" in cols else ("created_at" if "created_at" in cols else "id")
-    rows = await pool.fetch(
-        f"""
-        SELECT * FROM eassets_positions
-        WHERE mode = $1 AND LOWER(status) = $2
-        ORDER BY {order_col} DESC
-        """,
-        mode,
-        status.lower(),
+    order_col = (
+        "opened_at" if "opened_at" in cols else
+        "open_timestamp" if "open_timestamp" in cols else
+        "created_at" if "created_at" in cols else
+        "id"
     )
+    if "status" in cols:
+        rows = await pool.fetch(
+            f"""
+            SELECT * FROM eassets_positions
+            WHERE mode = $1 AND LOWER(status) = $2
+            ORDER BY {order_col} DESC
+            """,
+            mode,
+            status.lower(),
+        )
+    else:
+        rows = await pool.fetch(
+            f"""
+            SELECT * FROM eassets_positions
+            WHERE mode = $1
+            ORDER BY {order_col} DESC
+            """,
+            mode,
+        )
     return [dict(r) for r in rows]
 
 
@@ -1053,7 +1068,12 @@ async def get_trades_by_mode(
     cols = await _table_columns(pool, "eassets_trades")
     if "mode" not in cols:
         return []
-    order_col = "closed_at" if "closed_at" in cols else ("trade_timestamp" if "trade_timestamp" in cols else "id")
+    order_col = (
+        "closed_at" if "closed_at" in cols else
+        "trade_timestamp" if "trade_timestamp" in cols else
+        "created_at" if "created_at" in cols else
+        "id"
+    )
     rows = await pool.fetch(
         f"""
         SELECT * FROM eassets_trades

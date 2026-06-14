@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -46,6 +47,36 @@ def _f(v: Any) -> float | None:
         return float(v)
     if isinstance(v, (int, float)):
         return float(v)
+    return None
+
+
+def _first(row: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in row and row.get(key) is not None:
+            return row.get(key)
+    return None
+
+
+def _dt(v: Any) -> datetime | None:
+    if v is None:
+        return None
+    if isinstance(v, datetime):
+        return v
+    if isinstance(v, (int, float)):
+        ts = float(v)
+        if ts > 1_000_000_000_000:
+            ts /= 1000.0
+        return datetime.fromtimestamp(ts, tz=timezone.utc)
+    if isinstance(v, str):
+        raw = v.strip()
+        if not raw:
+            return None
+        try:
+            if raw.endswith("Z"):
+                raw = raw[:-1] + "+00:00"
+            return datetime.fromisoformat(raw)
+        except ValueError:
+            return None
     return None
 
 
@@ -798,24 +829,26 @@ async def bot_results(mode: str, limit: int = Query(100, ge=1, le=500)) -> dict[
     total_unreal = 0.0
     for p in open_pos:
         sym = str(p.get("symbol"))
-        entry = _f(p.get("entry_price"))
-        qty = _f(p.get("qty"))
+        entry = _f(_first(p, "entry_price"))
+        qty = _f(_first(p, "qty", "size"))
         cur = prices.get(sym)
-        pnl_usd, pnl_pct = _pos_pnl(p.get("side", "Buy"), entry, cur, qty)
+        side = _first(p, "side", "direction") or "Buy"
+        opened_dt = _dt(_first(p, "opened_at", "created_at", "open_time", "open_timestamp"))
+        pnl_usd, pnl_pct = _pos_pnl(side, entry, cur, qty)
         if pnl_usd is not None:
             total_unreal += pnl_usd
         open_out.append({
             "symbol": sym,
             "asset": sym.replace("USDT", ""),
-            "side": p.get("side"),
+            "side": side,
             "qty": qty,
             "entry_price": entry,
             "cur_price": cur,
-            "stop_loss": _f(p.get("stop_loss")),
-            "take_profit": _f(p.get("take_profit")),
-            "entry_score": _f(p.get("entry_score")),
-            "opened_at": p.get("opened_at").isoformat() if p.get("opened_at") else None,
-            "opened_at_brt": core.to_brt(p["opened_at"].isoformat(), "%d/%m %H:%M") if p.get("opened_at") else None,
+            "stop_loss": _f(_first(p, "stop_loss")),
+            "take_profit": _f(_first(p, "take_profit", "tp_price")),
+            "entry_score": _f(_first(p, "entry_score")),
+            "opened_at": opened_dt.isoformat() if opened_dt else None,
+            "opened_at_brt": core.to_brt(opened_dt.isoformat(), "%d/%m %H:%M") if opened_dt else None,
             "pnl_usd": pnl_usd,
             "pnl_pct": pnl_pct,
         })
@@ -824,23 +857,25 @@ async def bot_results(mode: str, limit: int = Query(100, ge=1, le=500)) -> dict[
     total_real = 0.0
     wins = 0
     for t in closed:
-        pnl = _f(t.get("pnl_usd"))
+        pnl = _f(_first(t, "pnl_usd", "total_pnl", "price_pnl"))
         if pnl is not None:
             total_real += pnl
             if pnl > 0:
                 wins += 1
         sym = str(t.get("symbol"))
+        side = _first(t, "side", "direction")
+        closed_dt = _dt(_first(t, "closed_at", "updated_at", "close_time", "trade_timestamp"))
         closed_out.append({
             "symbol": sym,
             "asset": sym.replace("USDT", ""),
-            "side": t.get("side"),
-            "entry_price": _f(t.get("entry_price")),
-            "close_price": _f(t.get("close_price")),
+            "side": side,
+            "entry_price": _f(_first(t, "entry_price")),
+            "close_price": _f(_first(t, "close_price", "exit_price")),
             "pnl_usd": pnl,
-            "pnl_pct": _f(t.get("pnl_pct")),
+            "pnl_pct": _f(_first(t, "pnl_pct", "total_pnl_pct", "price_pnl_pct")),
             "close_reason": t.get("close_reason"),
-            "closed_at": t.get("closed_at").isoformat() if t.get("closed_at") else None,
-            "closed_at_brt": core.to_brt(t["closed_at"].isoformat(), "%d/%m %H:%M") if t.get("closed_at") else None,
+            "closed_at": closed_dt.isoformat() if closed_dt else None,
+            "closed_at_brt": core.to_brt(closed_dt.isoformat(), "%d/%m %H:%M") if closed_dt else None,
         })
 
     n_closed = len(closed_out)
